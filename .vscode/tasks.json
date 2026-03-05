@@ -1,0 +1,36 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "CMake Configure",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-S", "${workspaceFolder}",
+                "-B", "${workspaceFolder}/build",
+                "-G", "Ninja",
+                "-DCMAKE_BUILD_TYPE=Debug",
+                "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+            ],
+            "group": "build",
+            "presentation": { "reveal": "always" }
+        },
+        {
+            "label": "CMake Build",
+            "type": "shell",
+            "command": "cmake",
+            "args": ["--build", "${workspaceFolder}/build", "--parallel"],
+            "group": { "kind": "build", "isDefault": true },
+            "presentation": { "reveal": "always" },
+            "dependsOn": "CMake Configure"
+        },
+        {
+            "label": "Run sluac (emit-tokens)",
+            "type": "shell",
+            "command": "${workspaceFolder}/build/compiler/sluac",
+            "args": ["${file}", "--emit-tokens"],
+            "group": "test",
+            "presentation": { "reveal": "always" }
+        }
+    ]
+}

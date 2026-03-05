@@ -1,0 +1,16 @@
+{
+    "files.associations": {
+        "*.slua": "lua"
+    },
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.rulers": [100],
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/compiler/include",
+        "${workspaceFolder}/runtime/include"
+    ],
+    "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json",
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "cmake.generator": "Ninja",
+    "cmake.configureOnOpen": true
+}

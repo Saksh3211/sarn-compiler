@@ -1,0 +1,6 @@
+--!!nonstrict
+
+local x
+print(x)
+local y = x + 5
+print(y)

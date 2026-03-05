@@ -1,0 +1,39 @@
+--!!strict
+
+-- memory_example.slua — manual memory management
+
+function zero_fill(buf: ptr<uint8>, size: int): void
+    for i = 0, size - 1, 1 do
+        store(buf + i, cast(uint8, 0))
+    end
+end
+
+function sum_array(arr: ptr<int>, size: int): int
+    local total: int = 0
+    for i = 0, size - 1, 1 do
+        total = total + deref(arr + i)
+    end
+    return total
+end
+
+function main(): int
+    const N: int = 256
+
+    local nums: ptr<int> = alloc_typed(int, N)
+    if nums == null then panic("alloc failed") end
+    defer free(nums)
+
+    for i = 0, N - 1, 1 do
+        store(nums + i, i * 2)
+    end
+
+    local s: int = sum_array(nums, N)
+    -- s = 0+2+4+...+510 = 65280
+
+    local buf: ptr<uint8> = alloc_typed(uint8, 1024)
+    if buf == null then panic("alloc failed") end
+    defer free(buf)
+    zero_fill(buf, 1024)
+
+    return 0
+end

@@ -1,0 +1,10 @@
+--!!strict
+
+function add(a: int, b: int): int
+    return a + b
+end
+
+function main(): int
+    const result: int = add(3, 4)
+    return 0
+end

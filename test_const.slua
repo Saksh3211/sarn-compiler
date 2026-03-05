@@ -1,0 +1,6 @@
+--!!strict
+function main(): int
+    const x: int = 10
+    x = 20
+    return x
+end

@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug sluac",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/compiler/sluac.exe",
+            "args": ["${workspaceFolder}/examples/hello_strict.slua", "--emit-tokens"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": true
+        }
+    ]
+}

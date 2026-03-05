@@ -1,0 +1,11 @@
+build/
+*.o
+*.obj
+*.a
+*.lib
+*.exe
+*.out
+*.pdb
+*.ilk
+*.slua.sig
+.cache/

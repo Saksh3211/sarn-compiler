@@ -1,0 +1,5 @@
+--!!strict
+function main(): int
+    local x: int = undefined_var + 1
+    return x
+end

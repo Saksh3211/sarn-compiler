@@ -1,0 +1,6 @@
+--!!nonstrict
+local function square(a)
+    return a*a
+end
+local result = square(3)
+print(result)

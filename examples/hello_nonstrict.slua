@@ -1,0 +1,23 @@
+--!!nonstrict
+
+-- hello_nonstrict.slua — nonstrict mode example
+
+local x             -- W0020: uninitialized, x = null at runtime
+local y = x + 5     -- W0024: arithmetic on null
+print(y)            -- W0023: prints -null-
+
+local name = "World"
+print("Hello, " .. name)
+
+local scores = { 95, 87, 72, 100, 63 }
+local total = 0
+for i = 1, #scores do
+    total = total + scores[i]
+end
+print(total)
+
+-- null safety: safe guard
+local raw = read_line()
+if raw != null then
+    print("You typed: " .. raw)
+end
