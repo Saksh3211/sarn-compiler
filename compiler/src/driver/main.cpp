@@ -323,8 +323,21 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    fprintf(stderr, "sluac: OK — %zu statements parsed and resolved\n",
-            mod->stmts.size());
-    fprintf(stderr, "sluac: codegen not yet implemented\n");
+#ifdef SLUA_HAS_LLVM
+    // Stage 7 — IR emission
+    {
+        slua::IREmitter emitter(diag, cfg, input_file);
+        if (!emitter.emit(*mod)) {
+            diag.dump_all();
+            return 1;
+        }
+        if (output_file == "a.out") output_file = "output.ll";
+        if (!emitter.write_ll(output_file)) return 1;
+        fprintf(stderr, "sluac: wrote IR to %s\n", output_file.c_str());
+    }
     return 0;
+#else
+    fprintf(stderr, "sluac: LLVM not available\n");
+    return 1;
+#endif
 }
