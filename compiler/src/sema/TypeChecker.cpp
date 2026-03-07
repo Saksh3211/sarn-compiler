@@ -625,6 +625,9 @@ namespace slua {
 
         // Arithmetic: +  -  *  /  %
         if (op == "+" || op == "-" || op == "*" || op == "/" || op == "%") {
+        // pointer arithmetic: ptr + int = ptr
+        if (lhs->kind == TypeKind::PTR && (rhs->kind == TypeKind::INT || rhs->kind == TypeKind::NUMBER)) return lhs;
+        if ((lhs->kind == TypeKind::INT || lhs->kind == TypeKind::NUMBER) && rhs->kind == TypeKind::PTR) return rhs;
             // null propagation in nonstrict
             if (lhs->kind == TypeKind::NULL_T || rhs->kind == TypeKind::NULL_T) {
                 if (cfg_.mode == CompileMode::STRICT)

@@ -1,0 +1,123 @@
+--!!strict
+-- math.slua — S Lua standard math library
+-- import math
+
+export function math_abs(x: number): number
+    if x < 0.0 then return -x end
+    return x
+end
+
+export function math_floor(x: number): int
+    return cast(int, x)
+end
+
+export function math_ceil(x: number): int
+    local i: int = cast(int, x)
+    if cast(number, i) < x then return i + 1 end
+    return i
+end
+
+export function math_sqrt(x: number): number
+    return _slua_sqrt(x)
+end
+
+export function math_pow(base: number, exp: number): number
+    return _slua_pow(base, exp)
+end
+
+export function math_sin(x: number): number
+    return _slua_sin(x)
+end
+
+export function math_cos(x: number): number
+    return _slua_cos(x)
+end
+
+export function math_tan(x: number): number
+    return _slua_tan(x)
+end
+
+export function math_log(x: number): number
+    return _slua_log(x)
+end
+
+export function math_log2(x: number): number
+    return _slua_log2(x)
+end
+
+export function math_exp(x: number): number
+    return _slua_exp(x)
+end
+
+export function math_min(a: number, b: number): number
+    if a < b then return a end
+    return b
+end
+
+export function math_max(a: number, b: number): number
+    if a > b then return a end
+    return b
+end
+
+export function math_clamp(x: number, lo: number, hi: number): number
+    if x < lo then return lo end
+    if x > hi then return hi end
+    return x
+end
+
+export function math_lerp(a: number, b: number, t: number): number
+    return a + (b - a) * t
+end
+
+export function math_sign(x: number): int
+    if x > 0.0 then return 1 end
+    if x < 0.0 then return -1 end
+    return 0
+end
+
+-- Integer versions
+export function math_iabs(x: int): int
+    if x < 0 then return -x end
+    return x
+end
+
+export function math_imin(a: int, b: int): int
+    if a < b then return a end
+    return b
+end
+
+export function math_imax(a: int, b: int): int
+    if a > b then return a end
+    return b
+end
+
+export function math_iclamp(x: int, lo: int, hi: int): int
+    if x < lo then return lo end
+    if x > hi then return hi end
+    return x
+end
+
+-- Constants (returned as functions since S Lua has no global const across modules yet)
+export function math_pi(): number
+    return 3.14159265358979323846
+end
+
+export function math_e(): number
+    return 2.71828182845904523536
+end
+
+export function math_inf(): number
+    return _slua_inf()
+end
+
+export function math_nan(): number
+    return _slua_nan()
+end
+
+export function math_is_nan(x: number): bool
+    return x ~= x
+end
+
+export function math_is_inf(x: number): bool
+    return x == _slua_inf() or x == -_slua_inf()
+end

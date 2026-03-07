@@ -268,18 +268,18 @@ int main(int argc, char** argv) {
 
     std::string source = read_file(input_file);
 
-    // Stage 1 — mode detection
+    // Stage 1 mode detection
     slua::CompileMode mode = slua::detect_mode(source, input_file);
     if (override_strict)     mode = slua::CompileMode::STRICT;
     if (override_nonstrict)  mode = slua::CompileMode::NONSTRICT;
     fprintf(stderr, "sluac: mode = %s\n",
             mode == slua::CompileMode::STRICT ? "strict" : "nonstrict");
 
-    // Stage 2 — diag + config
+    // Stage 2 diag + config
     slua::DiagEngine     diag(mode);
     slua::SemanticConfig cfg = slua::SemanticConfig::for_mode(mode);
 
-    // Stage 3 — token dump
+    // Stage 3 ï¿½ token dump
     if (emit_tokens) {
         slua::Lexer lexer(source, input_file, mode);
         while (!lexer.at_eof()) {
@@ -290,14 +290,14 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    // Stage 4 — parse
+    // Stage 4 parse
     slua::Lexer  lexer(source, input_file, mode);
     slua::Parser parser(lexer, diag, mode);
     auto mod = parser.parse_module(input_file);
 
     if (diag.has_errors()) { diag.dump_all(); return 1; }
 
-    // Stage 5 — name resolution
+    // Stage 5 name resolution
     {
         slua::Resolver resolver(diag, cfg);
         resolver.resolve(*mod);
@@ -305,7 +305,7 @@ int main(int argc, char** argv) {
 
     if (diag.has_errors()) { diag.dump_all(); return 1; }
 
-    // Stage 6 — type checking
+    // Stage 6 type checking
     {
         slua::TypeChecker tc(diag, cfg);
         tc.check(*mod);
@@ -313,7 +313,7 @@ int main(int argc, char** argv) {
 
     if (diag.has_errors()) { diag.dump_all(); return 1; }
 
-    // Stage 7 — AST dump
+    // Stage 7 AST dump
     if (emit_ast) {
         printf("Module: %s  mode=%s  stmts=%zu\n",
                mod->filename.c_str(),
@@ -324,7 +324,7 @@ int main(int argc, char** argv) {
     }
 
 #ifdef SLUA_HAS_LLVM
-    // Stage 7 — IR emission
+    // Stage 7 IR emission
     {
         slua::IREmitter emitter(diag, cfg, input_file);
         if (!emitter.emit(*mod)) {

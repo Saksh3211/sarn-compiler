@@ -1,0 +1,123 @@
+-- stdlib_demo.slua — demonstrates math, string, and io stdlib
+--!!strict
+
+-- ── Math demo ──────────────────────────────────────────────────────────────────
+
+function show_math(): void
+    -- Basic arithmetic
+    local x: number = 2.0
+    local root: number = math_sqrt(x)
+    io_print_labeled_number("sqrt(2)", root)
+
+    -- Trig
+    local pi: number = math_pi()
+    local half_pi: number = pi / 2.0
+    local sin_val: number = math_sin(half_pi)
+    io_print_labeled_number("sin(pi/2)", sin_val)
+
+    -- Clamping
+    local clamped: int = math_iclamp(150, 0, 100)
+    io_print_labeled_int("clamp(150, 0, 100)", clamped)
+
+    -- Sign
+    local s1: int = math_sign(-3.5)
+    local s2: int = math_sign(0.0)
+    local s3: int = math_sign(7.2)
+    io_print_labeled_int("sign(-3.5)", s1)
+    io_print_labeled_int("sign(0.0)",  s2)
+    io_print_labeled_int("sign(7.2)",  s3)
+
+    -- Lerp
+    local lerped: number = math_lerp(0.0, 100.0, 0.25)
+    io_print_labeled_number("lerp(0, 100, 0.25)", lerped)
+end
+
+-- ── String demo ────────────────────────────────────────────────────────────────
+
+function show_strings(): void
+    local hello: string = "Hello, World!"
+    io_print_labeled_int("len", str_len(hello))
+
+    local sub: string = str_sub(hello, 0, 4)
+    io_println(sub)   -- "Hello"
+
+    local up: string = str_upper(hello)
+    io_println(up)
+
+    local lo: string = str_lower(hello)
+    io_println(lo)
+
+    -- find
+    local pos: int = str_find(hello, "World", 0)
+    io_print_labeled_int("find 'World'", pos)
+
+    -- number conversion
+    local n: int = str_to_int("42")
+    io_print_labeled_int("str_to_int('42')", n)
+
+    local f: number = str_to_number("3.14")
+    io_print_labeled_number("str_to_number('3.14')", f)
+
+    -- starts/ends
+    local sw: bool = str_starts_with(hello, "Hello")
+    local ew: bool = str_ends_with(hello, "World!")
+    io_print_labeled_int("starts_with Hello", cast(int, sw))
+    io_print_labeled_int("ends_with World!",  cast(int, ew))
+
+    -- repeat
+    local rep: string = str_repeat("ab", 3)
+    io_println(rep)  -- "ababab"
+
+    -- trim
+    local padded: string = "   trimmed   "
+    local trimmed: string = str_trim(padded)
+    io_println(trimmed)
+end
+
+-- ── Memory + math together ─────────────────────────────────────────────────────
+
+function fill_squares(buf: ptr<number>, n: int): void
+    for i = 0, n - 1, 1 do
+        local fi: number = cast(number, i)
+        store(buf + i, fi * fi)
+    end
+end
+
+function sum_buf(buf: ptr<number>, n: int): number
+    local total: number = 0.0
+    for i = 0, n - 1, 1 do
+        total = total + deref(buf + i)
+    end
+    return total
+end
+
+function show_memory_math(): void
+    const N: int = 10
+    local buf: ptr<number> = alloc_typed(number, N)
+    if buf == null then
+        panic("alloc failed")
+    end
+    defer free(buf)
+
+    fill_squares(buf, N)
+    local s: number = sum_buf(buf, N)
+    -- 0^2 + 1^2 + ... + 9^2 = 285
+    io_print_labeled_number("sum of squares 0..9", s)
+end
+
+-- ── Entry point ────────────────────────────────────────────────────────────────
+
+function main(): int
+    io_println("=== Math ===")
+    show_math()
+
+    io_println("")
+    io_println("=== Strings ===")
+    show_strings()
+
+    io_println("")
+    io_println("=== Memory + Math ===")
+    show_memory_math()
+
+    return 0
+end

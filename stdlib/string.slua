@@ -1,0 +1,104 @@
+--!!strict
+-- string.slua — S Lua standard string library
+-- import string
+
+-- Returns the byte length of a string
+export function str_len(s: string): int
+    return _slua_str_len(s)
+end
+
+-- Returns byte at index i (0-based)
+export function str_byte(s: string, i: int): int
+    return _slua_str_byte(s, i)
+end
+
+-- Returns a single-character string from a byte value
+export function str_char(b: int): string
+    return _slua_str_char(b)
+end
+
+-- Substring: s[from..to] (0-based, inclusive)
+export function str_sub(s: string, from: int, to: int): string
+    return _slua_str_sub(s, from, to)
+end
+
+-- Concatenate two strings
+export function str_concat(a: string, b: string): string
+    return a .. b
+end
+
+-- Check if string starts with prefix
+export function str_starts_with(s: string, prefix: string): bool
+    local sl: int = _slua_str_len(s)
+    local pl: int = _slua_str_len(prefix)
+    if pl > sl then return false end
+    return _slua_str_sub(s, 0, pl - 1) == prefix
+end
+
+-- Check if string ends with suffix
+export function str_ends_with(s: string, suffix: string): bool
+    local sl: int = _slua_str_len(s)
+    local sul: int = _slua_str_len(suffix)
+    if sul > sl then return false end
+    return _slua_str_sub(s, sl - sul, sl - 1) == suffix
+end
+
+-- Convert int to string
+export function str_from_int(n: int): string
+    return _slua_int_to_str(n)
+end
+
+-- Convert number to string
+export function str_from_number(x: number): string
+    return _slua_float_to_str(x)
+end
+
+-- Convert string to int (returns 0 on failure)
+export function str_to_int(s: string): int
+    return _slua_str_to_int(s)
+end
+
+-- Convert string to number (returns 0.0 on failure)
+export function str_to_number(s: string): number
+    return _slua_str_to_float(s)
+end
+
+-- Convert all chars to uppercase
+export function str_upper(s: string): string
+    return _slua_str_upper(s)
+end
+
+-- Convert all chars to lowercase
+export function str_lower(s: string): string
+    return _slua_str_lower(s)
+end
+
+-- Find first occurrence of needle in haystack starting at from (0-based)
+-- Returns -1 if not found
+export function str_find(haystack: string, needle: string, from: int): int
+    return _slua_str_find(haystack, needle, from)
+end
+
+-- Check equality
+export function str_eq(a: string, b: string): bool
+    return a == b
+end
+
+-- Repeat string n times
+export function str_repeat(s: string, n: int): string
+    local result: string = ""
+    for i = 0, n - 1, 1 do
+        result = result .. s
+    end
+    return result
+end
+
+-- Trim leading and trailing spaces
+export function str_trim(s: string): string
+    return _slua_str_trim(s)
+end
+
+-- Check if string is empty
+export function str_empty(s: string): bool
+    return _slua_str_len(s) == 0
+end

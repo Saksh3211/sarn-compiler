@@ -8,7 +8,8 @@ cmake -S . -B build ^
   -DCMAKE_BUILD_TYPE=Debug ^
   -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake ^
   -DVCPKG_TARGET_TRIPLET=x64-windows ^
-  -DLLVM_DIR=C:/vcpkg/installed/x64-windows/share/llvm
+  -DLLVM_DIR=C:/vcpkg/installed/x64-windows/share/llvm ^
+  -DLLVM_ROOT=C:/vcpkg/installed/x64-windows
 
 if %ERRORLEVEL% neq 0 (
     echo [ERROR] CMake configure failed!

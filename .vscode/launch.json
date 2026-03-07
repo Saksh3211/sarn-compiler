@@ -2,15 +2,48 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug sluac",
+            "name": "Debug sluac (hello_strict)",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/compiler/sluac.exe",
-            "args": ["${workspaceFolder}/examples/hello_strict.slua", "--emit-tokens"],
+            "args": [
+                "examples/hello_strict.slua",
+                "--emit-ast"
+            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
-            "externalConsole": true
+            "console": "integratedTerminal",
+            "preLaunchTask": "sluac: build"
+        },
+        {
+            "name": "Debug sluac (current file)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/compiler/sluac.exe",
+            "args": [
+                "${file}"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "console": "integratedTerminal",
+            "preLaunchTask": "sluac: build"
+        },
+        {
+            "name": "Debug sluac (memory_example)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/compiler/sluac.exe",
+            "args": [
+                "examples/memory_example.slua",
+                "--emit-ast"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "console": "integratedTerminal",
+            "preLaunchTask": "sluac: build"
         }
     ]
 }
