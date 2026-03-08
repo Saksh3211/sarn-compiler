@@ -282,7 +282,7 @@ int main(int argc, char** argv) {
     slua::DiagEngine     diag(mode);
     slua::SemanticConfig cfg = slua::SemanticConfig::for_mode(mode);
 
-    // Stage 3 � token dump
+    // Stage 3 ï¿½ token dump
     if (emit_tokens) {
         slua::Lexer lexer(source, input_file, mode);
         while (!lexer.at_eof()) {
@@ -331,17 +331,18 @@ int main(int argc, char** argv) {
     {
         fprintf(stderr, "sluac: creating emitter\n"); fflush(stderr);
         slua::IREmitter emitter(diag, cfg, input_file);
-        fprintf(stderr, "sluac: calling emit\n"); fflush(stderr);
-        fprintf(stderr, "sluac: emit returned\n"); fflush(stderr);
-        if (!emitter.emit(*mod))
-            diag.dump_all();
-            return 1;
-        }
+        fprintf(stderr, "DBG: calling emit\n"); fflush(stderr);
+
+        if (!emitter.emit(*mod)) { diag.dump_all(); return 1; }
+
+
+
         if (output_file == "a.out") output_file = "output.ll";
         fprintf(stderr, "sluac: writing ll\n"); fflush(stderr);
-        if (!emitter.write_ll(output_file))
+        if (!emitter.write_ll(output_file)) return 1;
         fprintf(stderr, "sluac: wrote IR to %s\n", output_file.c_str());
     }
+
     return 0;
 #else
     fprintf(stderr, "sluac: LLVM not available\n");

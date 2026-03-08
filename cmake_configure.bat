@@ -5,7 +5,7 @@ echo.
 echo [sluac] Configuring...
 cmake -S . -B build ^
   -G Ninja ^
-  -DCMAKE_BUILD_TYPE=Debug ^
+  -DCMAKE_BUILD_TYPE=Release ^
   -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake ^
   -DVCPKG_TARGET_TRIPLET=x64-windows ^
   -DLLVM_DIR=C:/vcpkg/installed/x64-windows/share/llvm ^
@@ -34,3 +34,4 @@ echo ================================================================
 echo Test it:
 echo   build\compiler\sluac.exe examples\hello_strict.slua --emit-ir
 pause
+
