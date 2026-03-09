@@ -8,24 +8,16 @@
 #include <ctype.h>
 #include <float.h>
 
-/* â”€â”€ Math â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-
-double slua_sqrt (double x) { return sqrt(x);        }
-double slua_pow  (double b, double e) { return pow(b, e); }
-double slua_sin  (double x) { return sin(x);          }
-double slua_cos  (double x) { return cos(x);          }
-double slua_tan  (double x) { return tan(x);          }
-double slua_log  (double x) { return log(x);          }
-double slua_log2 (double x) { return log2(x);         }
-double slua_exp  (double x) { return exp(x);          }
-double slua_inf  (void)     { return HUGE_VAL;         }
-double slua_nan  (void)     { return nan("");}
-
-/* â”€â”€ String helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-
-/* All returned strings are heap-allocated.
-   The GC/manual memory story: callers own them. For now they leak in the
-   stdlib layer â€” real fix is integrating with slua_alloc in a future pass. */
+double slua_sqrt (double x) { return sqrt(x);}
+double slua_pow  (double b, double e) { return pow(b, e);}
+double slua_sin  (double x) { return sin(x);}
+double slua_cos  (double x) { return cos(x);}
+double slua_tan  (double x) { return tan(x);}
+double slua_log  (double x) { return log(x);}
+double slua_log2 (double x) { return log2(x);}
+double slua_exp  (double x) { return exp(x);}
+double slua_inf  (void) { return HUGE_VAL;}
+double slua_nan  (void) { return nan("");}
 
 int32_t slua_str_len(const char* s) {
     if (!s) return 0;
@@ -62,7 +54,6 @@ char* slua_str_sub(const char* s, int32_t from, int32_t to) {
 }
 
 char* slua_int_to_str(int64_t n) {
-    /* max int64 is 19 digits + sign + null */
     char* buf = (char*)malloc(24);
     if (!buf) return NULL;
     snprintf(buf, 24, "%lld", (long long)n);
@@ -120,19 +111,18 @@ int32_t slua_str_find(const char* haystack, const char* needle, int32_t from) {
 
 char* slua_str_trim(const char* s) {
     if (!s) return NULL;
-    /* skip leading whitespace */
+    
     while (*s && isspace((unsigned char)*s)) s++;
     size_t len = strlen(s);
-    /* strip trailing whitespace */
+    
     while (len > 0 && isspace((unsigned char)s[len - 1])) len--;
     char* buf = (char*)malloc(len + 1);
     if (!buf) return NULL;
     memcpy(buf, s, len);
+
     buf[len] = '\0';
     return buf;
 }
-
-/* â”€â”€ I/O â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 void slua_print_str_no_newline(const char* s) {
     if (s) fputs(s, stdout);
@@ -150,7 +140,7 @@ void slua_flush(void) {
 char* slua_read_line(void) {
     char   tmp[4096];
     if (!fgets(tmp, sizeof(tmp), stdin)) return strdup("");
-    /* strip trailing newline */
+    
     size_t len = strlen(tmp);
     if (len > 0 && tmp[len-1] == '\n') tmp[--len] = '\0';
     if (len > 0 && tmp[len-1] == '\r') tmp[--len] = '\0';

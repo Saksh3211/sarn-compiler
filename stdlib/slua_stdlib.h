@@ -8,7 +8,6 @@
 extern "C" {
 #endif
 
-/* â”€â”€ Math intrinsics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 double   slua_sqrt (double x);
 double   slua_pow  (double base, double exp);
 double   slua_sin  (double x);
@@ -20,7 +19,6 @@ double   slua_exp  (double x);
 double   slua_inf  (void);
 double   slua_nan  (void);
 
-/* â”€â”€ String intrinsics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 int32_t  slua_str_len      (const char* s);
 int32_t  slua_str_byte     (const char* s, int32_t i);
 char*    slua_str_char     (int32_t b);
@@ -34,14 +32,12 @@ char*    slua_str_lower    (const char* s);
 int32_t  slua_str_find     (const char* haystack, const char* needle, int32_t from);
 char*    slua_str_trim     (const char* s);
 
-/* â”€â”€ I/O intrinsics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 void     slua_print_str_no_newline (const char* s);
 void     slua_write_bytes          (const uint8_t* buf, int32_t len);
 void     slua_flush                (void);
 char*    slua_read_line            (void);
 int32_t  slua_read_char            (void);
 
-/* -- I/O extended ------------------------------------------------------------ */
 void     slua_io_clear             (void);
 void     slua_io_print_color       (const char* text, const char* color);
 void     slua_io_set_color         (const char* color);
