@@ -1,7 +1,5 @@
---!!strict
-
--- hello_strict.slua — strict mode example
--- Run: sluac examples/hello_strict.slua -o hello_strict
+--!!type:strict
+--!!mem:auto
 
 type Vec3 = { x: number, y: number, z: number }
 
@@ -19,7 +17,6 @@ function main(): int
     const b: Vec3 = { x = 0.0, y = 1.0, z = 0.0 }
 
     local d: number = dot(a, b)
-    -- d == 0.0 (orthogonal vectors)
 
     const SIZE: int = 512
     local buf: ptr<uint8> = alloc_typed(uint8, SIZE)
