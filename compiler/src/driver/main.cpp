@@ -144,8 +144,7 @@ static void print_stmt(const slua::Stmt* s, int indent) {
     std::visit([&](auto&& v) {
         using T = std::decay_t<decltype(v)>;
         if constexpr (std::is_same_v<T, slua::LocalDecl>) {
-            printf("%sLocal(%s%s)\n", ind(indent).c_str(),
-                   v.is_const ? "const " : "", v.name.c_str());
+            printf("%sLocal(%s%s)\n", ind(indent).c_str(),v.is_const ? "const " : "", v.name.c_str());
             if (v.type_ann) print_type(v.type_ann.get(), indent+1);
             if (v.init)     print_expr(v.init.get(),     indent+1);
         }
@@ -164,10 +163,8 @@ static void print_stmt(const slua::Stmt* s, int indent) {
             print_expr(v.call.get(), indent+1);
         }
         else if constexpr (std::is_same_v<T, slua::FuncDecl>) {
-            printf("%sFunc(%s%s, %zu params)\n",
-                   ind(indent).c_str(),
-                   v.exported ? "export " : "",
-                   v.name.c_str(), v.params.size());
+            printf("%sFunc(%s%s, %zu params)\n",ind(indent).c_str(),
+                   v.exported ? "export " : "",v.name.c_str(), v.params.size());
             if (v.ret_type) print_type(v.ret_type.get(), indent+1);
             for (auto& st : v.body) print_stmt(st.get(), indent+1);
         }

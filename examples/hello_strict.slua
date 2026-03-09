@@ -1,5 +1,5 @@
 --!!type:strict
---!!mem:auto
+--!!mem:man
 
 type Vec3 = { x: number, y: number, z: number }
 
