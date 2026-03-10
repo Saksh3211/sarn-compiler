@@ -1,6 +1,6 @@
---!!strict
+--!!type:strict
 
--- generics_example.slua — generic functions and types
+-- generics_example.slua generic functions and types
 
 type Stack<T> = {
     data:     ptr<T>,

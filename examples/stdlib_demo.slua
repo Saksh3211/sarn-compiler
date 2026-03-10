@@ -1,5 +1,8 @@
--- stdlib_demo.slua — demonstrates math, string, and io stdlib
---!!strict
+--!!type:strict
+
+import math
+import io
+import string
 
 -- ── Math demo ──────────────────────────────────────────────────────────────────
 

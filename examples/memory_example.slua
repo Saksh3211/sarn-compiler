@@ -1,6 +1,5 @@
---!!strict
-
--- memory_example.slua — manual memory management
+--!!type:strict
+--!!mem:man
 
 function zero_fill(buf: ptr<uint8>, size: int): void
     for i = 0, size - 1, 1 do

@@ -1,0 +1,17 @@
+--!!type:strict
+--!!mem:man
+
+import math
+import io
+
+function main():int64
+    local x:number = math.sqrt(144.0)
+    io.print_color("sqrt(144) = ", "cyan")
+    print(x)
+    local y:number = math.pow(2.0, 10.0)
+    io.print_color("pow(2,10) = ", "yellow")
+    print(y)
+    local z:number = math.sin(3.14159)
+    io.print_color("sin(pi) = "..z, "green")
+    return 0
+end
