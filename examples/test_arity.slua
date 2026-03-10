@@ -1,5 +1,6 @@
 --!!strict
 function greet(name: string): void
+    return 1
 end
 function main(): int
     greet("hello", "extra")

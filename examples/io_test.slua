@@ -1,9 +1,10 @@
 --!!type:strict
---!!mem:man
+--!!mem:auto
 
 import io
 
 function main():int64
+    print("string print working")
     io.print_color("=== S Lua IO Test ===", "cyan")
     io.print_color("Enter your name:", "yellow")
     local name:string = io.read_line()

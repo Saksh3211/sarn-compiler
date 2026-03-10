@@ -159,7 +159,6 @@ SluaString* slua_str_from_cstr(const char* cstr) {
 }
 
 const char* slua_str_cstr(SluaString* s) { return s ? s->data : ""; }
-int         slua_str_len (SluaString* s) { return s ? s->len  : 0;  }
 
 SluaValue slua_string_new(const char* data, int32_t len) {
     SluaString* s = (SluaString*)malloc(sizeof(SluaString));
