@@ -1,5 +1,5 @@
 #include "slua_stdlib.h"
-#include "../runtime/include/slua_runtime.h"
+#include "..\runtime\include\slua_runtime.h"
 
 #include <math.h>
 #include <stdio.h>

@@ -12,7 +12,6 @@
 #  include <time.h>
 #endif
 
-/* -- System allocator ------------------------------------------------------ */
 static void* sys_alloc_fn(void* ctx, size_t size) { (void)ctx; return malloc(size); }
 static void  sys_free_fn (void* ctx, void* ptr)   { (void)ctx; free(ptr); }
 
@@ -22,19 +21,16 @@ SluaAllocator slua_sys_allocator = {
     .ctx      = NULL,
 };
 
-/* -- Memory ---------------------------------------------------------------- */
 void* slua_alloc       (size_t bytes)              { return malloc(bytes); }
 void  slua_free        (void* ptr)                 { free(ptr); }
 void* slua_alloc_zeroed(size_t bytes)              { return calloc(1, bytes); }
 void* slua_realloc     (void* ptr, size_t new_size){ return realloc(ptr, new_size); }
 
-/* -- Panic ----------------------------------------------------------------- */
 void slua_panic(const char* msg, const char* file, int line) {
     fprintf(stderr, "\n[PANIC] %s\n  at %s:%d\n", msg, file, line);
     abort();
 }
 
-/* -- Value printing -------------------------------------------------------- */
 void slua_print_value(SluaValue v) {
     switch (v.tag) {
         case SLUA_TAG_NULL:     printf("-null-"); break;
@@ -53,7 +49,6 @@ void slua_print_value(SluaValue v) {
     }
 }
 
-/* -- Typename -------------------------------------------------------------- */
 const char* slua_typename(SluaValue v) {
     switch (v.tag) {
         case SLUA_TAG_NULL:     return "null";
@@ -78,7 +73,6 @@ void slua_warn_null_op(const char* file, int line) {
     fprintf(stderr, "[W0024] %s:%d - arithmetic on null; result is null\n", file, line);
 }
 
-/* -- Dynamic arithmetic ---------------------------------------------------- */
 #define ARITH_OP(name, op)                                                   \
 SluaValue slua_##name(SluaValue a, SluaValue b) {                            \
     if (a.tag == SLUA_TAG_NULL || b.tag == SLUA_TAG_NULL) return slua_null();\
@@ -121,7 +115,6 @@ int slua_equal(SluaValue a, SluaValue b) {
     }
 }
 
-/* -- I/O ------------------------------------------------------------------- */
 void slua_print_str  (const char* s) { printf("%s\n", s); }
 void slua_print_int  (int64_t i)     { printf("%lld\n", (long long)i); }
 void slua_print_float(double f)      { printf("%g\n", f); }
@@ -129,7 +122,6 @@ void slua_print_bool (int b)         { printf("%s\n", b ? "true" : "false"); }
 void slua_print_null (void)          { printf("-null-\n"); }
 void slua_eprint     (const char* m) { fprintf(stderr, "%s\n", m); }
 
-/* -- System ---------------------------------------------------------------- */
 void slua_exit(int code) { exit(code); }
 
 int64_t slua_time_ns(void) {
@@ -145,7 +137,6 @@ int64_t slua_time_ns(void) {
 #endif
 }
 
-/* -- String ---------------------------------------------------------------- */
 SluaString* slua_str_from_cstr(const char* cstr) {
     SluaString* s = (SluaString*)malloc(sizeof(SluaString));
     if (!s) SLUA_PANIC("out of memory");
@@ -175,7 +166,6 @@ SluaValue slua_string_new(const char* data, int32_t len) {
     return v;
 }
 
-/* -- Math ------------------------------------------------------------------ */
 double slua_math_floor(double x) { return floor(x); }
 double slua_math_ceil (double x) { return ceil(x);  }
 double slua_math_sqrt (double x) { return sqrt(x);  }
@@ -183,3 +173,26 @@ double slua_math_abs  (double x) { return fabs(x);  }
 double slua_math_pow  (double b, double e) { return pow(b, e); }
 double slua_math_min  (double a, double b) { return a < b ? a : b; }
 double slua_math_max  (double a, double b) { return a > b ? a : b; }
+
+double slua_sqrt (double x){ return sqrt(x); }
+double slua_pow  (double b, double e) { return pow(b, e); }
+double slua_sin  (double x){ return sin(x); }
+double slua_cos  (double x){ return cos(x); }
+double slua_tan  (double x) { return tan(x); }
+double slua_log  (double x){ return log(x); }
+double slua_log2 (double x){ return log2(x); }
+double slua_exp  (double x) { return exp(x); }
+double slua_inf(void) { return (double)INFINITY; }
+double slua_nan(void) { return (double)NAN; }
+
+const char* slua_num_to_str(double x) {
+    static char buf[64];
+    snprintf(buf, sizeof(buf), "%g", x);
+    return buf;
+}
+
+const char* slua_i64_to_str(int64_t x) {
+    static char buf[32];
+    snprintf(buf, sizeof(buf), "%lld", (long long)x);
+    return buf;
+}
