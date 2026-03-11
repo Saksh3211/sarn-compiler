@@ -29,8 +29,9 @@ void DiagEngine::note(std::string msg, SourceLoc loc) {
 }
 
 void DiagEngine::dump_all() const {
-    // Already printed inline
+    
     std::cerr << error_count_ << " error(s), " << warn_count_ << " warning(s)\n";
 }
 
-} // namespace slua
+} 
+

@@ -35,4 +35,5 @@ SemanticConfig SemanticConfig::for_mode(CompileMode m) {
     return c;
 }
 
-} // namespace slua
+} 
+

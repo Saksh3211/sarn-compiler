@@ -4,9 +4,9 @@
 
 namespace slua {
 
-    // =============================================================================
-    //  SluaType helpers
-    // =============================================================================
+    
+    
+    
 
     std::string SluaType::to_string() const {
         switch (kind) {
@@ -53,7 +53,7 @@ namespace slua {
         }
     }
 
-    // ── Builders ──────────────────────────────────────────────────────────────────
+    
 
     static SluaTypePtr make_prim(TypeKind k, const std::string& name = "") {
         auto t = std::make_shared<SluaType>();
@@ -87,9 +87,9 @@ namespace slua {
         return t;
     }
 
-    // =============================================================================
-    //  TypeEnv (scope) management
-    // =============================================================================
+    
+    
+    
 
     void TypeChecker::push_env() {
         auto* e  = new TypeEnv();
@@ -104,36 +104,36 @@ namespace slua {
         delete old;
     }
 
-    // =============================================================================
-    //  Built-in types
-    // =============================================================================
+    
+    
+    
 
     void TypeChecker::install_builtins() {
-        // print: (any) -> void
+        
         env_->define("print",
             make_func({make_any()}, make_void()));
 
-        // tostring: (any) -> string
+        
         env_->define("tostring",
             make_func({make_any()}, make_string()));
 
-        // tonumber: (any) -> number
+        
         env_->define("tonumber",
             make_func({make_any()}, make_number()));
 
-        // read_line: () -> string?  (treated as any for now)
+        
         env_->define("read_line",
             make_func({}, make_any()));
 
-        // assert: (bool, string) -> void
+        
         env_->define("assert",
             make_func({make_bool(), make_string()}, make_void()));
 
-        // type: (any) -> string
+        
         env_->define("type",
             make_func({make_any()}, make_string()));
 
-        // math (table — treated as any)
+        
         env_->define("math", make_any());
         env_->define("os",   make_any());
         env_->define("io",   make_any());
@@ -141,9 +141,9 @@ namespace slua {
         env_->define("string",make_any());
     }
 
-    // =============================================================================
-    //  Convert AST TypeNode → SluaType
-    // =============================================================================
+    
+    
+    
 
     SluaTypePtr TypeChecker::resolve_type_node(const TypeNode* t) {
         if (!t) return make_any();
@@ -166,27 +166,27 @@ namespace slua {
                 if (n == "any")     return make_any();
                 if (n == "null")    return make_null();
 
-                // Named user type — look up in env
+                
                 SluaTypePtr found = env_ ? env_->lookup(n) : nullptr;
                 if (found) return found;
 
-                // Unknown named type — treated as any in nonstrict, error in strict
+                
                 if (cfg_.mode == CompileMode::STRICT) {
-                    // (resolver already flagged undefined types, return error)
+                    
                     return make_error();
                 }
                 return make_any();
             }
 
             else if constexpr (std::is_same_v<T, OptionalType>) {
-                // T? — for now treated as the inner type | null
-                // We represent it as ANY to avoid false positives until
-                // union narrowing is implemented
+                
+                
+                
                 return make_any();
             }
 
             else if constexpr (std::is_same_v<T, UnionType>) {
-                return make_any(); // full union tracking in next phase
+                return make_any(); 
             }
 
             else if constexpr (std::is_same_v<T, PtrType>) {
@@ -197,18 +197,18 @@ namespace slua {
                 if (v.name == "ptr" && !v.args.empty())
                     return make_ptr(resolve_type_node(v.args[0].get()));
 
-                // Other generics: build a named generic type
+                
                 auto gt = std::make_shared<SluaType>();
                 gt->kind = TypeKind::GENERIC;
                 gt->name = v.name;
                 for (auto& a : v.args)
                     gt->type_args.push_back(resolve_type_node(a.get()));
 
-                // Check if base type is known
+                
                 SluaTypePtr base = env_ ? env_->lookup(v.name) : nullptr;
                 if (base && base->kind == TypeKind::RECORD) {
-                    // Return the base record type — generic instantiation
-                    // (full monomorphisation in codegen phase)
+                    
+                    
                     return base;
                 }
                 return gt;
@@ -233,9 +233,9 @@ namespace slua {
         }, t->v);
     }
 
-    // =============================================================================
-    //  Entry point
-    // =============================================================================
+    
+    
+    
 
     bool TypeChecker::check(Module& mod) {
         push_env();
@@ -248,9 +248,9 @@ namespace slua {
         return !diag_.has_errors();
     }
 
-    // =============================================================================
-    //  Statement dispatcher
-    // =============================================================================
+    
+    
+    
 
     void TypeChecker::check_stmt(Stmt& s) {
         std::visit([&](auto&& v) {
@@ -278,9 +278,9 @@ namespace slua {
         }, s.v);
     }
 
-    // =============================================================================
-    //  Variable declarations
-    // =============================================================================
+    
+    
+    
 
     void TypeChecker::check_local_decl(LocalDecl& s, SourceLoc loc) {
         SluaTypePtr ann_type = s.type_ann
@@ -293,18 +293,18 @@ namespace slua {
         SluaTypePtr final_type;
 
         if (ann_type && init_type) {
-            // Both annotation and initialiser — check compatibility
+            
             if (!is_assignable(init_type, ann_type, loc,
                     "initialiser of '" + s.name + "'"))
-                final_type = ann_type; // recover with annotation type
+                final_type = ann_type; 
             else
                 final_type = ann_type;
         } else if (ann_type) {
             final_type = ann_type;
         } else if (init_type) {
-            final_type = init_type; // infer from initialiser
+            final_type = init_type; 
         } else {
-            // No annotation, no initialiser
+            
             final_type = (cfg_.mode == CompileMode::STRICT) ? make_error() : make_any();
         }
 
@@ -330,12 +330,12 @@ namespace slua {
         env_->define(s.name, final_type);
     }
 
-    // =============================================================================
-    //  Function declaration
-    // =============================================================================
+    
+    
+    
 
     void TypeChecker::check_func_decl(FuncDecl& s, SourceLoc loc) {
-        // Build function type and define in outer scope first (for recursion)
+        
         std::vector<SluaTypePtr> param_types;
         for (auto& [pname, ptype] : s.params)
             param_types.push_back(resolve_type_node(ptype.get()));
@@ -346,16 +346,16 @@ namespace slua {
 
         env_->define(s.name, make_func(param_types, ret));
 
-        // New scope for body
+        
         push_env();
 
-        // Define params
+        
         for (size_t i = 0; i < s.params.size(); i++) {
             auto& [pname, ptype] = s.params[i];
             env_->define(pname, param_types[i]);
         }
 
-        // Check body with return type context
+        
         SluaTypePtr saved_ret = ret_type_;
         ret_type_ = ret;
 
@@ -366,14 +366,14 @@ namespace slua {
         pop_env();
     }
 
-    // =============================================================================
-    //  Control flow
-    // =============================================================================
+    
+    
+    
 
     void TypeChecker::check_if_stmt(IfStmt& s, SourceLoc loc) {
         SluaTypePtr cond_t = check_expr(*s.cond);
 
-        // Strict: condition must be bool or any
+        
         if (cfg_.mode == CompileMode::STRICT &&
             cond_t && cond_t->kind != TypeKind::BOOL &&
             cond_t->kind != TypeKind::ANY  &&
@@ -421,7 +421,7 @@ namespace slua {
         SluaTypePtr stop_t  = check_expr(*s.stop);
         SluaTypePtr step_t  = s.step ? check_expr(*s.step) : make_int();
 
-        // For variable must be numeric
+        
         if (cfg_.mode == CompileMode::STRICT) {
             if (start_t && !start_t->is_numeric() && start_t->kind != TypeKind::ANY)
                 diag_.error("E0041", "for start must be numeric, got '" +
@@ -431,7 +431,7 @@ namespace slua {
                     stop_t->to_string() + "'", loc);
         }
 
-        // Infer loop variable type
+        
         SluaTypePtr var_type = (start_t && start_t->kind == TypeKind::NUMBER)
             ? make_number() : make_int();
 
@@ -443,7 +443,7 @@ namespace slua {
 
     void TypeChecker::check_return_stmt(ReturnStmt& s, SourceLoc loc) {
         if (s.values.empty()) {
-            // return; — check that function is void
+            
             if (cfg_.mode == CompileMode::STRICT && ret_type_ &&
                 ret_type_->kind != TypeKind::VOID &&
                 ret_type_->kind != TypeKind::ANY  &&
@@ -469,7 +469,7 @@ namespace slua {
 
         if (lhs_type && rhs_type &&
             !lhs_type->is_error() && !rhs_type->is_error()) {
-            // Only check in strict mode; nonstrict allows dynamic assignment
+            
             if (cfg_.mode == CompileMode::STRICT)
                 is_assignable(rhs_type, lhs_type, loc, "assignment");
         }
@@ -529,9 +529,9 @@ namespace slua {
         env_->define(s.name, ft);
     }
 
-    // =============================================================================
-    //  Expression checker — returns inferred SluaType
-    // =============================================================================
+    
+    
+    
 
     SluaTypePtr TypeChecker::check_expr(Expr& e) {
         SluaTypePtr result = std::visit([&](auto&& v) -> SluaTypePtr {
@@ -545,7 +545,7 @@ namespace slua {
 
             else if constexpr (std::is_same_v<T, Ident>) {
                 SluaTypePtr t = env_ ? env_->lookup(v.name) : nullptr;
-                if (!t) return make_any(); // undefined already caught by resolver
+                if (!t) return make_any(); 
                 return t;
             }
 
@@ -592,26 +592,26 @@ namespace slua {
 
             else if constexpr (std::is_same_v<T, TypeofExpr>) {
                 check_expr(*v.expr);
-                return make_string(); // typeof returns a string tag
+                return make_string(); 
             }
 
             else if constexpr (std::is_same_v<T, SizeofExpr>) {
-                return make_int(); // sizeof returns int
+                return make_int(); 
             }
 
             return make_any();
         }, e.v);
 
-        // Attach inferred type to the AST node for later phases
-        // (We store it as the inferred_type field if it exists)
-        e.inferred_type = nullptr; // placeholder — will be TypeNodePtr in future
+        
+        
+        e.inferred_type = nullptr; 
 
         return result ? result : make_any();
     }
 
-    // =============================================================================
-    //  Binary operator type rules
-    // =============================================================================
+    
+    
+    
 
     SluaTypePtr TypeChecker::check_binop(Binop& e, SourceLoc loc) {
         SluaTypePtr lhs = check_expr(*e.lhs);
@@ -619,16 +619,16 @@ namespace slua {
 
         if (!lhs || !rhs) return make_any();
         if (lhs->kind == TypeKind::ANY || rhs->kind == TypeKind::ANY)
-            return make_any(); // dynamic — nonstrict mode
+            return make_any(); 
 
         const std::string& op = e.op;
 
-        // Arithmetic: +  -  *  /  %
+        
         if (op == "+" || op == "-" || op == "*" || op == "/" || op == "%") {
-        // pointer arithmetic: ptr + int = ptr
+        
         if (lhs->kind == TypeKind::PTR && (rhs->kind == TypeKind::INT || rhs->kind == TypeKind::NUMBER)) return lhs;
         if ((lhs->kind == TypeKind::INT || lhs->kind == TypeKind::NUMBER) && rhs->kind == TypeKind::PTR) return rhs;
-            // null propagation in nonstrict
+            
             if (lhs->kind == TypeKind::NULL_T || rhs->kind == TypeKind::NULL_T) {
                 if (cfg_.mode == CompileMode::STRICT)
                     diag_.error("E0060",
@@ -649,13 +649,13 @@ namespace slua {
                         rhs->to_string() + "'", loc);
                 return make_any();
             }
-            // int op int = int;  anything with number = number
+            
             if (lhs->kind == TypeKind::NUMBER || rhs->kind == TypeKind::NUMBER)
                 return make_number();
             return make_int();
         }
 
-        // Concatenation: ..
+        
         if (op == "..") {
             if (cfg_.mode == CompileMode::STRICT) {
                 bool lhs_ok = (lhs->kind == TypeKind::STRING ||
@@ -674,7 +674,7 @@ namespace slua {
             return make_string();
         }
 
-        // Comparison: ==  ~=  <  >  <=  >=
+        
         if (op == "==" || op == "~=" ||
             op == "<"  || op == ">"  ||
             op == "<=" || op == ">=") {
@@ -689,11 +689,11 @@ namespace slua {
             return make_bool();
         }
 
-        // Logical: and  or
-        if (op == "and") return rhs; // and returns the second operand's type
-        if (op == "or")  return lhs; // or returns the first truthy type
+        
+        if (op == "and") return rhs; 
+        if (op == "or")  return lhs; 
 
-        // Bitwise: &  |  ~  <<  >>
+        
         if (op == "&" || op == "|" || op == "~" ||
             op == "<<" || op == ">>") {
             if (cfg_.mode == CompileMode::STRICT) {
@@ -712,9 +712,9 @@ namespace slua {
         return make_any();
     }
 
-    // =============================================================================
-    //  Unary operator type rules
-    // =============================================================================
+    
+    
+    
 
     SluaTypePtr TypeChecker::check_unop(Unop& e, SourceLoc loc) {
         SluaTypePtr operand = check_expr(*e.operand);
@@ -743,9 +743,9 @@ namespace slua {
         return make_any();
     }
 
-    // =============================================================================
-    //  Call expression
-    // =============================================================================
+    
+    
+    
 
     SluaTypePtr TypeChecker::check_call_expr(Call& e, SourceLoc loc) {
         SluaTypePtr callee_t = check_expr(*e.callee);
@@ -755,7 +755,7 @@ namespace slua {
             arg_types.push_back(check_expr(*arg));
 
         if (!callee_t || callee_t->kind == TypeKind::ANY)
-            return make_any(); // dynamic call
+            return make_any(); 
 
         if (callee_t->kind != TypeKind::FUNC) {
             if (cfg_.mode == CompileMode::STRICT && !callee_t->is_error())
@@ -765,7 +765,7 @@ namespace slua {
             return make_any();
         }
 
-        // Arity check
+        
         if (cfg_.mode == CompileMode::STRICT &&
             arg_types.size() != callee_t->param_types.size()) {
             diag_.error("E0071",
@@ -774,7 +774,7 @@ namespace slua {
                 ", got " + std::to_string(arg_types.size()), loc);
         }
 
-        // Argument type checks
+        
         size_t n = std::min(arg_types.size(), callee_t->param_types.size());
         for (size_t i = 0; i < n; i++) {
             is_assignable(arg_types[i], callee_t->param_types[i], loc,
@@ -787,12 +787,12 @@ namespace slua {
     SluaTypePtr TypeChecker::check_method_call(MethodCall& e, SourceLoc loc) {
         check_expr(*e.obj);
         for (auto& arg : e.args) check_expr(*arg);
-        return make_any(); // method call return type resolved at codegen
+        return make_any(); 
     }
 
-    // =============================================================================
-    //  Field / index access
-    // =============================================================================
+    
+    
+    
 
     SluaTypePtr TypeChecker::check_field(Field& e, SourceLoc loc) {
         SluaTypePtr obj_t = check_expr(*e.table);
@@ -815,17 +815,17 @@ namespace slua {
         SluaTypePtr key_t = check_expr(*e.key);
 
         if (obj_t && obj_t->kind == TypeKind::PTR && obj_t->pointee)
-            return obj_t->pointee; // ptr[offset] → pointee type
+            return obj_t->pointee; 
 
         return make_any();
     }
 
-    // =============================================================================
-    //  Table constructor — infer record type from fields
-    // =============================================================================
+    
+    
+    
 
     SluaTypePtr TypeChecker::check_table_ctor(TableCtor& e, SourceLoc loc) {
-        // Check all entry expressions
+        
         bool all_named = true;
         for (auto& entry : e.entries) {
             if (entry.key) check_expr(**entry.key);
@@ -854,12 +854,12 @@ namespace slua {
             return rt;
         }
 
-        return make_any(); // positional or mixed table
+        return make_any(); 
     }
 
-    // =============================================================================
-    //  Function expression (lambda)
-    // =============================================================================
+    
+    
+    
 
     SluaTypePtr TypeChecker::check_func_expr(FuncExpr& e, SourceLoc loc) {
         std::vector<SluaTypePtr> param_types;
@@ -883,9 +883,9 @@ namespace slua {
         return make_func(std::move(param_types), ret);
     }
 
-    // =============================================================================
-    //  Alloc expression → ptr<T>
-    // =============================================================================
+    
+    
+    
 
     SluaTypePtr TypeChecker::check_alloc_expr(AllocExpr& e, SourceLoc loc) {
         SluaTypePtr elem = resolve_type_node(e.elem_type.get());
@@ -901,9 +901,9 @@ namespace slua {
         return make_ptr(elem);
     }
 
-    // =============================================================================
-    //  Type compatibility
-    // =============================================================================
+    
+    
+    
 
     bool TypeChecker::types_equal(SluaTypePtr a, SluaTypePtr b) {
         if (!a || !b) return false;
@@ -947,12 +947,12 @@ namespace slua {
     bool TypeChecker::is_assignable(SluaTypePtr from, SluaTypePtr to,
                                     SourceLoc loc, const std::string& ctx) {
         if (!from || !to) return true;
-        if (from->is_error() || to->is_error()) return true; // already reported
+        if (from->is_error() || to->is_error()) return true; 
 
-        // any is compatible with everything
+        
         if (to->kind == TypeKind::ANY || from->kind == TypeKind::ANY) return true;
 
-        // null can be assigned to any pointer or any type in nonstrict
+        
         if (from->kind == TypeKind::NULL_T) {
             if (to->kind == TypeKind::PTR) return true;
             if (cfg_.mode == CompileMode::NONSTRICT) return true;
@@ -964,15 +964,15 @@ namespace slua {
             }
         }
 
-        // int is assignable to number (widening)
+        
         if (from->kind == TypeKind::INT && to->kind == TypeKind::NUMBER) return true;
 
-        // Exact match
+        
         if (types_equal(from, to)) return true;
 
-        // Record structural compatibility
+        
         if (from->kind == TypeKind::RECORD && to->kind == TypeKind::RECORD) {
-            // To is compatible if 'from' has at least all fields of 'to'
+            
             for (auto& tf : to->fields) {
                 bool found = false;
                 for (auto& ff : from->fields) {
@@ -992,7 +992,7 @@ namespace slua {
             return true;
         }
 
-        // Type mismatch
+        
         if (cfg_.mode == CompileMode::STRICT) {
             diag_.error("E0092",
                 ctx + ": type mismatch — cannot assign '" + from->to_string() +
@@ -1007,4 +1007,5 @@ namespace slua {
         }
     }
 
-} // namespace slua
+} 
+

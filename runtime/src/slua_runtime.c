@@ -174,16 +174,6 @@ double slua_math_pow  (double b, double e) { return pow(b, e); }
 double slua_math_min  (double a, double b) { return a < b ? a : b; }
 double slua_math_max  (double a, double b) { return a > b ? a : b; }
 
-double slua_sqrt (double x){ return sqrt(x); }
-double slua_pow  (double b, double e) { return pow(b, e); }
-double slua_sin  (double x){ return sin(x); }
-double slua_cos  (double x){ return cos(x); }
-double slua_tan  (double x) { return tan(x); }
-double slua_log  (double x){ return log(x); }
-double slua_log2 (double x){ return log2(x); }
-double slua_exp  (double x) { return exp(x); }
-double slua_inf(void) { return (double)INFINITY; }
-double slua_nan(void) { return (double)NAN; }
 
 const char* slua_num_to_str(double x) {
     static char buf[64];

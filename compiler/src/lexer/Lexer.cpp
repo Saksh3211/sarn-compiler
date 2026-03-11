@@ -109,7 +109,7 @@ CompileMode detect_mode(const std::string& source, const std::string& filename) 
 
 [[maybe_unused]]
 static CompileMode detect_mode_unused_sentinel(const std::string& source, const std::string& filename) {
-    // Strip UTF-8 BOM
+    
     size_t start = 0;
     if (source.size() >= 3 &&
         (unsigned char)source[0] == 0xEF &&
@@ -118,11 +118,11 @@ static CompileMode detect_mode_unused_sentinel(const std::string& source, const 
         start = 3;
     }
 
-    // Extract first line
+    
     size_t end = source.find('\n', start);
     if (end == std::string::npos) end = source.size();
     std::string line = source.substr(start, end - start);
-    // Trim \r
+    
     if (!line.empty() && line.back() == '\r') line.pop_back();
 
     if (line == "--!!strict")    return CompileMode::STRICT;
@@ -141,14 +141,14 @@ static CompileMode detect_mode_unused_sentinel(const std::string& source, const 
 
 Lexer::Lexer(std::string source, std::string filename, CompileMode mode)
     : src_(std::move(source)), filename_(std::move(filename)), mode_(mode) {
-    // Skip past the directive line
+    
     size_t nl = src_.find('\n');
     if (nl != std::string::npos) {
         pos_  = nl + 1;
         line_ = 2;
         col_  = 1;
     }
-    // Skip BOM at start
+    
     if (pos_ == 0 && src_.size() >= 3 &&
         (unsigned char)src_[0] == 0xEF &&
         (unsigned char)src_[1] == 0xBB &&
@@ -183,9 +183,9 @@ void Lexer::skip_whitespace_and_comments() {
         if (c == ' ' || c == '\t' || c == '\r' || c == '\n') {
             advance(); continue;
         }
-        // Line comment
+        
         if (c == '-' && peek_char(1) == '-') {
-            // Long comment --[[ ... ]]
+            
             if (peek_char(2) == '[' && peek_char(3) == '[') {
                 pos_ += 4;
                 while (pos_ < src_.size()) {
@@ -206,7 +206,7 @@ void Lexer::skip_whitespace_and_comments() {
 
 Token Lexer::scan_string(char delim) {
     std::string val;
-    advance(); // consume opening quote
+    advance(); 
     while (pos_ < src_.size()) {
         char c = src_[pos_];
         if (c == delim) { advance(); break; }
@@ -236,7 +236,7 @@ Token Lexer::scan_number() {
         if (src_[pos_] == '.') is_float = true;
         num += advance();
     }
-    // Scientific notation
+    
     if (pos_ < src_.size() && (src_[pos_] == 'e' || src_[pos_] == 'E')) {
         is_float = true;
         num += advance();
@@ -333,4 +333,5 @@ Token Lexer::peek() {
     return lookahead_;
 }
 
-} // namespace slua
+} 
+

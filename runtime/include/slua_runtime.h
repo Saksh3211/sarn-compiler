@@ -108,16 +108,6 @@ double slua_math_abs(double x);
 double slua_math_pow(double base, double exp);
 double slua_math_min(double a, double b);
 double slua_math_max(double a, double b);
-double slua_sqrt(double x);
-double slua_pow(double b, double e);
-double slua_sin(double x);
-double slua_cos(double x);
-double slua_tan(double x);
-double slua_log(double x);
-double slua_log2(double x);
-double slua_exp(double x);
-double slua_inf(void);
-double slua_nan(void);
 
 const char* slua_num_to_str(double x);
 const char* slua_i64_to_str(int64_t x);

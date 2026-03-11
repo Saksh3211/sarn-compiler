@@ -3,16 +3,16 @@
 
 namespace slua {
 
-// =============================================================================
-//  Scope
-// =============================================================================
+
+
+
 
 bool Scope::define(const std::string& name, Symbol sym,
                    DiagEngine& diag, CompileMode mode) {
     auto it = syms_.find(name);
     if (it != syms_.end()) {
-        // Strict: redeclaration is always an error
-        // Nonstrict: redeclaration shadows (warning)
+        
+        
         if (mode == CompileMode::STRICT) {
             diag.error("E0010",
                 "redeclaration of '" + name + "' (previously declared at " +
@@ -37,9 +37,9 @@ Symbol* Scope::lookup(const std::string& name) {
     return nullptr;
 }
 
-// =============================================================================
-//  Scope management
-// =============================================================================
+
+
+
 
 void Resolver::push_scope() {
     current_scope_ = new Scope(current_scope_);
@@ -52,12 +52,12 @@ void Resolver::pop_scope() {
     delete old;
 }
 
-// =============================================================================
-//  Entry point
-// =============================================================================
+
+
+
 
 bool Resolver::resolve(Module& mod) {
-    // Global scope
+    
     push_scope();
 
     for (auto& stmt : mod.stmts)
@@ -67,9 +67,9 @@ bool Resolver::resolve(Module& mod) {
     return !diag_.has_errors();
 }
 
-// =============================================================================
-//  Statement dispatcher
-// =============================================================================
+
+
+
 
 void Resolver::resolve_stmt(Stmt& s) {
     std::visit([&](auto&& v) {
@@ -91,24 +91,24 @@ void Resolver::resolve_stmt(Stmt& s) {
         else if constexpr (std::is_same_v<T, FreeStmt>)    resolve_free_stmt(v);
         else if constexpr (std::is_same_v<T, Assign>)      resolve_assign(v, s.loc);
         else if constexpr (std::is_same_v<T, CallStmt>)    resolve_call_stmt(v);
-        else if constexpr (std::is_same_v<T, BreakStmt>)   { /* nothing */ }
-        else if constexpr (std::is_same_v<T, ContinueStmt>){ /* nothing */ }
-        else if constexpr (std::is_same_v<T, ImportDecl>)  { /* handled later */ }
+        else if constexpr (std::is_same_v<T, BreakStmt>)   {  }
+        else if constexpr (std::is_same_v<T, ContinueStmt>){  }
+        else if constexpr (std::is_same_v<T, ImportDecl>)  {  }
     }, s.v);
 }
 
-// =============================================================================
-//  Variable declarations
-// =============================================================================
+
+
+
 
 void Resolver::resolve_local_decl(LocalDecl& s, SourceLoc loc) {
-    // 1. Resolve type annotation if present
+    
     resolve_type(s.type_ann.get());
 
-    // 2. Resolve initialiser (before defining the name, so  local x = x  is caught)
+    
     if (s.init) resolve_expr(*s.init);
 
-    // 3. Strict: local with no type ann and no init → uninitialized warning
+    
     if (cfg_.mode == CompileMode::STRICT && !s.type_ann && !s.init) {
         if (cfg_.uninitialized_var == DiagBehavior::ERROR)
             diag_.error("E0020", "local '" + s.name + "': no type and no initialiser", loc);
@@ -116,7 +116,7 @@ void Resolver::resolve_local_decl(LocalDecl& s, SourceLoc loc) {
             diag_.warn("W0020", "local '" + s.name + "': no type and no initialiser", loc);
     }
 
-    // 4. Define symbol
+    
     Symbol sym;
     sym.name        = s.name;
     sym.kind        = SymbolKind::LOCAL;
@@ -140,13 +140,13 @@ void Resolver::resolve_global_decl(GlobalDecl& s, SourceLoc loc) {
     current_scope_->define(s.name, std::move(sym), diag_, cfg_.mode);
 }
 
-// =============================================================================
-//  Function declaration
-// =============================================================================
+
+
+
 
 void Resolver::resolve_func_decl(FuncDecl& s, SourceLoc loc) {
-    // Define the function name in the outer scope FIRST
-    // (allows recursion)
+    
+    
     Symbol fsym;
     fsym.name        = s.name;
     fsym.kind        = SymbolKind::FUNCTION;
@@ -155,10 +155,10 @@ void Resolver::resolve_func_decl(FuncDecl& s, SourceLoc loc) {
     fsym.initialized = true;
     current_scope_->define(s.name, std::move(fsym), diag_, cfg_.mode);
 
-    // New scope for params + body
+    
     push_scope();
 
-    // Define each parameter
+    
     for (auto& [pname, ptype] : s.params) {
         resolve_type(ptype.get());
         Symbol psym;
@@ -170,13 +170,13 @@ void Resolver::resolve_func_decl(FuncDecl& s, SourceLoc loc) {
         current_scope_->define(pname, std::move(psym), diag_, cfg_.mode);
     }
 
-    // Resolve return type
+    
     TypeNode* saved_ret = current_ret_type_;
     current_ret_type_   = s.ret_type.get();
 
     resolve_type(s.ret_type.get());
 
-    // Resolve body
+    
     for (auto& stmt : s.body)
         resolve_stmt(*stmt);
 
@@ -184,9 +184,9 @@ void Resolver::resolve_func_decl(FuncDecl& s, SourceLoc loc) {
     pop_scope();
 }
 
-// =============================================================================
-//  Control flow
-// =============================================================================
+
+
+
 
 void Resolver::resolve_if_stmt(IfStmt& s) {
     resolve_expr(*s.cond);
@@ -219,7 +219,7 @@ void Resolver::resolve_while_stmt(WhileStmt& s) {
 void Resolver::resolve_repeat_stmt(RepeatStmt& s) {
     push_scope();
     for (auto& st : s.body) resolve_stmt(*st);
-    // Note: until condition can see variables declared inside repeat body
+    
     resolve_expr(*s.until_cond);
     pop_scope();
 }
@@ -230,7 +230,7 @@ void Resolver::resolve_numeric_for(NumericFor& s, SourceLoc loc) {
     if (s.step) resolve_expr(*s.step);
 
     push_scope();
-    // Define loop variable
+    
     Symbol lsym;
     lsym.name        = s.var;
     lsym.kind        = SymbolKind::LOCAL;
@@ -247,7 +247,7 @@ void Resolver::resolve_return_stmt(ReturnStmt& s, SourceLoc loc) {
     for (auto& val : s.values)
         resolve_expr(*val);
 
-    // Strict: void function should not return a value
+    
     if (cfg_.mode == CompileMode::STRICT && current_ret_type_) {
         bool is_void = false;
         if (auto* pt = std::get_if<PrimitiveType>(&current_ret_type_->v))
@@ -305,12 +305,12 @@ void Resolver::resolve_free_stmt(FreeStmt& s) {
 }
 
 void Resolver::resolve_assign(Assign& s, SourceLoc loc) {
-    // Resolve RHS first
+    
     resolve_expr(*s.value);
-    // Resolve LHS (checks target exists)
+    
     resolve_expr(*s.target);
 
-    // Check const assignment
+    
     if (auto* id = std::get_if<Ident>(&s.target->v)) {
         Symbol* sym = current_scope_->lookup(id->name);
         if (sym && sym->is_const) {
@@ -324,18 +324,18 @@ void Resolver::resolve_call_stmt(CallStmt& s) {
     resolve_expr(*s.call);
 }
 
-// =============================================================================
-//  Expression dispatcher
-// =============================================================================
+
+
+
 
 void Resolver::resolve_expr(Expr& e) {
     std::visit([&](auto&& v) {
         using T = std::decay_t<decltype(v)>;
-        if      constexpr (std::is_same_v<T, NullLit>)    { /* nothing */ }
-        else if constexpr (std::is_same_v<T, BoolLit>)    { /* nothing */ }
-        else if constexpr (std::is_same_v<T, IntLit>)     { /* nothing */ }
-        else if constexpr (std::is_same_v<T, FloatLit>)   { /* nothing */ }
-        else if constexpr (std::is_same_v<T, StrLit>)     { /* nothing */ }
+        if      constexpr (std::is_same_v<T, NullLit>)    {  }
+        else if constexpr (std::is_same_v<T, BoolLit>)    {  }
+        else if constexpr (std::is_same_v<T, IntLit>)     {  }
+        else if constexpr (std::is_same_v<T, FloatLit>)   {  }
+        else if constexpr (std::is_same_v<T, StrLit>)     {  }
         else if constexpr (std::is_same_v<T, Ident>)      resolve_ident(v, e);
         else if constexpr (std::is_same_v<T, Binop>)      resolve_binop(v);
         else if constexpr (std::is_same_v<T, Unop>)       resolve_unop(v);
@@ -354,14 +354,14 @@ void Resolver::resolve_expr(Expr& e) {
     }, e.v);
 }
 
-// =============================================================================
-//  Expression helpers
-// =============================================================================
+
+
+
 
 void Resolver::resolve_ident(Ident& e, Expr& node) {
     Symbol* sym = current_scope_->lookup(e.name);
     if (!sym) {
-        // Built-in names that are always in scope
+        
         static const std::vector<std::string> builtins = {
             "print", "read_line", "tostring", "tonumber",
             "math", "os", "io", "table", "string",
@@ -388,7 +388,7 @@ void Resolver::resolve_ident(Ident& e, Expr& node) {
         return;
     }
 
-    // Check use-before-init in strict mode
+    
     if (cfg_.mode == CompileMode::STRICT &&
         !sym->initialized &&
         sym->kind == SymbolKind::LOCAL) {
@@ -482,9 +482,9 @@ void Resolver::resolve_sizeof_expr(SizeofExpr& e) {
     resolve_type(e.type.get());
 }
 
-// =============================================================================
-//  Type resolution (just recurses into nested types for now)
-// =============================================================================
+
+
+
 
 void Resolver::resolve_type(TypeNode* t) {
     if (!t) return;
@@ -505,8 +505,8 @@ void Resolver::resolve_type(TypeNode* t) {
         else if constexpr (std::is_same_v<T, GenericType>)
             for (auto& a : v.args) resolve_type(a.get());
         else if constexpr (std::is_same_v<T, PrimitiveType>) {
-            // In strict mode, check named types are declared
-            // (skip built-in primitive names)
+            
+            
             static const std::vector<std::string> primitives = {
                 "int","number","string","bool","void","any",
                 "uint8","uint16","uint32","uint64",
@@ -520,12 +520,12 @@ void Resolver::resolve_type(TypeNode* t) {
             if (!is_prim && cfg_.mode == CompileMode::STRICT) {
                 Symbol* sym = current_scope_->lookup(v.name);
                 if (!sym || sym->kind != SymbolKind::TYPE) {
-                    // Generic type params are not tracked here yet — skip warning
-                    // (type param resolution comes in the type checker phase)
+                    
+                    
                 }
             }
         }
     }, t->v);
 }
 
-} // namespace slua
+} 

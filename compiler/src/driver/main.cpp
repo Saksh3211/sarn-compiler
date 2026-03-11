@@ -268,7 +268,7 @@ int main(int argc, char** argv) {
 
     std::string source = read_file(input_file);
 
-    // Stage 1 mode detection
+    
     slua::Directives directives = slua::detect_directives(source, input_file);
     slua::CompileMode mode = directives.type;
     if (override_strict)     mode = slua::CompileMode::STRICT;
@@ -276,12 +276,12 @@ int main(int argc, char** argv) {
     fprintf(stderr, "sluac: mode = %s\n",
             mode == slua::CompileMode::STRICT ? "strict" : "nonstrict");
 
-    // Stage 2 diag + config
+    
     slua::DiagEngine     diag(mode);
     slua::SemanticConfig cfg = slua::SemanticConfig::for_mode(mode);
     cfg.mem_mode = directives.mem;
 
-    // Stage 3 Ã¯Â¿Â½ token dump
+    
     if (emit_tokens) {
         slua::Lexer lexer(source, input_file, mode);
         while (!lexer.at_eof()) {
@@ -292,14 +292,14 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    // Stage 4 parse
+    
     slua::Lexer  lexer(source, input_file, mode);
     slua::Parser parser(lexer, diag, mode);
     auto mod = parser.parse_module(input_file);
 
     if (diag.has_errors()) { diag.dump_all(); return 1; }
 
-    // Stage 5 name resolution
+    
     {
         slua::Resolver resolver(diag, cfg);
         resolver.resolve(*mod);
@@ -307,7 +307,7 @@ int main(int argc, char** argv) {
 
     if (diag.has_errors()) { diag.dump_all(); return 1; }
 
-    // Stage 6 type checking
+    
     {
         slua::TypeChecker tc(diag, cfg);
         tc.check(*mod);
@@ -315,7 +315,7 @@ int main(int argc, char** argv) {
 
     if (diag.has_errors()) { diag.dump_all(); return 1; }
 
-    // Stage 7 AST dump
+    
     if (emit_ast) {
         printf("Module: %s  mode=%s  stmts=%zu\n",
                mod->filename.c_str(),
@@ -326,7 +326,7 @@ int main(int argc, char** argv) {
     }
 
 #ifdef SLUA_HAS_LLVM
-    // Stage 7 IR emission
+    
     {
         fprintf(stderr, "sluac: creating emitter\n"); fflush(stderr);
         slua::IREmitter emitter(diag, cfg, input_file);
@@ -348,3 +348,4 @@ int main(int argc, char** argv) {
     return 1;
 #endif
 }
+
