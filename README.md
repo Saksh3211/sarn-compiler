@@ -1,6 +1,6 @@
 # S Lua
 
-S Lua (Systems Lua) is a compiled systems programming language inspired by Lua syntax but designed for native performance and low-level control.
+S Lua (Systems Lua or maybe saksh's lua) is a compiled systems programming language inspired by Lua syntax but designed for native performance and low-level control.
 
 S Lua programs compile directly to native machine code using LLVM. There is no virtual machine and no garbage collector. Memory management is explicit and predictable, making the language suitable for systems software, game engines, tooling, and performance-critical applications.
 
