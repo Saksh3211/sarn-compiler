@@ -345,18 +345,30 @@ void IREmitter::emit_local_decl(LocalDecl& s, SourceLoc loc) {
     llvm::AllocaInst* slot = create_alloca(ty, s.name);
 
     if (s.init) {
-        llvm::Value* val = emit_expr(*s.init);
+        llvm::Value* val = nullptr;
+        if (auto* idx = std::get_if<Index>(&s.init->v))
+            val = emit_index(*idx, s.init->loc, s.type_ann.get());
+        else
+            val = emit_expr(*s.init);
         if (val) {
             val = coerce(val, ty, loc);
             builder_.CreateStore(val, slot);
         }
     } else {
-
         builder_.CreateStore(llvm::Constant::getNullValue(ty), slot);
     }
-
     env_->define(s.name, slot);
 }
+
+
+
+
+
+
+
+
+
+
 
 void IREmitter::emit_global_decl(GlobalDecl& s, SourceLoc loc) {
     llvm::Type* ty = s.type_ann
@@ -1397,5 +1409,8 @@ llvm::Value* IREmitter::coerce(llvm::Value* v, llvm::Type* to,
 }
 
 #endif
+
+
+
 
 

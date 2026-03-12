@@ -111,7 +111,8 @@ int slua_equal(SluaValue a, SluaValue b) {
         case SLUA_TAG_BOOL:
         case SLUA_TAG_INT:      return a.val.ival == b.val.ival;
         case SLUA_TAG_FLOAT:    return a.val.fval == b.val.fval;
-        default:                return a.val.ptr  == b.val.ptr;
+          case SLUA_TAG_STRING:   { if (!a.val.ptr || !b.val.ptr) return a.val.ptr == b.val.ptr; return strcmp(((SluaString*)a.val.ptr)->data, ((SluaString*)b.val.ptr)->data) == 0; }
+          default:                return a.val.ptr  == b.val.ptr;
     }
 }
 

@@ -17,9 +17,9 @@ function main():int64
     local a:int64 = t[1]
     local b:int64 = t[2]
     local result:int64 = add(a, b)
-    t["a"]="abc"
+    t["ba"]="abc"
     print(result)
-    local str:string = t["a"]
+    local str:string = t["ba"]
     print(str)
     return 0
 end
