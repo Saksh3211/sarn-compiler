@@ -12,10 +12,8 @@
 #include <sstream>
 
 namespace slua {
-IREmitter::IREmitter(DiagEngine& diag, SemanticConfig cfg,const std::string& module_name)
-    : diag_(diag), cfg_(cfg),
-      mod_(std::make_unique<llvm::Module>(module_name, ctx_)),
-      builder_(ctx_) {
+IREmitter::IREmitter(DiagEngine& diag, SemanticConfig cfg,const std::string& module_name): diag_(diag), cfg_(cfg),
+mod_(std::make_unique<llvm::Module>(module_name, ctx_)),builder_(ctx_) {
     declare_runtime();
 }
 
