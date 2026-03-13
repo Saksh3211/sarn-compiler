@@ -202,12 +202,10 @@ void slua_io_print_color(const char* msg, const char* color) {
 
 
 static SluaValue box_str(const char* s) {
-    SluaValue v; v.tag = SLUA_TAG_STRING;
-    SluaString* ss = (SluaString*)malloc(sizeof(SluaString));
-    ss->len  = s ? (int32_t)strlen(s) : 0;
-    ss->hash = 0;
-    ss->data = s ? strdup(s) : NULL;
-    v.val.ptr = ss;
+    SluaValue v;
+    memset(&v, 0, sizeof(v));
+    v.tag = SLUA_TAG_STRING;
+    v.val.ptr = s ? strdup(s) : NULL;
     return v;
 }
 
@@ -254,7 +252,7 @@ double slua_tbl_iget_f64(SluaTable* t, int64_t key) {
 const char* slua_tbl_iget_str(SluaTable* t, int64_t key) {
     SluaValue v = slua_table_get(t, slua_int(key));
     if (v.tag != SLUA_TAG_STRING || !v.val.ptr) return "";
-    return ((SluaString*)v.val.ptr)->data;
+    return (const char*)v.val.ptr;
 }
 int32_t slua_tbl_iget_bool(SluaTable* t, int64_t key) {
     SluaValue v = slua_table_get(t, slua_int(key));
@@ -274,9 +272,10 @@ double slua_tbl_sget_f64(SluaTable* t, const char* key) {
 const char* slua_tbl_sget_str(SluaTable* t, const char* key) {
     SluaValue v = slua_table_get(t, str_key(key));
     if (v.tag != SLUA_TAG_STRING || !v.val.ptr) return "";
-    return ((SluaString*)v.val.ptr)->data;
+    return (const char*)v.val.ptr;
 }
 int32_t slua_tbl_sget_bool(SluaTable* t, const char* key) {
     SluaValue v = slua_table_get(t, str_key(key));
     return (int32_t)v.val.bits;
 }
+
