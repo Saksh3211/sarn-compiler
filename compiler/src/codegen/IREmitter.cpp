@@ -1220,6 +1220,82 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                 }
                 return llvm::ConstantInt::get(i64, 0);
             }
+
+            if (mod == "stdata") {
+                auto* i64 = llvm::Type::getInt64Ty(ctx_);
+                auto* i1  = llvm::Type::getInt1Ty(ctx_);
+                auto* f64 = llvm::Type::getDoubleTy(ctx_);
+                auto* i32 = llvm::Type::getInt32Ty(ctx_);
+                auto getarg = [&](size_t n) -> llvm::Value* {
+                    return e.args.size() > n ? emit_expr(*e.args[n]) : nullptr;
+                };
+                if (meth == "typeof" && e.args.size() >= 1) {
+                    llvm::Value* v = getarg(0);
+                    if (!v)                          return builder_.CreateGlobalStringPtr("null");
+                    if (v->getType()->isDoubleTy())  return builder_.CreateGlobalStringPtr("number");
+                    if (v->getType()->isIntegerTy(1))return builder_.CreateGlobalStringPtr("bool");
+                    if (v->getType()->isPointerTy()) return builder_.CreateGlobalStringPtr("string");
+                    return builder_.CreateGlobalStringPtr("int");
+                }
+                if (meth == "tostring" && e.args.size() >= 1) {
+                    llvm::Value* v = getarg(0);
+                    if (!v) return builder_.CreateGlobalStringPtr("null");
+                    if (v->getType()->isPointerTy()) return v;
+                    if (v->getType()->isDoubleTy()) {
+                        auto* fn = get_runtime_fn("slua_float_to_str");
+                        if (fn) return builder_.CreateCall(fn, {v}, "fts");
+                    }
+                    auto* fn = get_runtime_fn("slua_int_to_str");
+                    if (fn) return builder_.CreateCall(fn, {builder_.CreateSExt(v, i64)}, "its");
+                    return builder_.CreateGlobalStringPtr("?");
+                }
+                if (meth == "tointeger" && e.args.size() >= 1) {
+                    llvm::Value* v = getarg(0);
+                    if (!v) return llvm::ConstantInt::get(i64, 0);
+                    return coerce(v, i64, loc);
+                }
+                if (meth == "tofloat" && e.args.size() >= 1) {
+                    llvm::Value* v = getarg(0);
+                    if (!v) return llvm::ConstantFP::get(f64, 0.0);
+                    return coerce(v, f64, loc);
+                }
+                if (meth == "tobool" && e.args.size() >= 1) {
+                    llvm::Value* v = getarg(0);
+                    if (!v) return llvm::ConstantInt::get(i1, 0);
+                    if (v->getType()->isIntegerTy(1)) return v;
+                    if (v->getType()->isPointerTy())  return builder_.CreateIsNotNull(v);
+                    return builder_.CreateICmpNE(v, llvm::Constant::getNullValue(v->getType()));
+                }
+                if (meth == "isnull" && e.args.size() >= 1) {
+                    llvm::Value* v = getarg(0);
+                    if (!v) return llvm::ConstantInt::get(i1, 1);
+                    if (v->getType()->isPointerTy()) return builder_.CreateIsNull(v);
+                    return builder_.CreateICmpEQ(v, llvm::Constant::getNullValue(v->getType()));
+                }
+                if (meth == "assert" && e.args.size() >= 1) {
+                    llvm::Value* cond = getarg(0);
+                    llvm::Value* msg  = e.args.size() >= 2 ? getarg(1) : builder_.CreateGlobalStringPtr("assertion failed");
+                    if (!cond) return llvm::ConstantInt::get(i64, 0);
+                    if (!cond->getType()->isIntegerTy(1))
+                        cond = builder_.CreateICmpNE(cond, llvm::Constant::getNullValue(cond->getType()));
+                    auto* pass_bb = llvm::BasicBlock::Create(ctx_, "assert.pass", cur_func_);
+                    auto* fail_bb = llvm::BasicBlock::Create(ctx_, "assert.fail", cur_func_);
+                    builder_.CreateCondBr(cond, pass_bb, fail_bb);
+                    builder_.SetInsertPoint(fail_bb);
+                    auto* pfn = get_runtime_fn("slua_panic");
+                    if (pfn) {
+                        if (!msg || !msg->getType()->isPointerTy())
+                            msg = builder_.CreateGlobalStringPtr("assertion failed");
+                        builder_.CreateCall(pfn, {msg,
+                            builder_.CreateGlobalStringPtr("?"),
+                            llvm::ConstantInt::get(i32, 0)});
+                    }
+                    builder_.CreateUnreachable();
+                    builder_.SetInsertPoint(pass_bb);
+                    return llvm::ConstantInt::get(i64, 0);
+                }
+                return llvm::ConstantInt::get(i64, 0);
+            }
         }
     }
 

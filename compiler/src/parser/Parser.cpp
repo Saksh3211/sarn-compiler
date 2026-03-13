@@ -3,19 +3,11 @@
 
 namespace slua {
 
-
-
-
-
 Parser::Parser(Lexer& lexer, DiagEngine& diag, CompileMode mode)
     : lex_(lexer), diag_(diag), mode_(mode) {
     cur_  = lex_.next();
     peek_ = lex_.peek();
 }
-
-
-
-
 
 Token Parser::advance() {
     Token t = cur_;
@@ -23,7 +15,6 @@ Token Parser::advance() {
     peek_   = lex_.peek();
     return t;
 }
-
 bool Parser::check(TokenKind k) const { return cur_.kind == k; }
 
 bool Parser::match(TokenKind k) {
@@ -42,7 +33,6 @@ Token Parser::expect(TokenKind k, const std::string& ctx) {
     }
     return advance();
 }
-
 
 std::string Parser::token_kind_name(TokenKind k) {
     switch (k) {
@@ -68,11 +58,6 @@ std::string Parser::token_kind_name(TokenKind k) {
         default: return "token";
     }
 }
-
-
-
-
-
 std::unique_ptr<Module> Parser::parse_module(const std::string& filename) {
     auto mod      = std::make_unique<Module>();
     mod->filename = filename;
@@ -87,10 +72,6 @@ std::unique_ptr<Module> Parser::parse_module(const std::string& filename) {
     }
     return mod;
 }
-
-
-
-
 
 StmtPtr Parser::parse_stmt() {
     SourceLoc loc = cur_.loc;
@@ -764,8 +745,7 @@ ExprPtr Parser::parse_postfix_expr() {
 
         
         if (check(TokenKind::TK_DOT)) {
-            advance();
-            std::string field = expect(TokenKind::TK_IDENT, "field access").text;
+            std::string field = advance().text;
             auto e = std::make_unique<Expr>();
             e->v   = Field{std::move(base), field};
             e->loc = loc;

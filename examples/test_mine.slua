@@ -1,5 +1,6 @@
 --!!type:strict
 --!!mem:auto
+import stdata
 
 function add(a:int64, b:int64):int64
     return a + b
@@ -21,5 +22,14 @@ function main():int4
     print(result)
     local str:string = t["ba"]
     print(str)
+
+    print("umm , type library")
+    local x:int64 = 10
+    print(stdata.typeof(x))        -- "int"
+    print(stdata.tostring(x))      -- "42"
+    print(stdata.tofloat(x))       -- 42.0
+    print(stdata.tobool(x))        -- true
+    print(stdata.isnull(x))        -- false
+    stdata.assert(x > 0, "x must be positive")
     return 0
 end
