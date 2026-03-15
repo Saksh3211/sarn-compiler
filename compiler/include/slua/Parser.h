@@ -42,6 +42,7 @@ namespace slua {
         StmtPtr parse_import_decl();
         StmtPtr parse_type_decl();
         StmtPtr parse_extern_decl();
+        StmtPtr parse_enum_decl();
 
         
         ExprPtr parse_expr();

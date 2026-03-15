@@ -181,9 +181,6 @@ namespace slua {
             }
 
             else if constexpr (std::is_same_v<T, OptionalType>) {
-                
-                
-                
                 return make_any();
             }
 
@@ -231,6 +228,9 @@ namespace slua {
                 return make_func(std::move(params), resolve_type_node(v.ret.get()));
             }
 
+            else if constexpr (std::is_same_v<T, TupleType>) {
+                return make_any();
+            }
             return make_any();
         }, t->v);
     }
@@ -249,10 +249,6 @@ namespace slua {
         pop_env();
         return !diag_.has_errors();
     }
-
-    
-    
-    
 
     void TypeChecker::check_stmt(Stmt& s) {
         std::visit([&](auto&& v) {
@@ -276,6 +272,19 @@ namespace slua {
             else if constexpr (std::is_same_v<T, ExternDecl>)  check_extern_decl(v, s.loc);
             else if constexpr (std::is_same_v<T, BreakStmt>)   {}
             else if constexpr (std::is_same_v<T, ContinueStmt>){}
+
+            else if constexpr (std::is_same_v<T, EnumDecl>) {
+                env_->define(v.name, make_int());
+                for (auto& [mname, mval] : v.members)
+                    env_->define(mname, make_int());
+            }
+            else if constexpr (std::is_same_v<T, MultiLocalDecl>) {
+                if (v.init) check_expr(*v.init);
+                for (auto& [vname, vtype] : v.vars) {
+                    SluaTypePtr t = vtype ? resolve_type_node(vtype.get()) : make_any();
+                    env_->define(vname, t);
+                }
+            }
             else if constexpr (std::is_same_v<T, ImportDecl>) {
                 if (v.module_name == "stdgui") {
                     stdgui_imported_ = true;
@@ -289,10 +298,6 @@ namespace slua {
         else if constexpr (std::is_same_v<T, FileImportDecl>) {}
         }, s.v);
     }
-
-    
-    
-    
 
     void TypeChecker::check_local_decl(LocalDecl& s, SourceLoc loc) {
         SluaTypePtr ann_type = s.type_ann

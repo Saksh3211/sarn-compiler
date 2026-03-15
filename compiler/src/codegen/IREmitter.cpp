@@ -117,7 +117,13 @@ llvm::Type* IREmitter::llvm_type(const TypeNode* t) {
 
         else if constexpr (std::is_same_v<T, UnionType>)
             return tagvalue_type();
-
+        
+        else if constexpr (std::is_same_v<T, TupleType>) {
+            std::vector<llvm::Type*> elems;
+            for (auto& m : v.members)
+                elems.push_back(llvm_type(m.get()));
+            return llvm::StructType::get(ctx_, elems);
+        }
         return llvm::Type::getInt64Ty(ctx_);
     }, t->v);
 }
@@ -298,6 +304,17 @@ bool IREmitter::emit(slua::Module& mod) {
         else if (auto* td = std::get_if<TypeDecl>(&s->v)) {
             emit_type_decl(*td, s->loc);
         }
+        else if (auto* ed = std::get_if<EnumDecl>(&s->v)) {
+            auto* i64t = llvm::Type::getInt64Ty(ctx_);
+            for (auto& [mname, mval] : ed->members) {
+                int64_t val = mval.has_value() ? *mval : 0;
+                auto* gv = new llvm::GlobalVariable(
+                    *mod_, i64t, true,
+                    llvm::GlobalValue::InternalLinkage,
+                    llvm::ConstantInt::get(i64t, val), mname);
+                env_->define(mname, gv);
+            }
+        }
     }
 
     for (auto& s : mod.stmts)
@@ -397,6 +414,8 @@ void IREmitter::emit_stmt(Stmt& s) {
             }
         }
         else if constexpr (std::is_same_v<T, ImportDecl>) {}
+        else if constexpr (std::is_same_v<T, EnumDecl>)       {}
+        else if constexpr (std::is_same_v<T, MultiLocalDecl>) emit_multi_local_decl(v, s.loc);
     }, s.v);
 }
 
@@ -409,10 +428,40 @@ void IREmitter::emit_local_decl(LocalDecl& s, SourceLoc loc) {
 
     if (s.init) {
         llvm::Value* val = nullptr;
-        if (auto* idx = std::get_if<Index>(&s.init->v))
+        if (auto* tc = std::get_if<TableCtor>(&s.init->v)) {
+            if (s.type_ann && ty->isStructTy()) {
+                auto* st = llvm::cast<llvm::StructType>(ty);
+                std::string sname = st->getName().str();
+                auto fit = struct_fields_.find(sname);
+                if (fit != struct_fields_.end()) {
+                    llvm::Value* agg = llvm::Constant::getNullValue(ty);
+                    for (auto& entry : tc->entries) {
+                        if (!entry.key) continue;
+                        std::string fname;
+                        if (auto* sl = std::get_if<StrLit>(&(*entry.key)->v))
+                            fname = sl->val;
+                        if (fname.empty()) continue;
+                        auto& fnames = fit->second;
+                        for (unsigned i = 0; i < fnames.size(); i++) {
+                            if (fnames[i] == fname) {
+                                llvm::Value* fval = emit_expr(*entry.val);
+                                if (fval) {
+                                    fval = coerce(fval, st->getElementType(i), loc);
+                                    agg = builder_.CreateInsertValue(agg, fval, {i});
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    val = agg;
+                }
+            }
+            if (!val) val = emit_expr(*s.init);
+        } else if (auto* idx = std::get_if<Index>(&s.init->v)) {
             val = emit_index(*idx, s.init->loc, s.type_ann.get());
-        else
+        } else {
             val = emit_expr(*s.init);
+        }
         if (val) {
             val = coerce(val, ty, loc);
             builder_.CreateStore(val, slot);
@@ -700,15 +749,28 @@ void IREmitter::emit_cstyle_for(CStyleFor& s) {
 }
 
 void IREmitter::emit_return_stmt(ReturnStmt& s, SourceLoc loc) {
-    if (!s.values.empty() && cur_ret_slot_) {
-        llvm::Value* val = emit_expr(*s.values[0]);
-        if (val) {
-            llvm::Type* ret_ty = cur_ret_slot_->getAllocatedType();
-            val = coerce(val, ret_ty, loc);
-            builder_.CreateStore(val, cur_ret_slot_);
+    if (cur_ret_slot_) {
+        llvm::Type* ret_ty = cur_ret_slot_->getAllocatedType();
+        if (s.values.size() == 1) {
+            llvm::Value* val = emit_expr(*s.values[0]);
+            if (val) {
+                val = coerce(val, ret_ty, loc);
+                builder_.CreateStore(val, cur_ret_slot_);
+            }
+        } else if (s.values.size() > 1) {
+            if (auto* st = llvm::dyn_cast<llvm::StructType>(ret_ty)) {
+                llvm::Value* agg = llvm::Constant::getNullValue(st);
+                for (size_t i = 0; i < s.values.size() && i < st->getNumElements(); i++) {
+                    llvm::Value* v = emit_expr(*s.values[i]);
+                    if (v) {
+                        v = coerce(v, st->getElementType(i), loc);
+                        agg = builder_.CreateInsertValue(agg, v, {(unsigned)i});
+                    }
+                }
+                builder_.CreateStore(agg, cur_ret_slot_);
+            }
         }
     }
-
     for (int i = (int)defer_stack_.size() - 1; i >= 0; i--) {
         auto& scope = defer_stack_[i];
         for (int j = (int)scope.size() - 1; j >= 0; j--)
@@ -818,11 +880,15 @@ void IREmitter::emit_panic_stmt(PanicStmt& s) {
 void IREmitter::emit_type_decl(TypeDecl& s, SourceLoc loc) {
     if (auto* rt = std::get_if<RecordType>(&s.def->v)) {
         std::vector<llvm::Type*> fields;
-        for (auto& [fn, ft] : rt->fields)
+        std::vector<std::string> names;
+        for (auto& [fn, ft] : rt->fields) {
             fields.push_back(llvm_type(ft.get()));
+            names.push_back(fn);
+        }
         auto* st = llvm::StructType::create(ctx_, s.name);
         st->setBody(fields);
         struct_types_[s.name] = st;
+        struct_fields_[s.name] = names;
     }
 }
 
@@ -1558,9 +1624,46 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
 }
 
 llvm::Value* IREmitter::emit_method_call(MethodCall& e, SourceLoc loc) {
-    emit_expr(*e.obj);
-    for (auto& arg : e.args) emit_expr(*arg);
-    return llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx_), 0);
+    std::string type_name;
+    if (auto* id = std::get_if<Ident>(&e.obj->v)) {
+        llvm::Value* slot = env_ ? env_->lookup(id->name) : nullptr;
+        if (auto* ai = llvm::dyn_cast_or_null<llvm::AllocaInst>(slot)) {
+            if (auto* st = llvm::dyn_cast<llvm::StructType>(ai->getAllocatedType())) {
+                if (!st->getName().empty())
+                    type_name = st->getName().str();
+            }
+        }
+    }
+
+    llvm::Function* fn = nullptr;
+    if (!type_name.empty()) {
+        auto it = functions_.find(type_name + "." + e.method);
+        if (it != functions_.end()) fn = it->second;
+    }
+
+    llvm::Value* self = emit_expr(*e.obj);
+
+    if (!fn) {
+        for (auto& arg : e.args) emit_expr(*arg);
+        return llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx_), 0);
+    }
+
+    std::vector<llvm::Value*> call_args;
+    auto param_tys = fn->getFunctionType()->params().vec();
+
+    if (!param_tys.empty() && self)
+        self = coerce(self, param_tys[0], loc);
+    call_args.push_back(self);
+
+    for (size_t i = 0; i < e.args.size(); i++) {
+        llvm::Value* arg = emit_expr(*e.args[i]);
+        if (!arg) return nullptr;
+        if (i + 1 < param_tys.size())
+            arg = coerce(arg, param_tys[i + 1], loc);
+        call_args.push_back(arg);
+    }
+
+    return builder_.CreateCall(fn, call_args);
 }
 
 llvm::Value* IREmitter::emit_field(Field& e, SourceLoc loc) {
@@ -1568,17 +1671,32 @@ llvm::Value* IREmitter::emit_field(Field& e, SourceLoc loc) {
     if (!obj) return nullptr;
 
     llvm::Type* struct_ty = nullptr;
-    if (auto* ai = llvm::dyn_cast<llvm::AllocaInst>(obj))
+    std::string sname;
+    if (auto* ai = llvm::dyn_cast<llvm::AllocaInst>(obj)) {
         struct_ty = ai->getAllocatedType();
-    else if (auto* gv = llvm::dyn_cast<llvm::GlobalVariable>(obj))
+    } else if (auto* gv = llvm::dyn_cast<llvm::GlobalVariable>(obj)) {
         struct_ty = gv->getValueType();
+    }
 
     if (!struct_ty || !struct_ty->isStructTy())
         return llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx_), 0);
 
-    auto* gep = builder_.CreateStructGEP(struct_ty, obj, 0, e.name);
-    llvm::Type* ft = llvm::cast<llvm::StructType>(struct_ty)->getElementType(0);
-    return builder_.CreateLoad(ft, gep, e.name);
+    auto* st = llvm::cast<llvm::StructType>(struct_ty);
+    sname = st->getName().str();
+
+    unsigned field_idx = 0;
+    auto fit = struct_fields_.find(sname);
+    if (fit != struct_fields_.end()) {
+        for (unsigned i = 0; i < fit->second.size(); i++) {
+            if (fit->second[i] == e.name) { field_idx = i; break; }
+        }
+    }
+
+    if (field_idx >= st->getNumElements())
+        return llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx_), 0);
+
+    auto* gep = builder_.CreateStructGEP(struct_ty, obj, field_idx, e.name);
+    return builder_.CreateLoad(st->getElementType(field_idx), gep, e.name);
 }
 
 llvm::Value* IREmitter::emit_index(Index& e, SourceLoc loc, TypeNode* result_type) {
@@ -1710,7 +1828,14 @@ llvm::Value* IREmitter::emit_lvalue(Expr& e) {
         if (auto* ai = llvm::dyn_cast<llvm::AllocaInst>(obj))
             sty = ai->getAllocatedType();
         if (!sty || !sty->isStructTy()) return obj;
-        return builder_.CreateStructGEP(sty, obj, 0, fi->name);
+        auto* st = llvm::cast<llvm::StructType>(sty);
+        unsigned idx = 0;
+        auto fit = struct_fields_.find(st->getName().str());
+        if (fit != struct_fields_.end()) {
+            for (unsigned i = 0; i < fit->second.size(); i++)
+                if (fit->second[i] == fi->name) { idx = i; break; }
+        }
+        return builder_.CreateStructGEP(sty, obj, idx, fi->name);
     }
 
     if (auto* idx = std::get_if<Index>(&e.v)) {
@@ -1750,7 +1875,35 @@ llvm::Value* IREmitter::coerce(llvm::Value* v, llvm::Type* to, SourceLoc) {
 
     return v;
 }
-
+void IREmitter::emit_enum_decl(EnumDecl& s, SourceLoc loc) {
+    // Processed in first pass of emit(); nothing to do here.
 }
 
+void IREmitter::emit_multi_local_decl(MultiLocalDecl& s, SourceLoc loc) {
+    if (!s.init) return;
+    llvm::Value* result = emit_expr(*s.init);
+    if (!result) return;
+
+    auto* st = llvm::dyn_cast<llvm::StructType>(result->getType());
+
+    for (size_t i = 0; i < s.vars.size(); i++) {
+        auto& [vname, vtype] = s.vars[i];
+        llvm::Type* ty = vtype ? llvm_type(vtype.get()) : llvm::Type::getInt64Ty(ctx_);
+        llvm::AllocaInst* slot = create_alloca(ty, vname);
+
+        llvm::Value* elem = nullptr;
+        if (st && i < st->getNumElements()) {
+            elem = builder_.CreateExtractValue(result, {(unsigned)i});
+            elem = coerce(elem, ty, loc);
+        } else if (i == 0) {
+            elem = coerce(result, ty, loc);
+        } else {
+            elem = llvm::Constant::getNullValue(ty);
+        }
+
+        builder_.CreateStore(elem, slot);
+        env_->define(vname, slot);
+    }
+}
+}
 #endif

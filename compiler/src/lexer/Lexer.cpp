@@ -49,10 +49,11 @@ static const std::unordered_map<std::string, TokenKind> KEYWORDS = {
     {"sizeof",     TokenKind::TK_SIZEOF},
     {"in",         TokenKind::TK_IN},
     {"comptime",   TokenKind::TK_COMPTIME},
+    {"enum",       TokenKind::TK_ENUM},
 };
 
 Directives detect_directives(const std::string& source,
-                              const std::string& filename) {
+        const std::string& filename) {
     Directives d;
     size_t pos = 0;
 

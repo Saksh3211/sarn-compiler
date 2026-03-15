@@ -14,17 +14,18 @@ struct TypeNode;
 using TypeNodePtr = std::unique_ptr<TypeNode>;
 
 struct PrimitiveType { std::string name; };              
-struct OptionalType  { TypeNodePtr inner; };             
-struct UnionType     { std::vector<TypeNodePtr> members; };
-struct PtrType       { TypeNodePtr pointee; };           
-struct FuncType      { std::vector<TypeNodePtr> params; TypeNodePtr ret; };
-struct RecordType    { std::vector<std::pair<std::string, TypeNodePtr>> fields; };
-struct GenericType   { std::string name; std::vector<TypeNodePtr> args; };
+struct OptionalType { TypeNodePtr inner; };             
+struct UnionType { std::vector<TypeNodePtr> members; };
+struct PtrType  { TypeNodePtr pointee; };           
+struct FuncType { std::vector<TypeNodePtr> params; TypeNodePtr ret; };
+struct RecordType  { std::vector<std::pair<std::string, TypeNodePtr>> fields; };
+struct GenericType { std::string name; std::vector<TypeNodePtr> args; };
+struct TupleType { std::vector<TypeNodePtr> members; };
 
 struct TypeNode {
     using Variant = std::variant<
         PrimitiveType, OptionalType, UnionType,
-        PtrType, FuncType, RecordType, GenericType>;
+        PtrType, FuncType, RecordType, GenericType, TupleType>;
     Variant v;
     SourceLoc loc;
 };
@@ -101,6 +102,14 @@ struct ImportDecl { std::string module_name; };
 struct PanicStmt  { ExprPtr msg; };
 struct StoreStmt  { ExprPtr ptr; ExprPtr val; };
 struct FreeStmt   { ExprPtr ptr; };
+struct EnumDecl {
+    std::string name;
+    std::vector<std::pair<std::string, std::optional<int64_t>>> members;
+};
+struct MultiLocalDecl {
+    std::vector<std::pair<std::string, TypeNodePtr>> vars;
+    ExprPtr init;
+};
 struct TypeDecl   { std::string name;
                     std::vector<std::string> type_params;
                     TypeNodePtr def; };
@@ -111,7 +120,7 @@ struct Stmt {
         IfStmt, WhileStmt, RepeatStmt, NumericFor,
         ReturnStmt, BreakStmt, ContinueStmt, DeferStmt, CStyleFor,
         FuncDecl, ExternDecl, ImportDecl, FileImportDecl, PanicStmt,
-        StoreStmt, FreeStmt, TypeDecl>;
+        StoreStmt, FreeStmt, TypeDecl, EnumDecl, MultiLocalDecl>;
     Variant v;
     SourceLoc loc;
 };
@@ -125,6 +134,3 @@ struct Module {
 };
 
 } 
-
-
-

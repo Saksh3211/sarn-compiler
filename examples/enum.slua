@@ -1,0 +1,36 @@
+--!!type:strict
+--!!mem:auto
+import math
+
+type Vec2 = { x: number, y: number }
+
+function Vec2.length(self: Vec2): number
+    return math.sqrt(self.x * self.x + self.y * self.y)
+end
+
+function Vec2.scale(self: Vec2, factor: number): Vec2
+    return { x = self.x * factor, y = self.y * factor }
+end
+
+enum Direction = { UP = 2, DOWN = 1, LEFT = 2, RIGHT = 3 }
+
+enum Color = { RED, GREEN, BLUE }
+
+function divmod(a: int, b: int): int, int
+    return a / b, a % b
+end
+
+function main(): int
+    local v: Vec2 = { x = 3.0, y = 4.0 }
+    local len: number = v:length()
+    print(len)
+
+    local dir: int = UP
+    print(dir)
+
+    local q, r = divmod(17, 5)
+    print(q)
+    print(r)
+    print(math.sqrt(25))
+    return 0
+end

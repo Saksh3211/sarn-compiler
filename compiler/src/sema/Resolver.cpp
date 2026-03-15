@@ -96,6 +96,30 @@ void Resolver::resolve_stmt(Stmt& s) {
             if (v.module_name == "stdgui") stdgui_imported_ = true;
         }
         else if constexpr (std::is_same_v<T, FileImportDecl>) {}
+        else if constexpr (std::is_same_v<T, EnumDecl>) {
+            Symbol tsym;
+            tsym.name = v.name; tsym.kind = SymbolKind::TYPE;
+            tsym.type_node = nullptr; tsym.decl_loc = s.loc; tsym.initialized = true;
+            current_scope_->define(v.name, std::move(tsym), diag_, cfg_.mode);
+            for (auto& [mname, mval] : v.members) {
+                Symbol msym;
+                msym.name = mname; msym.kind = SymbolKind::CONST;
+                msym.type_node = nullptr; msym.decl_loc = s.loc;
+                msym.initialized = true; msym.is_const = true;
+                current_scope_->define(mname, std::move(msym), diag_, cfg_.mode);
+            }
+        }
+        else if constexpr (std::is_same_v<T, MultiLocalDecl>) {
+            if (v.init) resolve_expr(*v.init);
+            for (auto& [vname, vtype] : v.vars) {
+                resolve_type(vtype.get());
+                Symbol sym;
+                sym.name = vname; sym.kind = SymbolKind::LOCAL;
+                sym.type_node = vtype.get(); sym.decl_loc = s.loc;
+                sym.initialized = true; sym.is_const = false;
+                current_scope_->define(vname, std::move(sym), diag_, cfg_.mode);
+            }
+        }
     }, s.v);
 }
 
@@ -513,9 +537,10 @@ void Resolver::resolve_type(TypeNode* t) {
             for (auto& [n, ft] : v.fields) resolve_type(ft.get());
         else if constexpr (std::is_same_v<T, GenericType>)
             for (auto& a : v.args) resolve_type(a.get());
+        else if constexpr (std::is_same_v<T, TupleType>)
+            for (auto& m : v.members) resolve_type(m.get());
+        
         else if constexpr (std::is_same_v<T, PrimitiveType>) {
-            
-            
             static const std::vector<std::string> primitives = {
                 "int","number","string","bool","void","any",
                 "uint8","uint16","uint32","uint64",

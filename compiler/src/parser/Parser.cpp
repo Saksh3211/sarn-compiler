@@ -140,6 +140,9 @@ StmtPtr Parser::parse_stmt() {
         case TokenKind::TK_EXTERN:
             return parse_extern_decl();
 
+        case TokenKind::TK_ENUM:
+            return parse_enum_decl();
+
         case TokenKind::TK_PANIC: {
             advance();
             expect(TokenKind::TK_LPAREN, "panic");
@@ -227,6 +230,24 @@ StmtPtr Parser::parse_local_decl() {
     if (match(TokenKind::TK_COLON))
         type_ann = parse_type();
 
+    if (check(TokenKind::TK_COMMA)) {
+        std::vector<std::pair<std::string, TypeNodePtr>> vars;
+        vars.push_back({name, std::move(type_ann)});
+        while (match(TokenKind::TK_COMMA)) {
+            std::string vname = expect(TokenKind::TK_IDENT, "variable name").text;
+            TypeNodePtr vtype;
+            if (match(TokenKind::TK_COLON))
+                vtype = parse_type();
+            vars.push_back({vname, std::move(vtype)});
+        }
+        expect(TokenKind::TK_ASSIGN, "multi-local initialiser");
+        auto init = parse_expr();
+        auto s = std::make_unique<Stmt>();
+        s->v = MultiLocalDecl{std::move(vars), std::move(init)};
+        s->loc = loc;
+        return s;
+    }
+
     ExprPtr init;
     if (match(TokenKind::TK_ASSIGN))
         init = parse_expr();
@@ -281,6 +302,10 @@ StmtPtr Parser::parse_global_decl() {
 StmtPtr Parser::parse_func_decl(bool exported) {
     SourceLoc loc = advance().loc;
     std::string name = expect(TokenKind::TK_IDENT, "function name").text;
+    if (match(TokenKind::TK_DOT)) {
+        std::string method = expect(TokenKind::TK_IDENT, "method name").text;
+        name = name + "." + method;
+    }
 
     std::vector<std::string> type_params;
     if (match(TokenKind::TK_LT)) {
@@ -304,8 +329,18 @@ StmtPtr Parser::parse_func_decl(bool exported) {
     expect(TokenKind::TK_RPAREN, "function parameters");
 
     TypeNodePtr ret_type;
-    if (match(TokenKind::TK_COLON))
+    if (match(TokenKind::TK_COLON)) {
         ret_type = parse_type();
+        if (check(TokenKind::TK_COMMA)) {
+            std::vector<TypeNodePtr> members;
+            members.push_back(std::move(ret_type));
+            while (match(TokenKind::TK_COMMA))
+                members.push_back(parse_type());
+            auto tup = std::make_unique<TypeNode>();
+            tup->v = TupleType{std::move(members)};
+            ret_type = std::move(tup);
+        }
+    }
 
     std::vector<StmtPtr> body;
     while (!check(TokenKind::TK_END) && !check(TokenKind::TK_EOF))
@@ -314,7 +349,7 @@ StmtPtr Parser::parse_func_decl(bool exported) {
 
     auto s = std::make_unique<Stmt>();
     s->v   = FuncDecl{name, exported, std::move(type_params),
-                      std::move(params), std::move(ret_type), std::move(body)};
+        std::move(params), std::move(ret_type), std::move(body)};
     s->loc = loc;
     return s;
 }
@@ -326,9 +361,9 @@ StmtPtr Parser::parse_if_stmt() {
 
     std::vector<StmtPtr> then_body;
     while (!check(TokenKind::TK_ELSEIF) &&
-           !check(TokenKind::TK_ELSE)   &&
-           !check(TokenKind::TK_END)    &&
-           !check(TokenKind::TK_EOF)) {
+        !check(TokenKind::TK_ELSE)   &&
+        !check(TokenKind::TK_END)    &&
+        !check(TokenKind::TK_EOF)) {
         if (auto st = parse_stmt()) then_body.push_back(std::move(st));
     }
 
@@ -339,9 +374,9 @@ StmtPtr Parser::parse_if_stmt() {
         expect(TokenKind::TK_THEN, "elseif condition");
         std::vector<StmtPtr> ei_body;
         while (!check(TokenKind::TK_ELSEIF) &&
-               !check(TokenKind::TK_ELSE)   &&
-               !check(TokenKind::TK_END)    &&
-               !check(TokenKind::TK_EOF)) {
+            !check(TokenKind::TK_ELSE)   &&
+            !check(TokenKind::TK_END)    &&
+            !check(TokenKind::TK_EOF)) {
             if (auto st = parse_stmt()) ei_body.push_back(std::move(st));
         }
         elseif_clauses.push_back({std::move(ei_cond), std::move(ei_body)});
@@ -359,7 +394,7 @@ StmtPtr Parser::parse_if_stmt() {
 
     auto s = std::make_unique<Stmt>();
     s->v   = IfStmt{std::move(cond), std::move(then_body),
-                    std::move(elseif_clauses), std::move(else_body)};
+            std::move(elseif_clauses), std::move(else_body)};
     s->loc = loc;
     return s;
 }
@@ -571,8 +606,8 @@ ExprPtr Parser::parse_and_expr() {
 ExprPtr Parser::parse_cmp_expr() {
     auto lhs = parse_concat_expr();
     while (check(TokenKind::TK_EQ)  || check(TokenKind::TK_NEQ) ||
-           check(TokenKind::TK_LT)  || check(TokenKind::TK_GT)  ||
-           check(TokenKind::TK_LEQ) || check(TokenKind::TK_GEQ)) {
+        check(TokenKind::TK_LT)  || check(TokenKind::TK_GT)  ||
+        check(TokenKind::TK_LEQ) || check(TokenKind::TK_GEQ)) {
         SourceLoc loc = cur_.loc;
         std::string op = advance().text;
         auto rhs = parse_concat_expr();
@@ -615,8 +650,8 @@ ExprPtr Parser::parse_add_expr() {
 ExprPtr Parser::parse_mul_expr() {
     auto lhs = parse_unary_expr();
     while (check(TokenKind::TK_STAR)    ||
-           check(TokenKind::TK_SLASH)   ||
-           check(TokenKind::TK_PERCENT)) {
+        check(TokenKind::TK_SLASH)   ||
+        check(TokenKind::TK_PERCENT)) {
         SourceLoc loc = cur_.loc;
         std::string op = advance().text;
         auto rhs = parse_unary_expr();
@@ -1056,6 +1091,38 @@ TypeNodePtr Parser::parse_func_type() {
 
 TypeNodePtr Parser::parse_ptr_type() {
     return parse_primary_type();
+}
+
+StmtPtr Parser::parse_enum_decl() {
+    SourceLoc loc = advance().loc;
+    std::string name = expect(TokenKind::TK_IDENT, "enum name").text;
+    expect(TokenKind::TK_ASSIGN, "enum declaration");
+    expect(TokenKind::TK_LBRACE, "enum body");
+
+    std::vector<std::pair<std::string, std::optional<int64_t>>> members;
+    int64_t auto_val = 0;
+
+    while (!check(TokenKind::TK_RBRACE) && !check(TokenKind::TK_EOF)) {
+        std::string mname = expect(TokenKind::TK_IDENT, "enum member name").text;
+        std::optional<int64_t> mval;
+        if (match(TokenKind::TK_ASSIGN)) {
+            if (check(TokenKind::TK_INT_LIT)) {
+                mval = std::stoll(cur_.text);
+                auto_val = *mval + 1;
+                advance();
+            }
+        } else {
+            mval = auto_val++;
+        }
+        members.push_back({mname, mval});
+        match(TokenKind::TK_COMMA);
+    }
+    expect(TokenKind::TK_RBRACE, "enum body");
+
+    auto s = std::make_unique<Stmt>();
+    s->v = EnumDecl{name, std::move(members)};
+    s->loc = loc;
+    return s;
 }
 
 }

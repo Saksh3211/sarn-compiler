@@ -52,6 +52,10 @@ static void print_type(const slua::TypeNode* t, int indent) {
             printf("%s-> ", ind(indent).c_str());
             print_type(v.ret.get(), 0);
         }
+        else if constexpr (std::is_same_v<T, slua::TupleType>) {
+            printf("%sTuple(%zu)\n", ind(indent).c_str(), v.members.size());
+            for (auto& m : v.members) print_type(m.get(), indent+1);
+        }
         else if constexpr (std::is_same_v<T, slua::RecordType>) {
             printf("%sRecord\n", ind(indent).c_str());
             for (auto& [n,tp] : v.fields) {
@@ -231,6 +235,20 @@ static void print_stmt(const slua::Stmt* s, int indent) {
             for (auto& st : v.body) print_stmt(st.get(), indent+1);
             printf("%sUntil\n", ind(indent).c_str());
             print_expr(v.until_cond.get(), indent+1);
+        }
+        else if constexpr (std::is_same_v<T, slua::EnumDecl>) {
+            printf("%sEnum(%s, %zu members)\n", ind(indent).c_str(),v.name.c_str(), v.members.size());
+            for (auto& [mn, mv] : v.members)
+                printf("%s  %s = %lld\n", ind(indent).c_str(),
+                       mn.c_str(), (long long)(mv.has_value() ? *mv : 0));
+        }
+        else if constexpr (std::is_same_v<T, slua::MultiLocalDecl>) {
+            printf("%sMultiLocal(%zu vars)\n", ind(indent).c_str(), v.vars.size());
+            for (auto& [vn, vt] : v.vars) {
+                printf("%s  %s\n", ind(indent).c_str(), vn.c_str());
+                if (vt) print_type(vt.get(), indent+2);
+            }
+            if (v.init) print_expr(v.init.get(), indent+1);
         }
     }, s->v);
 }
