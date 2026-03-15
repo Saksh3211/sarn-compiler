@@ -8,30 +8,24 @@
             "program": "${workspaceFolder}/build/compiler/sluac.exe",
             "args": ["${file}"],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/bin",
             "environment": [],
             "console": "integratedTerminal"
         },
         {
-            "name": "Debug sluac (hello_strict.slua --emit-ast)",
+            "name": "Run (current file)",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/compiler/sluac.exe",
-            "args": ["examples/hello_strict.slua", "--emit-ast"],
-            "stopAtEntry": false,
+            "program": "powershell",
+            "args": [
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}/slua.ps1",
+                "Slua-Run",
+                "${file}"
+            ],
             "cwd": "${workspaceFolder}",
-            "environment": [],
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "Debug sluac (enum.slua)",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/build/compiler/sluac.exe",
-            "args": ["examples/enum.slua"],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
             "console": "integratedTerminal"
         }
     ]
