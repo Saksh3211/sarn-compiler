@@ -3,15 +3,21 @@
 import stdgui
 
 function main(): int
-    window.init(800, 600, "Fonts", 60)
-    local fid: int = font.load("C:/Windows/Fonts/arial.ttf", 48)
+    window.init(800, 500, "Font Test", 60)
+    local fid: int = font.load("C:/Windows/Fonts/segoeui.ttf", 48)
     while window.should_close() == 0 do
         window.begin_drawing()
-        window.clear(20, 20, 30, 255)
-        draw.text_font(fid, "Hello", 100, 100, 36, 1.0, 255, 220, 100, 255)
+        window.clear(20, 22, 30, 255)
+        if fid >= 0 then
+            draw.text_font(fid, "Hello from S Lua!", 60, 180, 48, 1.0, 255, 220, 80, 255)
+        else
+            draw.text("font load failed", 60, 180, 28, 255, 80, 80, 255)
+        end
         window.end_drawing()
     end
-    font.unload(fid)
+    if fid >= 0 then
+        font.unload(fid)
+    end
     window.close()
     return 0
 end

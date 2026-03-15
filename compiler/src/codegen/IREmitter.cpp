@@ -1431,9 +1431,11 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                 if (meth == "triangle" && e.args.size() >= 10) { auto* fn = get_runtime_fn("slua_draw_triangle"); if (fn) builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2)),ci32(ga(3)),ci32(ga(4)),ci32(ga(5)),ci32(ga(6)),ci32(ga(7)),ci32(ga(8)),ci32(ga(9))}); return llvm::ConstantInt::get(i64, 0); }
                 if (meth == "text" && e.args.size() >= 8) { auto* fn = get_runtime_fn("slua_draw_text"); if (fn) builder_.CreateCall(fn, {ga(0),ci32(ga(1)),ci32(ga(2)),ci32(ga(3)),ci32(ga(4)),ci32(ga(5)),ci32(ga(6)),ci32(ga(7))}); return llvm::ConstantInt::get(i64, 0); }
                 if (meth == "measure_text" && e.args.size() >= 2) { auto* fn = get_runtime_fn("slua_measure_text"); if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ga(0), ci32(ga(1))}, "mtw"), i64); }
+                if (meth == "text_font" && e.args.size() >= 10) { auto* fn = get_runtime_fn("slua_draw_text_font"); if (fn) builder_.CreateCall(fn, {ci32(ga(0)),ga(1),ci32(ga(2)),ci32(ga(3)),ci32(ga(4)),cf32(ga(5)),ci32(ga(6)),ci32(ga(7)),ci32(ga(8)),ci32(ga(9))}); return llvm::ConstantInt::get(i64, 0); }
+                
                 return llvm::ConstantInt::get(i64, 0);
             }
-
+            
             if (mod == "input") {
                 auto* i32 = llvm::Type::getInt32Ty(ctx_);
                 auto* i64 = llvm::Type::getInt64Ty(ctx_);
@@ -1444,17 +1446,41 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     return v;
                 };
                 auto ga = [&](size_t n) -> llvm::Value* { return e.args.size() > n ? emit_expr(*e.args[n]) : nullptr; };
-                if (meth == "key_down"     && e.args.size() >= 1) { auto* fn = get_runtime_fn("slua_is_key_down");          if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ci32(ga(0))}, "kd"), i64); }
-                if (meth == "key_pressed"  && e.args.size() >= 1) { auto* fn = get_runtime_fn("slua_is_key_pressed");        if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ci32(ga(0))}, "kp"), i64); }
+                if (meth == "key_down"     && e.args.size() >= 1) { auto* fn = get_runtime_fn("slua_is_key_down");if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ci32(ga(0))}, "kd"), i64); }
+                if (meth == "key_pressed"  && e.args.size() >= 1) { auto* fn = get_runtime_fn("slua_is_key_pressed"); if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ci32(ga(0))}, "kp"), i64); }
                 if (meth == "key_released" && e.args.size() >= 1) { auto* fn = get_runtime_fn("slua_is_key_released");       if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ci32(ga(0))}, "kr"), i64); }
-                if (meth == "mouse_x")     { auto* fn = get_runtime_fn("slua_get_mouse_x");          if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {}, "mx"), i64); }
-                if (meth == "mouse_y")     { auto* fn = get_runtime_fn("slua_get_mouse_y");          if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {}, "my"), i64); }
+                if (meth == "mouse_x")     { auto* fn = get_runtime_fn("slua_get_mouse_x");  if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {}, "mx"), i64); }
+                if (meth == "mouse_y")     { auto* fn = get_runtime_fn("slua_get_mouse_y"); if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {}, "my"), i64); }
                 if (meth == "mouse_pressed" && e.args.size() >= 1) { auto* fn = get_runtime_fn("slua_is_mouse_btn_pressed"); if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ci32(ga(0))}, "mbp"), i64); }
                 if (meth == "mouse_down"    && e.args.size() >= 1) { auto* fn = get_runtime_fn("slua_is_mouse_btn_down");    if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ci32(ga(0))}, "mbd"), i64); }
                 if (meth == "mouse_wheel")  { auto* fn = get_runtime_fn("slua_get_mouse_wheel"); if (fn) return builder_.CreateCall(fn, {}, "mw"); }
                 return llvm::ConstantInt::get(i64, 0);
             }
-
+            
+            if (mod == "font") {
+                auto* i32 = llvm::Type::getInt32Ty(ctx_);
+                auto* i64 = llvm::Type::getInt64Ty(ctx_);
+                auto ci32 = [&](llvm::Value* v) -> llvm::Value* {
+                    if (!v) return llvm::ConstantInt::get(i32, 0);
+                    if (v->getType()->isIntegerTy(32)) return v;
+                    if (v->getType()->isIntegerTy()) return builder_.CreateTrunc(v, i32);
+                    if (v->getType()->isDoubleTy())  return builder_.CreateFPToSI(v, i32);
+                    return v;
+                };
+                auto ga = [&](size_t n) -> llvm::Value* {
+                    return e.args.size() > n ? emit_expr(*e.args[n]) : nullptr;
+                };
+                if (meth == "load" && e.args.size() >= 2) {
+                    auto* fn = get_runtime_fn("slua_font_load");
+                    if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ga(0), ci32(ga(1))}, "fload"), i64);
+                }
+                if (meth == "unload" && e.args.size() >= 1) {
+                    auto* fn = get_runtime_fn("slua_font_unload");
+                    if (fn) builder_.CreateCall(fn, {ci32(ga(0))});
+                    return llvm::ConstantInt::get(i64, 0);
+                }
+                return llvm::ConstantInt::get(i64, 0);
+            }
             if (mod == "ui") {
                 auto* i32 = llvm::Type::getInt32Ty(ctx_);
                 auto* i64 = llvm::Type::getInt64Ty(ctx_);

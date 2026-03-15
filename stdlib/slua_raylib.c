@@ -105,8 +105,7 @@ void slua_ui_set_accent(int32_t r, int32_t g, int32_t b) {
     slua_ui.accent_hot = slua_mk_color(rh, gh, bh, 255);
 }
 
-int32_t slua_ui_button(int32_t x, int32_t y, int32_t w, int32_t h,
-                       const char* text) {
+int32_t slua_ui_button(int32_t x, int32_t y, int32_t w, int32_t h,const char* text) {
     int mx = GetMouseX(), my = GetMouseY();
     int hover = mx >= x && mx <= x+w && my >= y && my <= y+h;
     DrawRectangle(x, y, w, h, hover ? slua_ui.accent_hot : slua_ui.accent);
@@ -114,20 +113,16 @@ int32_t slua_ui_button(int32_t x, int32_t y, int32_t w, int32_t h,
         (Rectangle){(float)x,(float)y,(float)w,(float)h},
         1.5f, slua_ui.border);
     int tw = MeasureText(text, slua_ui.font_size);
-    DrawText(text, x + (w-tw)/2, y + (h-slua_ui.font_size)/2,
-             slua_ui.font_size, slua_ui.text);
+    DrawText(text, x + (w-tw)/2, y + (h-slua_ui.font_size)/2,slua_ui.font_size, slua_ui.text);
     return (hover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) ? 1 : 0;
 }
 
-void slua_ui_label(int32_t x, int32_t y, int32_t w, int32_t h,
-                   const char* text) {
+void slua_ui_label(int32_t x, int32_t y, int32_t w, int32_t h,const char* text) {
     (void)w;
-    DrawText(text, x, y + (h-slua_ui.font_size)/2,
-             slua_ui.font_size, slua_ui.text);
+    DrawText(text, x, y + (h-slua_ui.font_size)/2,slua_ui.font_size, slua_ui.text);
 }
 
-int32_t slua_ui_checkbox(int32_t x, int32_t y, int32_t size,
-                          const char* text, int32_t checked) {
+int32_t slua_ui_checkbox(int32_t x, int32_t y, int32_t size,const char* text, int32_t checked) {
     int mx = GetMouseX(), my = GetMouseY();
     int hover = mx >= x && mx <= x+size && my >= y && my <= y+size;
     DrawRectangle(x, y, size, size, slua_ui.bg);
@@ -138,23 +133,20 @@ int32_t slua_ui_checkbox(int32_t x, int32_t y, int32_t size,
         int pad = size / 4;
         DrawRectangle(x+pad, y+pad, size-pad*2, size-pad*2, slua_ui.accent);
     }
-    DrawText(text, x+size+6, y+(size-slua_ui.font_size)/2,
-             slua_ui.font_size, slua_ui.text);
+    DrawText(text, x+size+6, y+(size-slua_ui.font_size)/2,slua_ui.font_size, slua_ui.text);
     if (hover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         return checked ? 0 : 1;
     return checked;
 }
 
-double slua_ui_slider(int32_t x, int32_t y, int32_t w, int32_t h,
-                      double minv, double maxv, double val) {
+double slua_ui_slider(int32_t x, int32_t y, int32_t w, int32_t h,double minv, double maxv, double val) {
     int mx = GetMouseX(), my = GetMouseY();
     DrawRectangle(x, y+h/2-2, w, 4, slua_ui.border);
     double t = (val - minv) / (maxv - minv);
     int kx = x + (int)(t * w);
     int kr = h / 2;
     int hover = mx >= kx-kr && mx <= kx+kr && my >= y && my <= y+h;
-    DrawCircle(kx, y+h/2, (float)kr,
-               hover ? slua_ui.accent_hot : slua_ui.accent);
+    DrawCircle(kx, y+h/2, (float)kr,hover ? slua_ui.accent_hot : slua_ui.accent);
     if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) &&
         mx >= x && mx <= x+w && my >= y && my <= y+h) {
         t = (double)(mx - x) / w;
@@ -249,17 +241,16 @@ void slua_font_unload(int32_t id) {
     slua_font_used[id] = 0;
 }
 
-void slua_draw_text_font(int32_t font_id, const char* text,
-                          int32_t x, int32_t y, int32_t size, float spacing,
-                          int32_t r, int32_t g, int32_t b, int32_t a) {
+void slua_draw_text_font(int32_t font_id, const char* text,int32_t x, int32_t y, int32_t size, float spacing,
+        int32_t r, int32_t g, int32_t b, int32_t a) {
     Color col = slua_mk_color(r, g, b, a);
     const char* t = text ? text : "";
     if (font_id < 0 || font_id >= SLUA_MAX_FONTS || !slua_font_used[font_id]) {
         DrawText(t, x, y, size, col);
         return;
     }
-    DrawTextEx(slua_font_reg[font_id], t,
-               (Vector2){(float)x, (float)y},
-               (float)size, spacing, col);
+    Font* f = &slua_font_reg[font_id];
+    float fs = (size > 0) ? (float)size : (float)f->baseSize;
+    DrawTextEx(*f, t, (Vector2){(float)x, (float)y}, fs, spacing, col);
 }
 #endif
