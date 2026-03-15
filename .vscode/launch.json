@@ -1,16 +1,8 @@
 {
     "version": "0.2.0",
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // NOTE: F5 on .slua files is handled by the S Lua extension keybinding
-    // (defined in the extension's package.json), NOT by these launch configs.
-    // These configs are for debugging the sluac compiler itself (C++ code).
-    // ─────────────────────────────────────────────────────────────────────────
-
     "configurations": [
-
         {
-            "name": "Debug sluac (current .slua file)",
+            "name": "Debug sluac (current file)",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/compiler/sluac.exe",
@@ -18,16 +10,10 @@
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
-            "console": "integratedTerminal",
-            "presentation": {
-                "hidden": false,
-                "group": "compiler",
-                "order": 1
-            }
+            "console": "integratedTerminal"
         },
-
         {
-            "name": "Debug sluac (hello_strict.slua)",
+            "name": "Debug sluac (hello_strict.slua --emit-ast)",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/compiler/sluac.exe",
@@ -35,14 +21,8 @@
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
-            "console": "integratedTerminal",
-            "presentation": {
-                "hidden": false,
-                "group": "compiler",
-                "order": 2
-            }
+            "console": "integratedTerminal"
         },
-
         {
             "name": "Debug sluac (enum.slua)",
             "type": "cppvsdbg",
@@ -52,12 +32,7 @@
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
-            "console": "integratedTerminal",
-            "presentation": {
-                "hidden": false,
-                "group": "compiler",
-                "order": 3
-            }
+            "console": "integratedTerminal"
         }
     ]
 }

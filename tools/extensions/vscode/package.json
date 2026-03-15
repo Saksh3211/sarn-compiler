@@ -1,19 +1,25 @@
 {
   "name": "slua-language",
   "displayName": "S Lua Language",
-  "description": "Syntax highlighting, real-time diagnostics, auto-complete, hover docs, run button and themes for S Lua.",
-  "version": "0.3.0",
+  "description": "Syntax highlighting, diagnostics, auto-complete, hover docs, run button and dark theme for S Lua.",
+  "version": "0.4.0",
   "publisher": "Saksh3211",
   "license": "MIT",
-  "repository": { "type": "git", "url": "https://github.com/Saksh3211/S-lua" },
-  "engines": { "vscode": "^1.70.0" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Saksh3211/S-lua"
+  },
+  "engines": {
+    "vscode": "^1.70.0"
+  },
   "categories": ["Programming Languages", "Linters", "Snippets", "Themes"],
   "keywords": ["slua", "s-lua", "systems-lua", "llvm"],
-  "activationEvents": ["onLanguage:slua", "workspaceContains:**/*.slua"],
+  "activationEvents": [
+    "onLanguage:slua",
+    "workspaceContains:**/*.slua"
+  ],
   "main": "./extension.js",
-
   "contributes": {
-
     "languages": [
       {
         "id": "slua",
@@ -22,7 +28,6 @@
         "configuration": "./language-configuration.json"
       }
     ],
-
     "grammars": [
       {
         "language": "slua",
@@ -30,11 +35,12 @@
         "path": "./syntaxes/slua.tmLanguage.json"
       }
     ],
-
     "snippets": [
-      { "language": "slua", "path": "./snippets/slua.json" }
+      {
+        "language": "slua",
+        "path": "./snippets/slua.json"
+      }
     ],
-
     "themes": [
       {
         "label": "S Lua Dark",
@@ -42,7 +48,6 @@
         "path": "./themes/slua-dark.json"
       }
     ],
-
     "commands": [
       {
         "command": "slua.runFile",
@@ -52,15 +57,14 @@
       },
       {
         "command": "slua.buildCompiler",
-        "title": "Build Compiler (cmake_configure.bat)",
+        "title": "Build Compiler",
         "category": "S Lua",
-        "icon": "$(tools)"
+        "icon": "$(gear)"
       },
       {
         "command": "slua.compile",
         "title": "Run Diagnostics",
-        "category": "S Lua",
-        "icon": "$(bug)"
+        "category": "S Lua"
       },
       {
         "command": "slua.emitAST",
@@ -69,11 +73,10 @@
       },
       {
         "command": "slua.emitIR",
-        "title": "Emit LLVM IR (.ll)",
+        "title": "Emit LLVM IR",
         "category": "S Lua"
       }
     ],
-
     "keybindings": [
       {
         "command": "slua.runFile",
@@ -91,7 +94,6 @@
         "when": "resourceExtname == .slua"
       }
     ],
-
     "menus": {
       "editor/title": [
         {
@@ -128,19 +130,18 @@
         }
       ]
     },
-
     "configuration": {
       "title": "S Lua",
       "properties": {
         "slua.compilerPath": {
           "type": "string",
           "default": "",
-          "description": "Path to sluac.exe. Leave empty to auto-detect at <workspace>/build/compiler/sluac.exe."
+          "description": "Path to sluac.exe. Leave empty to auto-detect at build/compiler/sluac.exe."
         },
         "slua.sluaRoot": {
           "type": "string",
           "default": "",
-          "description": "Root of the S Lua project (used to call slua.ps1). Leave empty to use workspace root."
+          "description": "Root of the S Lua project for calling slua.ps1. Leave empty to use workspace root."
         },
         "slua.lintOnSave": {
           "type": "boolean",
@@ -150,14 +151,14 @@
         "slua.lintOnChange": {
           "type": "boolean",
           "default": true,
-          "description": "Run diagnostics as you type (writes to a temp file)."
+          "description": "Run diagnostics while typing."
         },
         "slua.lintDelay": {
           "type": "number",
           "default": 700,
           "minimum": 200,
           "maximum": 5000,
-          "description": "Milliseconds to wait after the last keystroke before running lint-on-change."
+          "description": "Milliseconds after last keystroke before lint-on-change fires."
         }
       }
     }
