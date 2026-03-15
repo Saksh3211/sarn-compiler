@@ -12,7 +12,6 @@
                 "Slua-Run",
                 "${relativeFile}"
             ],
-            
             "group": {
                 "kind": "test",
                 "isDefault": true
@@ -61,12 +60,7 @@
             "command": "${workspaceFolder}\\build\\compiler\\sluac.exe",
             "args": ["${file}", "--emit-ast"],
             "group": "test",
-            "presentation": {
-                "reveal": "always",
-                "panel": "shared",
-                "clear": true,
-                "showReuseMessage": false
-            },
+            "presentation": { "reveal": "always", "panel": "shared", "clear": true, "showReuseMessage": false },
             "problemMatcher": []
         },
 
@@ -74,17 +68,9 @@
             "label": "sluac: emit IR (current file)",
             "type": "shell",
             "command": "${workspaceFolder}\\build\\compiler\\sluac.exe",
-            "args": [
-                "${file}", "-o",
-                "${fileDirname}\\${fileBasenameNoExtension}.ll"
-            ],
+            "args": ["${file}", "-o", "${fileDirname}\\${fileBasenameNoExtension}.ll"],
             "group": "test",
-            "presentation": {
-                "reveal": "always",
-                "panel": "shared",
-                "clear": true,
-                "showReuseMessage": false
-            },
+            "presentation": { "reveal": "always", "panel": "shared", "clear": true, "showReuseMessage": false },
             "problemMatcher": []
         }
     ]

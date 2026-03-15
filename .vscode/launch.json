@@ -1,29 +1,13 @@
 {
     "version": "0.2.0",
-    
-    "configurations": [
 
-        {
-            "name": "Run S Lua File",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "powershell.exe",
-            "args": [
-                "-ExecutionPolicy", "Bypass",
-                "-File", "${workspaceFolder}\\slua.ps1",
-                "Slua-Run",
-                "${relativeFile}"
-            ],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
-            "console": "integratedTerminal",
-            "presentation": {
-                "hidden": false,
-                "group": "slua",
-                "order": 1
-            }
-        },
+    // ─────────────────────────────────────────────────────────────────────────
+    // NOTE: F5 on .slua files is handled by the S Lua extension keybinding
+    // (defined in the extension's package.json), NOT by these launch configs.
+    // These configs are for debugging the sluac compiler itself (C++ code).
+    // ─────────────────────────────────────────────────────────────────────────
+
+    "configurations": [
 
         {
             "name": "Debug sluac (current .slua file)",
@@ -38,16 +22,33 @@
             "presentation": {
                 "hidden": false,
                 "group": "compiler",
+                "order": 1
+            }
+        },
+
+        {
+            "name": "Debug sluac (hello_strict.slua)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/compiler/sluac.exe",
+            "args": ["examples/hello_strict.slua", "--emit-ast"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "console": "integratedTerminal",
+            "presentation": {
+                "hidden": false,
+                "group": "compiler",
                 "order": 2
             }
         },
 
         {
-            "name": "Debug sluac (hello_strict --emit-ast)",
+            "name": "Debug sluac (enum.slua)",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/compiler/sluac.exe",
-            "args": ["examples/hello_strict.slua", "--emit-ast"],
+            "args": ["examples/enum.slua"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

@@ -3,10 +3,14 @@
     "editor.insertSpaces": true,
     "editor.rulers": [100],
 
+    // ── S Lua language association ────────────────────────────────────────────
+    // This REQUIRES the slua-language extension to be installed as a VSIX.
+    // After installing, .slua files are recognized as "slua" not "Lua".
     "files.associations": {
         "*.slua": "slua"
     },
 
+    //clangd for compiler C++ source
     "clangd.enableCodeCompletion": true,
     "clangd.arguments": [
         "--compile-commands-dir=${workspaceFolder}/build",
@@ -14,25 +18,30 @@
         "--clang-tidy=false"
     ],
 
-    "C_Cpp.files.exclude": {
-        "**/*.slua": true
-    },
+    //Turn off C++ IntelliSense on .slua files
+    "C_Cpp.files.exclude": { "**/*.slua": true },
     "C_Cpp.intelliSenseEngine": "default",
     "C_Cpp.errorSquiggles": "enabled",
 
+    //Disable Lua extension's diagnostics on .slua
     "Lua.diagnostics.enable": false,
+    "Lua.workspace.ignoreDir": [],
 
+    //Spell checker
     "cSpell.ignorePaths": ["**/*.slua"],
 
+    //File explorer
     "explorer.fileNesting.enabled": true,
     "explorer.fileNesting.patterns": {
         "*.slua": "${capture}.slua.sig"
     },
 
+    //Terminal
     "terminal.integrated.defaultProfile.windows": "PowerShell",
-    
+
+    // Disable cmake-tools auto-build (it causes ALL_BUILD error)
     "cmake.buildDirectory": "${workspaceFolder}/build",
-    "cmake.generator": "Ninja",
     "cmake.configureOnOpen": false,
-    "cmake.buildBeforeRun": false
+    "cmake.buildBeforeRun": false,
+    "cmake.statusBarVisibility": "hidden"
 }

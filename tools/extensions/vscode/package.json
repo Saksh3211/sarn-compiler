@@ -1,16 +1,17 @@
 {
-  "name": "slua-extension",
-  "displayName": "S Lua extension",
-  "description": "This is offocial slua vscode extention. Features: highlighting, real-time diagnostics, auto-complete, hover docs, and themes for the S Lua language.",
-  "version": "0.2.0",
+  "name": "slua-language",
+  "displayName": "S Lua Language",
+  "description": "Syntax highlighting, real-time diagnostics, auto-complete, hover docs, run button and themes for S Lua.",
+  "version": "0.3.0",
   "publisher": "Saksh3211",
   "license": "MIT",
   "repository": { "type": "git", "url": "https://github.com/Saksh3211/S-lua" },
   "engines": { "vscode": "^1.70.0" },
   "categories": ["Programming Languages", "Linters", "Snippets", "Themes"],
   "keywords": ["slua", "s-lua", "systems-lua", "llvm"],
-  "activationEvents": ["onLanguage:slua"],
+  "activationEvents": ["onLanguage:slua", "workspaceContains:**/*.slua"],
   "main": "./extension.js",
+
   "contributes": {
 
     "languages": [
@@ -44,35 +45,86 @@
 
     "commands": [
       {
+        "command": "slua.runFile",
+        "title": "Run S Lua File",
+        "category": "S Lua",
+        "icon": "$(play)"
+      },
+      {
+        "command": "slua.buildCompiler",
+        "title": "Build Compiler (cmake_configure.bat)",
+        "category": "S Lua",
+        "icon": "$(tools)"
+      },
+      {
         "command": "slua.compile",
         "title": "Run Diagnostics",
+        "category": "S Lua",
+        "icon": "$(bug)"
+      },
+      {
+        "command": "slua.emitAST",
+        "title": "Emit AST",
         "category": "S Lua"
       },
       {
-        "command": "slua.runFile",
-        "title": "Run File (slua.ps1)",
+        "command": "slua.emitIR",
+        "title": "Emit LLVM IR (.ll)",
         "category": "S Lua"
       }
     ],
 
+    "keybindings": [
+      {
+        "command": "slua.runFile",
+        "key": "f5",
+        "when": "resourceExtname == .slua && !inDebugMode"
+      },
+      {
+        "command": "slua.runFile",
+        "key": "ctrl+f5",
+        "when": "resourceExtname == .slua"
+      },
+      {
+        "command": "slua.compile",
+        "key": "f7",
+        "when": "resourceExtname == .slua"
+      }
+    ],
+
     "menus": {
-      "editor/context": [
-        {
-          "command": "slua.compile",
-          "when": "resourceExtname == .slua",
-          "group": "slua@1"
-        },
-        {
-          "command": "slua.runFile",
-          "when": "resourceExtname == .slua",
-          "group": "slua@2"
-        }
-      ],
       "editor/title": [
         {
           "command": "slua.runFile",
           "when": "resourceExtname == .slua",
-          "group": "navigation"
+          "group": "navigation@1"
+        },
+        {
+          "command": "slua.buildCompiler",
+          "when": "resourceExtname == .slua",
+          "group": "navigation@2"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "slua.runFile",
+          "when": "resourceExtname == .slua",
+          "group": "slua@1"
+        },
+        {
+          "command": "slua.compile",
+          "when": "resourceExtname == .slua",
+          "group": "slua@2"
+        },
+        {
+          "command": "slua.emitAST",
+          "when": "resourceExtname == .slua",
+          "group": "slua@3"
+        },
+        {
+          "command": "slua.emitIR",
+          "when": "resourceExtname == .slua",
+          "group": "slua@4"
         }
       ]
     },
@@ -83,12 +135,12 @@
         "slua.compilerPath": {
           "type": "string",
           "default": "",
-          "description": "Absolute path to sluac.exe. Leave empty to auto-detect from <workspace>/build/compiler/sluac.exe."
+          "description": "Path to sluac.exe. Leave empty to auto-detect at <workspace>/build/compiler/sluac.exe."
         },
         "slua.sluaRoot": {
           "type": "string",
           "default": "",
-          "description": "Absolute path to the S Lua project root (used by the Run File command to call slua.ps1). Leave empty to use the workspace root."
+          "description": "Root of the S Lua project (used to call slua.ps1). Leave empty to use workspace root."
         },
         "slua.lintOnSave": {
           "type": "boolean",
@@ -98,12 +150,12 @@
         "slua.lintOnChange": {
           "type": "boolean",
           "default": true,
-          "description": "Run diagnostics as you type (uses a temporary file)."
+          "description": "Run diagnostics as you type (writes to a temp file)."
         },
         "slua.lintDelay": {
           "type": "number",
-          "default": 600,
-          "minimum": 100,
+          "default": 700,
+          "minimum": 200,
           "maximum": 5000,
           "description": "Milliseconds to wait after the last keystroke before running lint-on-change."
         }
