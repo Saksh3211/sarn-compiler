@@ -1,5 +1,5 @@
 {
-    "editor.tabSize": 4,
+    "editor.tabSize": 5,
     "editor.insertSpaces": true,
     "editor.rulers": [100],
     "files.associations": {

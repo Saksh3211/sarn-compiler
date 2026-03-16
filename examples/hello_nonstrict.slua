@@ -1,7 +1,6 @@
---!!nonstrict
+--!!type:nonstrict
 
 function main()
-        
     local x             
     local y = x + 5     
     print(y)         
@@ -17,7 +16,7 @@ function main()
     print(total)
 
     local raw = read_line()
-    if raw != null then
+    if not raw then
         print("You typed: " .. raw)
     end
 end

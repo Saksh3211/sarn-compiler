@@ -2,6 +2,8 @@
 --!!mem:auto
 import math
 
+--comments
+
 type Vec2 = { x: number, y: number }
 
 function Vec2.length(self: Vec2): number
@@ -31,6 +33,6 @@ function main(): int
     local q, r = divmod(17, 5)
     print(q)
     print(r)
-    print(math.sqrt(25))
+    --print(math.sqrt(25))
     return 0
 end
