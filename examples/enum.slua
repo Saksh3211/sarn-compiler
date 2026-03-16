@@ -1,6 +1,8 @@
 --!!type:strict
 --!!mem:auto
+
 import math
+import io
 
 --comments
 
@@ -25,7 +27,7 @@ end
 function main(): int
     local v: Vec2 = { x = 3.0, y = 4.0 }
     local len: number = v:length()
-    print(len)
+    io.print_color("length of vector: ".. len, "cyan")
 
     local dir: int = UP
     print(dir)

@@ -6,8 +6,6 @@ const path   = require('path');
 const os     = require('os');
 const fs     = require('fs');
 
-// ─── Module methods database ──────────────────────────────────────────────────
-
 const MODULE_METHODS = {
     math: [
         { name:'sqrt', sig:'sqrt(x: number): number',                    doc:'Square root of x.' },
@@ -113,21 +111,14 @@ const MODULE_METHODS = {
 };
 
 const KEYWORDS_CONTROL = ['if','then','else','elseif','end','for','while','do','repeat','until','return','break','continue','and','or','not'];
-const KEYWORDS_DECL    = ['local','const','global','function','type','extern','export','import','enum','defer','in','comptime','module'];
-const KEYWORDS_MEM     = ['alloc','free','alloc_typed','stack_alloc','deref','store','addr','cast','ptr_cast','panic','typeof','sizeof'];
-const CONSTANTS        = ['null','true','false'];
-const TYPES            = ['int','int8','int16','int32','int64','uint8','uint16','uint32','uint64','number','float','double','string','bool','void','any','ptr','char','byte','table'];
-
-// ─── State ────────────────────────────────────────────────────────────────────
+const KEYWORDS_DECL = ['local','const','global','function','type','extern','export','import','enum','defer','in','comptime','module'];
+const KEYWORDS_MEM = ['alloc','free','alloc_typed','stack_alloc','deref','store','addr','cast','ptr_cast','panic','typeof','sizeof'];
+const CONSTANTS = ['null','true','false'];
+const TYPES = ['int','int4','int8','int16','int32','int64','uint8','uint16','uint32','uint64','number','float','double','string','bool','void','any','ptr','char','byte','table'];
 
 let diagnosticCollection;
 let lintTimer = null;
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-// KEY FIX: check file extension, NOT languageId.
-// languageId is 'lua' until the extension is installed and VS Code restarted.
-// The file extension always ends in .slua so use that instead.
 function isSluaDocument(doc) {
     if (!doc) return false;
     return doc.fileName.toLowerCase().endsWith('.slua');
@@ -155,20 +146,16 @@ function getProjectRoot() {
     return folders ? folders[0].uri.fsPath : '';
 }
 
-// ─── Diagnostics ─────────────────────────────────────────────────────────────
-
 function parseCompilerOutput(stderr, document) {
     const diags = [];
     for (const raw of stderr.split('\n')) {
         const line = raw.trim();
         if (!line.startsWith('[')) continue;
 
-        // [EE0012] path/to/file.slua:3:5  message
         let m = line.match(/^\[([EWN])\w+\]\s+\S+?:(\d+):(\d+)\s+(.+)$/);
         if (m) {
             const sev = m[1] === 'E' ? vscode.DiagnosticSeverity.Error
-                      : m[1] === 'W' ? vscode.DiagnosticSeverity.Warning
-                      :                vscode.DiagnosticSeverity.Information;
+                : m[1] === 'W' ? vscode.DiagnosticSeverity.Warning:vscode.DiagnosticSeverity.Information;
             const ln  = Math.max(0, parseInt(m[2]) - 1);
             const col = Math.max(0, parseInt(m[3]) - 1);
             const lineText = ln < document.lineCount ? document.lineAt(ln).text : '';
@@ -180,12 +167,10 @@ function parseCompilerOutput(stderr, document) {
             continue;
         }
 
-        // [W0001] path:  message  (no line/col)
         m = line.match(/^\[([EWN])\w+\]\s+\S+?:\s+(.+)$/);
         if (m) {
             const sev = m[1] === 'E' ? vscode.DiagnosticSeverity.Error
-                      : m[1] === 'W' ? vscode.DiagnosticSeverity.Warning
-                      :                vscode.DiagnosticSeverity.Information;
+                    :m[1] === 'W' ? vscode.DiagnosticSeverity.Warning:vscode.DiagnosticSeverity.Information;
             diags.push(new vscode.Diagnostic(
                 new vscode.Range(0, 0, 0, document.lineAt(0).text.length || 1),
                 m[2].trim(), sev
@@ -231,14 +216,13 @@ function runLintOnContent(document) {
     });
 }
 
-// ─── Completion ───────────────────────────────────────────────────────────────
+// ─── Completion 
 
 class SluaCompletionProvider {
     provideCompletionItems(document, position) {
         const lineText   = document.lineAt(position).text;
         const textBefore = lineText.substring(0, position.character);
 
-        // Module method completion: math.sq_  →  show math methods
         const modMatch = textBefore.match(/\b([a-zA-Z_]\w*)\.([a-zA-Z_]\w*)$/);
         if (modMatch && MODULE_METHODS[modMatch[1]]) {
             return MODULE_METHODS[modMatch[1]].map(m => {
@@ -276,7 +260,6 @@ class SluaCompletionProvider {
         printItem.documentation = new vscode.MarkdownString('Print a value followed by a newline.');
         items.push(printItem);
 
-        // Symbols from the current document
         const text = document.getText();
         const seen = new Set(items.map(i => String(i.label)));
         const addSymbols = (re, kind) => {
@@ -299,7 +282,7 @@ class SluaCompletionProvider {
     }
 }
 
-// ─── Hover ────────────────────────────────────────────────────────────────────
+// ─── Hover effects
 
 class SluaHoverProvider {
     provideHover(document, position) {
@@ -380,8 +363,6 @@ class SluaHoverProvider {
         return null;
     }
 }
-
-// ─── Commands ─────────────────────────────────────────────────────────────────
 
 function cmdRunFile() {
     const editor = vscode.window.activeTextEditor;
@@ -467,14 +448,12 @@ function cmdEmitIR() {
     });
 }
 
-// ─── Activation / Deactivation ────────────────────────────────────────────────
+
 
 function activate(context) {
 
     diagnosticCollection = vscode.languages.createDiagnosticCollection('slua');
     context.subscriptions.push(diagnosticCollection);
-
-    // --- Lint events ---
 
     context.subscriptions.push(
         vscode.workspace.onDidOpenTextDocument(doc => {
@@ -507,9 +486,6 @@ function activate(context) {
         )
     );
 
-    // --- Language features ---
-    // Register for BOTH 'slua' languageId AND file pattern so features work
-    // even when the file is recognised as 'lua' (before extension fully installed).
     const selector = [
         { language: 'slua' },
         { scheme: 'file', pattern: '**/*.slua' }
@@ -530,22 +506,21 @@ function activate(context) {
     // --- Commands ---
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('slua.runFile',       cmdRunFile)
+        vscode.commands.registerCommand('slua.runFile',cmdRunFile)
     );
     context.subscriptions.push(
-        vscode.commands.registerCommand('slua.buildCompiler', cmdBuildCompiler)
+        vscode.commands.registerCommand('slua.buildCompiler',cmdBuildCompiler)
     );
     context.subscriptions.push(
-        vscode.commands.registerCommand('slua.compile',       cmdRunDiagnostics)
+        vscode.commands.registerCommand('slua.compile',cmdRunDiagnostics)
     );
     context.subscriptions.push(
-        vscode.commands.registerCommand('slua.emitAST',       cmdEmitAST)
+        vscode.commands.registerCommand('slua.emitAST',cmdEmitAST)
     );
     context.subscriptions.push(
-        vscode.commands.registerCommand('slua.emitIR',        cmdEmitIR)
+        vscode.commands.registerCommand('slua.emitIR',cmdEmitIR)
     );
 
-    // Lint already-open files
     vscode.workspace.textDocuments.forEach(doc => {
         if (isSluaDocument(doc)) runLintOnFile(doc);
     });

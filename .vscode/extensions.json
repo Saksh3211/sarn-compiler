@@ -4,7 +4,8 @@
         "ms-vscode.powershell",
         "twxs.cmake",
         "eamodio.gitlens",
-        "oderwat.indent-rainbow"
+        "oderwat.indent-rainbow",
+        "saksh3211.slua-extension"
     ],
     "unwantedRecommendations": [
         "ms-vscode.cpptools",

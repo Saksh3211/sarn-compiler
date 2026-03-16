@@ -16,10 +16,10 @@ function Slua-Run {
     $exe  = "$env:SLUA_BIN\$name.exe"
 
     & "$env:SLUA_ROOT\build\compiler\sluac.exe" "$env:SLUA_ROOT\$src" -o $ll
-    if ($LASTEXITCODE -ne 0) { Write-Host "[ERROR] sluac failed" -ForegroundColor Red; return }
+    if ($LASTEXITCODE -ne 0) { Write-Host "[ERROR] sluac failed to emit LLVM IR , check the source file." -ForegroundColor Red; return }
 
     clang $ll "$env:SLUA_ROOT\build\runtime\slua.lib" "C:\vcpkg\installed\x64-windows\lib\raylib.lib" -lOpenGL32 -lgdi32 -lwinmm -lUser32 -lShell32 -lGdi32 -lmsvcrt -lucrt -lvcruntime -o $exe 2>&1
-    if ($LASTEXITCODE -ne 0) { Write-Host "[ERROR] clang failed" -ForegroundColor Red; return }
+    if ($LASTEXITCODE -ne 0) { Write-Host "[ERROR] clang failed to compile." -ForegroundColor Red; return }
 
     & $exe
 }
