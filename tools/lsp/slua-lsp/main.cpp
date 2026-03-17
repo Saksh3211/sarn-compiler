@@ -30,13 +30,9 @@ int main()
     {
         if (line.find("initialize") != std::string::npos)
         {
-            std::cout <<
-R"({
-"id":1,
-"result":{
-"capabilities":{
-"completionProvider":{},
-"hoverProvider":true,
+            std::cout <<R"({"id":1,
+"result":{"capabilities":{
+"completionProvider":{},"hoverProvider":true,
 "textDocumentSync":1
 }}
 })" << std::endl;

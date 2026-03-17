@@ -2,9 +2,9 @@
   "icon": "./icons/icon.png",
   "readme": "./readme.md",
   "name": "slua-extension",
-  "displayName": "S Lua Extension",
-  "description": "Syntax highlighting, diagnostics, auto-complete, hover docs, run button and dark theme for S Lua.",
-  "version": "0.4.0",
+  "displayName": "S Lua Language",
+  "description": "Syntax highlighting, diagnostics, auto-complete, hover docs, run button, custom icon, and fully customizable theme for S Lua.",
+  "version": "0.5.0",
   "publisher": "Saksh3211",
   "license": "MIT",
   "repository": {
@@ -14,7 +14,7 @@
   "engines": {
     "vscode": "^1.70.0"
   },
-  "categories": ["Programming Languages", "Linters", "Snippets", "Themes","Debuggers"],
+  "categories": ["Programming Languages", "Linters", "Snippets", "Themes"],
   "keywords": ["slua", "s-lua", "systems-lua", "llvm"],
   "activationEvents": [
     "onLanguage:slua",
@@ -22,14 +22,20 @@
   ],
   "main": "./extension.js",
   "contributes": {
+
     "languages": [
       {
         "id": "slua",
         "aliases": ["S Lua", "slua"],
         "extensions": [".slua"],
-        "configuration": "./language-configuration.json"
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "dark": "./icons/slua-file.svg",
+          "light": "./icons/slua-file.svg"
+        }
       }
     ],
+
     "grammars": [
       {
         "language": "slua",
@@ -37,12 +43,11 @@
         "path": "./syntaxes/slua.tmLanguage.json"
       }
     ],
+
     "snippets": [
-      {
-        "language": "slua",
-        "path": "./snippets/slua.json"
-      }
+      { "language": "slua", "path": "./snippets/slua.json" }
     ],
+
     "themes": [
       {
         "label": "S Lua Dark",
@@ -50,6 +55,15 @@
         "path": "./themes/slua-dark.json"
       }
     ],
+
+    "iconThemes": [
+      {
+        "id": "slua-icons",
+        "label": "S Lua Icons",
+        "path": "./icon-theme/slua-icons.json"
+      }
+    ],
+
     "commands": [
       {
         "command": "slua.runFile",
@@ -77,8 +91,20 @@
         "command": "slua.emitIR",
         "title": "Emit LLVM IR",
         "category": "S Lua"
+      },
+      {
+        "command": "slua.customizeTheme",
+        "title": "Customize Theme Colors",
+        "category": "S Lua",
+        "icon": "$(symbol-color)"
+      },
+      {
+        "command": "slua.resetTheme",
+        "title": "Reset Theme to Defaults",
+        "category": "S Lua"
       }
     ],
+
     "keybindings": [
       {
         "command": "slua.runFile",
@@ -96,6 +122,7 @@
         "when": "resourceExtname == .slua"
       }
     ],
+
     "menus": {
       "editor/title": [
         {
@@ -107,6 +134,11 @@
           "command": "slua.buildCompiler",
           "when": "resourceExtname == .slua",
           "group": "navigation@2"
+        },
+        {
+          "command": "slua.customizeTheme",
+          "when": "resourceExtname == .slua",
+          "group": "navigation@3"
         }
       ],
       "editor/context": [
@@ -121,17 +153,23 @@
           "group": "slua@2"
         },
         {
-          "command": "slua.emitAST",
+          "command": "slua.customizeTheme",
           "when": "resourceExtname == .slua",
           "group": "slua@3"
         },
         {
-          "command": "slua.emitIR",
+          "command": "slua.emitAST",
           "when": "resourceExtname == .slua",
           "group": "slua@4"
+        },
+        {
+          "command": "slua.emitIR",
+          "when": "resourceExtname == .slua",
+          "group": "slua@5"
         }
       ]
     },
+
     "configuration": {
       "title": "S Lua",
       "properties": {
@@ -161,6 +199,174 @@
           "minimum": 200,
           "maximum": 5000,
           "description": "Milliseconds after last keystroke before lint-on-change fires."
+        },
+
+        "slua.theme.directives.color": {
+          "type": "string",
+          "default": "#f38ba8",
+          "description": "Color for --!! directives (e.g. --!!type:strict). Use a hex color like #f38ba8."
+        },
+        "slua.theme.directives.fontStyle": {
+          "type": "string",
+          "default": "bold italic",
+          "enum": ["", "bold", "italic", "bold italic", "underline"],
+          "description": "Font style for --!! directives."
+        },
+
+        "slua.theme.controlKeywords.color": {
+          "type": "string",
+          "default": "#cba6f7",
+          "description": "Color for control flow keywords: if then else for while do return break continue and or not."
+        },
+        "slua.theme.controlKeywords.fontStyle": {
+          "type": "string",
+          "default": "bold",
+          "enum": ["", "bold", "italic", "bold italic", "underline"],
+          "description": "Font style for control flow keywords."
+        },
+
+        "slua.theme.declKeywords.color": {
+          "type": "string",
+          "default": "#89b4fa",
+          "description": "Color for declaration keywords: local const global function type extern export import enum defer."
+        },
+        "slua.theme.declKeywords.fontStyle": {
+          "type": "string",
+          "default": "bold",
+          "enum": ["", "bold", "italic", "bold italic", "underline"],
+          "description": "Font style for declaration keywords."
+        },
+
+        "slua.theme.memoryKeywords.color": {
+          "type": "string",
+          "default": "#fab387",
+          "description": "Color for memory / system keywords: alloc free deref store cast panic typeof sizeof."
+        },
+        "slua.theme.memoryKeywords.fontStyle": {
+          "type": "string",
+          "default": "bold",
+          "enum": ["", "bold", "italic", "bold italic", "underline"],
+          "description": "Font style for memory keywords."
+        },
+
+        "slua.theme.types.color": {
+          "type": "string",
+          "default": "#89dceb",
+          "description": "Color for built-in type names: int number string bool void any ptr table etc."
+        },
+        "slua.theme.types.fontStyle": {
+          "type": "string",
+          "default": "italic",
+          "enum": ["", "bold", "italic", "bold italic", "underline"],
+          "description": "Font style for built-in types."
+        },
+
+        "slua.theme.constants.color": {
+          "type": "string",
+          "default": "#fab387",
+          "description": "Color for language constants: null true false."
+        },
+        "slua.theme.constants.fontStyle": {
+          "type": "string",
+          "default": "bold",
+          "enum": ["", "bold", "italic", "bold italic", "underline"],
+          "description": "Font style for language constants."
+        },
+
+        "slua.theme.modules.color": {
+          "type": "string",
+          "default": "#94e2d5",
+          "description": "Color for built-in module names: math io os string stdata window draw input ui font."
+        },
+        "slua.theme.modules.fontStyle": {
+          "type": "string",
+          "default": "",
+          "enum": ["", "bold", "italic", "bold italic", "underline"],
+          "description": "Font style for module names."
+        },
+
+        "slua.theme.functions.color": {
+          "type": "string",
+          "default": "#f9e2af",
+          "description": "Color for declared function names (in function declarations)."
+        },
+        "slua.theme.functions.fontStyle": {
+          "type": "string",
+          "default": "bold",
+          "enum": ["", "bold", "italic", "bold italic", "underline"],
+          "description": "Font style for declared function names."
+        },
+
+        "slua.theme.functionCalls.color": {
+          "type": "string",
+          "default": "#89b4fa",
+          "description": "Color for function call sites."
+        },
+        "slua.theme.functionCalls.fontStyle": {
+          "type": "string",
+          "default": "",
+          "enum": ["", "bold", "italic", "bold italic", "underline"],
+          "description": "Font style for function call sites."
+        },
+
+        "slua.theme.strings.color": {
+          "type": "string",
+          "default": "#a6e3a1",
+          "description": "Color for string literals."
+        },
+        "slua.theme.strings.fontStyle": {
+          "type": "string",
+          "default": "",
+          "enum": ["", "bold", "italic", "bold italic", "underline"],
+          "description": "Font style for string literals."
+        },
+
+        "slua.theme.numbers.color": {
+          "type": "string",
+          "default": "#fab387",
+          "description": "Color for numeric literals."
+        },
+        "slua.theme.numbers.fontStyle": {
+          "type": "string",
+          "default": "",
+          "enum": ["", "bold", "italic", "bold italic", "underline"],
+          "description": "Font style for numeric literals."
+        },
+
+        "slua.theme.comments.color": {
+          "type": "string",
+          "default": "#6c7086",
+          "description": "Color for comments (-- line comments and --[[ block comments]])."
+        },
+        "slua.theme.comments.fontStyle": {
+          "type": "string",
+          "default": "italic",
+          "enum": ["", "bold", "italic", "bold italic", "underline"],
+          "description": "Font style for comments."
+        },
+
+        "slua.theme.operators.color": {
+          "type": "string",
+          "default": "#f2cdcd",
+          "description": "Color for operators: == ~= <= >= .. -> & | etc."
+        },
+        "slua.theme.operators.fontStyle": {
+          "type": "string",
+          "default": "",
+          "enum": ["", "bold", "italic", "bold italic", "underline"],
+          "description": "Font style for operators."
+        },
+
+        "slua.theme.typeNames.color": {
+          "type": "string",
+          "default": "#89dceb",
+          "description": "Color for user-defined type names in method declarations (e.g. Vec2 in Vec2.length)."
+        },
+        "slua.theme.typeNames.fontStyle": {
+          "type": "string",
+          "default": "italic bold",
+          "enum": ["", "bold", "italic", "bold italic", "underline"],
+          "description": "Font style for user-defined type names."
         }
       }
     }

@@ -10,7 +10,7 @@ function retable():table
     return t
 end
 
-function main():int4
+function main():int
     local t:table = retable()
     local a:int64 = t[1]
     local b:int64 = t[2]
