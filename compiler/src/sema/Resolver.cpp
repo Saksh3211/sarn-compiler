@@ -1,4 +1,4 @@
-#include "slua/Resolver.h"
+﻿#include "slua/Resolver.h"
 #include <cassert>
 
 namespace slua {
@@ -408,6 +408,14 @@ void Resolver::resolve_ident(Ident& e, Expr& node) {
                 is_builtin = true;
         }
 
+        static const std::vector<std::string> std_mods = {
+            "math","io","os","string","stdata","table",
+            "fs","random","datetime","path","process","json","net","sync","regex"
+        };
+        if (!is_builtin) {
+            for (auto& m : std_mods)
+                if (m == e.name) { is_builtin = true; break; }
+        }
         if (!is_builtin && imported_modules_.count(e.name))
             is_builtin = true;
 

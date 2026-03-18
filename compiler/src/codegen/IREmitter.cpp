@@ -1,4 +1,4 @@
-#ifdef SLUA_HAS_LLVM
+﻿#ifdef SLUA_HAS_LLVM
 
 #include "slua/IREmitter.h"
 #include <llvm/IR/Constants.h>
@@ -266,6 +266,86 @@ void IREmitter::declare_runtime() {
     declare("slua_font_load",            i32,   {i8p, i32});
     declare("slua_font_unload",          voidT, {i32});
     declare("slua_draw_text_font",       voidT, {i32, i8p, i32, i32, i32, f32, i32, i32, i32, i32});
+    declare("slua_fs_read_all",    i8p,   {i8p});
+    declare("slua_fs_write",       i32,   {i8p, i8p});
+    declare("slua_fs_append",      i32,   {i8p, i8p});
+    declare("slua_fs_exists",      i32,   {i8p});
+    declare("slua_fs_delete",      i32,   {i8p});
+    declare("slua_fs_mkdir",       i32,   {i8p});
+    declare("slua_fs_rename",      i32,   {i8p, i8p});
+    declare("slua_fs_size",        i64,   {i8p});
+    declare("slua_fs_listdir",     i8p,   {i8p});
+    declare("slua_fs_open",        i64,   {i8p, i8p});
+    declare("slua_fs_close",       i32,   {i64});
+    declare("slua_fs_readline",    i8p,   {i64});
+    declare("slua_fs_writeh",      i32,   {i64, i8p});
+    declare("slua_fs_flush",       i32,   {i64});
+    declare("slua_fs_copy",        i32,   {i8p, i8p});
+    declare("slua_random_seed",    voidT, {i64});
+    declare("slua_random_int",     i64,   {i64, i64});
+    declare("slua_random_float",   f64,   {});
+    declare("slua_random_range",   i64,   {i64, i64});
+    declare("slua_random_gauss",   f64,   {f64, f64});
+    declare("slua_datetime_now",        i64, {});
+    declare("slua_datetime_format",     i8p, {i64, i8p});
+    declare("slua_datetime_parse",      i64, {i8p, i8p});
+    declare("slua_datetime_diff",       i64, {i64, i64});
+    declare("slua_datetime_add",        i64, {i64, i64});
+    declare("slua_datetime_now_str",    i8p, {i8p});
+    declare("slua_datetime_year",       i32, {i64});
+    declare("slua_datetime_month",      i32, {i64});
+    declare("slua_datetime_day",        i32, {i64});
+    declare("slua_datetime_hour",       i32, {i64});
+    declare("slua_datetime_minute",     i32, {i64});
+    declare("slua_datetime_second",     i32, {i64});
+    declare("slua_path_join",      i8p,   {i8p, i8p});
+    declare("slua_path_basename",  i8p,   {i8p});
+    declare("slua_path_dirname",   i8p,   {i8p});
+    declare("slua_path_extension", i8p,   {i8p});
+    declare("slua_path_stem",      i8p,   {i8p});
+    declare("slua_path_absolute",  i8p,   {i8p});
+    declare("slua_path_normalize", i8p,   {i8p});
+    declare("slua_path_exists",    i32,   {i8p});
+    declare("slua_path_is_file",   i32,   {i8p});
+    declare("slua_path_is_dir",    i32,   {i8p});
+    declare("slua_process_run",    i64,   {i8p});
+    declare("slua_process_output", i8p,   {i8p});
+    declare("slua_process_spawn",  i64,   {i8p});
+    declare("slua_process_wait",   i32,   {i64});
+    declare("slua_process_kill",   i32,   {i64});
+    declare("slua_process_alive",  i32,   {i64});
+    declare("slua_json_encode_str",    i8p, {i8p});
+    declare("slua_json_encode_int",    i8p, {i64});
+    declare("slua_json_encode_float",  i8p, {f64});
+    declare("slua_json_encode_bool",   i8p, {i32});
+    declare("slua_json_encode_null",   i8p, {});
+    declare("slua_json_get_str",       i8p, {i8p, i8p});
+    declare("slua_json_get_int",       i64, {i8p, i8p});
+    declare("slua_json_get_float",     f64, {i8p, i8p});
+    declare("slua_json_get_bool",      i32, {i8p, i8p});
+    declare("slua_json_has_key",       i32, {i8p, i8p});
+    declare("slua_json_minify",        i8p, {i8p});
+    declare("slua_json_get_array_item",i8p, {i8p, i8p, i32});
+    declare("slua_net_init",        i32, {});
+    declare("slua_net_connect",     i64, {i8p, i32});
+    declare("slua_net_listen",      i64, {i32});
+    declare("slua_net_accept",      i64, {i64});
+    declare("slua_net_send",        i32, {i64, i8p});
+    declare("slua_net_send_bytes",  i32, {i64, i8p, i32});
+    declare("slua_net_recv",        i8p, {i64, i32});
+    declare("slua_net_close",       i32, {i64});
+    declare("slua_net_local_ip",    i8p, {});
+    declare("slua_sync_mutex_new",     i64, {});
+    declare("slua_sync_mutex_lock",    i32, {i64});
+    declare("slua_sync_mutex_unlock",  i32, {i64});
+    declare("slua_sync_mutex_trylock", i32, {i64});
+    declare("slua_sync_mutex_free",    i32, {i64});
+    declare("slua_regex_match",    i32, {i8p, i8p});
+    declare("slua_regex_find",     i32, {i8p, i8p, i32});
+    declare("slua_regex_replace",  i8p, {i8p, i8p, i8p});
+    declare("slua_regex_groups",   i8p, {i8p, i8p});
+    declare("slua_regex_count",    i32, {i8p, i8p});
+    declare("slua_regex_find_all", i8p, {i8p, i8p});
 }
 
 llvm::Function* IREmitter::get_runtime_fn(const std::string& name) {
@@ -1576,9 +1656,226 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                 if (meth == "set_accent" && e.args.size() >= 3) { auto* fn = get_runtime_fn("slua_ui_set_accent"); if (fn) builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2))}); return llvm::ConstantInt::get(i64, 0); }
                 return llvm::ConstantInt::get(i64, 0);
             }
+            if (mod == "fs") {
+            auto* i8p = llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(ctx_));
+                auto* i64 = llvm::Type::getInt64Ty(ctx_);
+                auto* i32 = llvm::Type::getInt32Ty(ctx_);
+                (void)i8p; (void)i32;
+                auto ga  = [&](size_t n) -> llvm::Value* { return e.args.size()>n ? emit_expr(*e.args[n]) : nullptr; };
+                auto c64 = [&](llvm::Value* v) -> llvm::Value* {
+                    if(!v) return llvm::ConstantInt::get(i64,0);
+                    if(v->getType()->isIntegerTy(64)) return v;
+                    if(v->getType()->isIntegerTy()) return builder_.CreateSExt(v,i64);
+                    if(v->getType()->isDoubleTy()) return builder_.CreateFPToSI(v,i64);
+                    return v;
+                };
+                auto sxi = [&](llvm::Value* v) -> llvm::Value* { return builder_.CreateSExt(v,i64); };
+                if (meth=="read_all" && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_fs_read_all"); if(fn) return builder_.CreateCall(fn,{ga(0)},"fsra"); }
+                if (meth=="listdir"  && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_fs_listdir");  if(fn) return builder_.CreateCall(fn,{ga(0)},"fsld"); }
+                if (meth=="exists"   && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_fs_exists");   if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"fse")); }
+                if (meth=="delete"   && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_fs_delete");   if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"fsd")); }
+                if (meth=="mkdir"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_fs_mkdir");    if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"fsmd")); }
+                if (meth=="size"     && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_fs_size");     if(fn) return builder_.CreateCall(fn,{ga(0)},"fssz"); }
+                if (meth=="write"    && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_fs_write");    if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"fsw")); }
+                if (meth=="append"   && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_fs_append");   if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"fsa")); }
+                if (meth=="rename"   && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_fs_rename");   if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"fsrn")); }
+                if (meth=="copy"     && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_fs_copy");     if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"fscp")); }
+                if (meth=="open"     && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_fs_open");     if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"fsop"); }
+                if (meth=="close"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_fs_close");    if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"fscl")); }
+                if (meth=="readline" && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_fs_readline"); if(fn) return builder_.CreateCall(fn,{c64(ga(0))},"fsrl"); }
+                if (meth=="writeh"   && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_fs_writeh");   if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ga(1)},"fswh")); }
+                if (meth=="flush"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_fs_flush");    if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"fsfl")); }
+                return llvm::ConstantInt::get(i64,0);
+            }
+            if (mod == "random") {
+                auto* i64 = llvm::Type::getInt64Ty(ctx_);
+                auto* f64 = llvm::Type::getDoubleTy(ctx_);
+                auto ga   = [&](size_t n) -> llvm::Value* { return e.args.size()>n ? emit_expr(*e.args[n]) : nullptr; };
+                auto c64  = [&](llvm::Value* v) -> llvm::Value* {
+                    if(!v) return llvm::ConstantInt::get(i64,0);
+                    if(v->getType()->isIntegerTy(64)) return v;
+                    if(v->getType()->isIntegerTy()) return builder_.CreateSExt(v,i64);
+                    return v;
+                };
+                auto cf64 = [&](llvm::Value* v) -> llvm::Value* {
+                    if(!v) return llvm::ConstantFP::get(f64,0.0);
+                    if(v->getType()->isDoubleTy()) return v;
+                    if(v->getType()->isIntegerTy()) return builder_.CreateSIToFP(v,f64);
+                    return v;
+                };
+                if (meth=="seed"  && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_random_seed");  if(fn){ builder_.CreateCall(fn,{c64(ga(0))}); return llvm::ConstantInt::get(i64,0); } }
+                if (meth=="int"   && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_random_int");   if(fn) return builder_.CreateCall(fn,{c64(ga(0)),c64(ga(1))},"rni"); }
+                if (meth=="range" && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_random_range"); if(fn) return builder_.CreateCall(fn,{c64(ga(0)),c64(ga(1))},"rnr"); }
+                if (meth=="float")                     { auto* fn=get_runtime_fn("slua_random_float"); if(fn) return builder_.CreateCall(fn,{},"rnf"); }
+                if (meth=="gauss" && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_random_gauss"); if(fn) return builder_.CreateCall(fn,{cf64(ga(0)),cf64(ga(1))},"rng"); }
+                return llvm::ConstantInt::get(i64,0);
+            }
+            if (mod == "datetime") {
+                auto* i8p = llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(ctx_));
+                auto* i64 = llvm::Type::getInt64Ty(ctx_);
+                (void)i8p;
+                auto ga  = [&](size_t n) -> llvm::Value* { return e.args.size()>n ? emit_expr(*e.args[n]) : nullptr; };
+                auto c64 = [&](llvm::Value* v) -> llvm::Value* {
+                    if(!v) return llvm::ConstantInt::get(i64,0);
+                    if(v->getType()->isIntegerTy(64)) return v;
+                    if(v->getType()->isIntegerTy()) return builder_.CreateSExt(v,i64);
+                    return v;
+                };
+                auto sxi = [&](llvm::Value* v) -> llvm::Value* { return builder_.CreateSExt(v,i64); };
+                if (meth=="now")                         { auto* fn=get_runtime_fn("slua_datetime_now");     if(fn) return builder_.CreateCall(fn,{},"dtnow"); }
+                if (meth=="now_str" && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_datetime_now_str");if(fn) return builder_.CreateCall(fn,{ga(0)},"dtns"); }
+                if (meth=="format"  && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_datetime_format"); if(fn) return builder_.CreateCall(fn,{c64(ga(0)),ga(1)},"dtfmt"); }
+                if (meth=="parse"   && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_datetime_parse");  if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"dtprs"); }
+                if (meth=="diff"    && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_datetime_diff");   if(fn) return builder_.CreateCall(fn,{c64(ga(0)),c64(ga(1))},"dtdif"); }
+                if (meth=="add"     && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_datetime_add");    if(fn) return builder_.CreateCall(fn,{c64(ga(0)),c64(ga(1))},"dtadd"); }
+                if (meth=="year"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_datetime_year");   if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"dty")); }
+                if (meth=="month"   && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_datetime_month");  if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"dtmo")); }
+                if (meth=="day"     && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_datetime_day");    if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"dtd")); }
+                if (meth=="hour"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_datetime_hour");   if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"dth")); }
+                if (meth=="minute"  && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_datetime_minute"); if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"dtmi")); }
+                if (meth=="second"  && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_datetime_second"); if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"dts")); }
+                return llvm::ConstantInt::get(i64,0);
+            }
+            if (mod == "path") {
+                auto* i64 = llvm::Type::getInt64Ty(ctx_);
+                auto ga  = [&](size_t n) -> llvm::Value* { return e.args.size()>n ? emit_expr(*e.args[n]) : nullptr; };
+                auto sxi = [&](llvm::Value* v) -> llvm::Value* { return builder_.CreateSExt(v,i64); };
+                if (meth=="join"      && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_path_join");      if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"pjn"); }
+                if (meth=="basename"  && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_path_basename");  if(fn) return builder_.CreateCall(fn,{ga(0)},"pbn"); }
+                if (meth=="dirname"   && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_path_dirname");   if(fn) return builder_.CreateCall(fn,{ga(0)},"pdn"); }
+                if (meth=="extension" && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_path_extension"); if(fn) return builder_.CreateCall(fn,{ga(0)},"pex"); }
+                if (meth=="stem"      && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_path_stem");      if(fn) return builder_.CreateCall(fn,{ga(0)},"pst"); }
+                if (meth=="absolute"  && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_path_absolute");  if(fn) return builder_.CreateCall(fn,{ga(0)},"pab"); }
+                if (meth=="normalize" && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_path_normalize"); if(fn) return builder_.CreateCall(fn,{ga(0)},"pnm"); }
+                if (meth=="exists"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_path_exists");    if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"pe")); }
+                if (meth=="is_file"   && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_path_is_file");   if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"pif")); }
+                if (meth=="is_dir"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_path_is_dir");    if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"pid")); }
+                return llvm::ConstantInt::get(i64,0);
+            }
+            if (mod == "process") {
+                auto* i64 = llvm::Type::getInt64Ty(ctx_);
+                auto ga  = [&](size_t n) -> llvm::Value* { return e.args.size()>n ? emit_expr(*e.args[n]) : nullptr; };
+                auto c64 = [&](llvm::Value* v) -> llvm::Value* {
+                    if(!v) return llvm::ConstantInt::get(i64,0);
+                    if(v->getType()->isIntegerTy(64)) return v;
+                    if(v->getType()->isIntegerTy()) return builder_.CreateSExt(v,i64);
+                    return v;
+                };
+                auto sxi = [&](llvm::Value* v) -> llvm::Value* { return builder_.CreateSExt(v,i64); };
+                if (meth=="run"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_process_run");    if(fn) return builder_.CreateCall(fn,{ga(0)},"prun"); }
+                if (meth=="output" && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_process_output"); if(fn) return builder_.CreateCall(fn,{ga(0)},"pout"); }
+                if (meth=="spawn"  && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_process_spawn");  if(fn) return builder_.CreateCall(fn,{ga(0)},"pspn"); }
+                if (meth=="wait"   && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_process_wait");   if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"pwt")); }
+                if (meth=="kill"   && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_process_kill");   if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"pkl")); }
+                if (meth=="alive"  && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_process_alive");  if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"pal")); }
+                return llvm::ConstantInt::get(i64,0);
+            }
+            if (mod == "json") {
+                auto* i64 = llvm::Type::getInt64Ty(ctx_);
+                auto* f64 = llvm::Type::getDoubleTy(ctx_);
+                auto* i32 = llvm::Type::getInt32Ty(ctx_);
+                auto ga   = [&](size_t n) -> llvm::Value* { return e.args.size()>n ? emit_expr(*e.args[n]) : nullptr; };
+                auto c64  = [&](llvm::Value* v) -> llvm::Value* {
+                    if(!v) return llvm::ConstantInt::get(i64,0);
+                    if(v->getType()->isIntegerTy(64)) return v;
+                    if(v->getType()->isIntegerTy()) return builder_.CreateSExt(v,i64);
+                    return v;
+                };
+                auto cf64 = [&](llvm::Value* v) -> llvm::Value* {
+                    if(!v) return llvm::ConstantFP::get(f64,0.0);
+                    if(v->getType()->isDoubleTy()) return v;
+                    if(v->getType()->isIntegerTy()) return builder_.CreateSIToFP(v,f64);
+                    return v;
+                };
+                auto ci32 = [&](llvm::Value* v) -> llvm::Value* {
+                    if(!v) return llvm::ConstantInt::get(i32,0);
+                    if(v->getType()->isIntegerTy(32)) return v;
+                    if(v->getType()->isIntegerTy()) return builder_.CreateTrunc(v,i32);
+                    return v;
+                };
+                auto sxi  = [&](llvm::Value* v) -> llvm::Value* { return builder_.CreateSExt(v,i64); };
+                if (meth=="encode_str"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_json_encode_str");     if(fn) return builder_.CreateCall(fn,{ga(0)},"jes"); }
+                if (meth=="encode_int"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_json_encode_int");     if(fn) return builder_.CreateCall(fn,{c64(ga(0))},"jei"); }
+                if (meth=="encode_float"  && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_json_encode_float");   if(fn) return builder_.CreateCall(fn,{cf64(ga(0))},"jef"); }
+                if (meth=="encode_bool"   && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_json_encode_bool");    if(fn) return builder_.CreateCall(fn,{ci32(ga(0))},"jeb"); }
+                if (meth=="encode_null")                        { auto* fn=get_runtime_fn("slua_json_encode_null");    if(fn) return builder_.CreateCall(fn,{},"jen"); }
+                if (meth=="get_str"       && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_json_get_str");        if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"jgs"); }
+                if (meth=="get_int"       && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_json_get_int");        if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"jgi"); }
+                if (meth=="get_float"     && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_json_get_float");      if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"jgf"); }
+                if (meth=="get_bool"      && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_json_get_bool");       if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"jgb")); }
+                if (meth=="has_key"       && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_json_has_key");        if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"jhk")); }
+                if (meth=="minify"        && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_json_minify");         if(fn) return builder_.CreateCall(fn,{ga(0)},"jmn"); }
+                if (meth=="get_array_item"&& e.args.size()>=3) { auto* fn=get_runtime_fn("slua_json_get_array_item"); if(fn) return builder_.CreateCall(fn,{ga(0),ga(1),ci32(ga(2))},"jai"); }
+                return llvm::ConstantInt::get(i64,0);
+            }
+            if (mod == "net") {
+                auto* i64 = llvm::Type::getInt64Ty(ctx_);
+                auto* i32 = llvm::Type::getInt32Ty(ctx_);
+                auto ga   = [&](size_t n) -> llvm::Value* { return e.args.size()>n ? emit_expr(*e.args[n]) : nullptr; };
+                auto c64  = [&](llvm::Value* v) -> llvm::Value* {
+                    if(!v) return llvm::ConstantInt::get(i64,0);
+                    if(v->getType()->isIntegerTy(64)) return v;
+                    if(v->getType()->isIntegerTy()) return builder_.CreateSExt(v,i64);
+                    return v;
+                };
+                auto ci32 = [&](llvm::Value* v) -> llvm::Value* {
+                    if(!v) return llvm::ConstantInt::get(i32,0);
+                    if(v->getType()->isIntegerTy(32)) return v;
+                    if(v->getType()->isIntegerTy()) return builder_.CreateTrunc(v,i32);
+                    return v;
+                };
+                auto sxi  = [&](llvm::Value* v) -> llvm::Value* { return builder_.CreateSExt(v,i64); };
+                if (meth=="init")                         { auto* fn=get_runtime_fn("slua_net_init");        if(fn) return sxi(builder_.CreateCall(fn,{},"nini")); }
+                if (meth=="local_ip")                     { auto* fn=get_runtime_fn("slua_net_local_ip");    if(fn) return builder_.CreateCall(fn,{},"nip"); }
+                if (meth=="listen"    && e.args.size()>=1){ auto* fn=get_runtime_fn("slua_net_listen");      if(fn) return builder_.CreateCall(fn,{ci32(ga(0))},"nls"); }
+                if (meth=="accept"    && e.args.size()>=1){ auto* fn=get_runtime_fn("slua_net_accept");      if(fn) return builder_.CreateCall(fn,{c64(ga(0))},"nac"); }
+                if (meth=="connect"   && e.args.size()>=2){ auto* fn=get_runtime_fn("slua_net_connect");     if(fn) return builder_.CreateCall(fn,{ga(0),ci32(ga(1))},"nco"); }
+                if (meth=="send"      && e.args.size()>=2){ auto* fn=get_runtime_fn("slua_net_send");        if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ga(1)},"nsnd")); }
+                if (meth=="send_bytes"&& e.args.size()>=3){ auto* fn=get_runtime_fn("slua_net_send_bytes");  if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ga(1),ci32(ga(2))},"nsb")); }
+                if (meth=="recv"      && e.args.size()>=2){ auto* fn=get_runtime_fn("slua_net_recv");        if(fn) return builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1))},"nrcv"); }
+                if (meth=="close"     && e.args.size()>=1){ auto* fn=get_runtime_fn("slua_net_close");       if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"ncl")); }
+                return llvm::ConstantInt::get(i64,0);
+            }
+            if (mod == "sync") {
+                auto* i64 = llvm::Type::getInt64Ty(ctx_);
+                auto ga  = [&](size_t n) -> llvm::Value* { return e.args.size()>n ? emit_expr(*e.args[n]) : nullptr; };
+                auto c64 = [&](llvm::Value* v) -> llvm::Value* {
+                    if(!v) return llvm::ConstantInt::get(i64,0);
+                    if(v->getType()->isIntegerTy(64)) return v;
+                    if(v->getType()->isIntegerTy()) return builder_.CreateSExt(v,i64);
+                    return v;
+                };
+                auto sxi = [&](llvm::Value* v) -> llvm::Value* { return builder_.CreateSExt(v,i64); };
+                if (meth=="mutex_new")                     { auto* fn=get_runtime_fn("slua_sync_mutex_new");     if(fn) return builder_.CreateCall(fn,{},"smn"); }
+                if (meth=="lock"      && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_sync_mutex_lock");    if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"sml")); }
+                if (meth=="unlock"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_sync_mutex_unlock");  if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"smu")); }
+                if (meth=="trylock"   && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_sync_mutex_trylock"); if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"smt")); }
+                if (meth=="free"      && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_sync_mutex_free");    if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"smf")); }
+                return llvm::ConstantInt::get(i64,0);
+            }
+            if (mod == "regex") {
+                auto* i64 = llvm::Type::getInt64Ty(ctx_);
+                auto* i32 = llvm::Type::getInt32Ty(ctx_);
+                auto ga   = [&](size_t n) -> llvm::Value* { return e.args.size()>n ? emit_expr(*e.args[n]) : nullptr; };
+                auto ci32 = [&](llvm::Value* v) -> llvm::Value* {
+                    if(!v) return llvm::ConstantInt::get(i32,0);
+                    if(v->getType()->isIntegerTy(32)) return v;
+                    if(v->getType()->isIntegerTy()) return builder_.CreateTrunc(v,i32);
+                    return v;
+                };
+                auto sxi  = [&](llvm::Value* v) -> llvm::Value* { return builder_.CreateSExt(v,i64); };
+                if (meth=="match"    && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_regex_match");    if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"rxm")); }
+                if (meth=="find"     && e.args.size()>=3) { auto* fn=get_runtime_fn("slua_regex_find");     if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1),ci32(ga(2))},"rxf")); }
+                if (meth=="replace"  && e.args.size()>=3) { auto* fn=get_runtime_fn("slua_regex_replace");  if(fn) return builder_.CreateCall(fn,{ga(0),ga(1),ga(2)},"rxr"); }
+                if (meth=="groups"   && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_regex_groups");   if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"rxg"); }
+                if (meth=="count"    && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_regex_count");    if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"rxc")); }
+                if (meth=="find_all" && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_regex_find_all"); if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"rxfa"); }
+                return llvm::ConstantInt::get(i64,0);
+            }
         }
     }
 
+    
     if (auto* id = std::get_if<Ident>(&e.callee->v)) {
         if (id->name == "print" && !e.args.empty()) {
             llvm::Value* arg = emit_expr(*e.args[0]);

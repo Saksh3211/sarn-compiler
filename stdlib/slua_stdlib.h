@@ -1,4 +1,4 @@
-#ifndef SLUA_STDLIB_H
+﻿#ifndef SLUA_STDLIB_H
 #define SLUA_STDLIB_H
 
 #include <stdint.h>
@@ -118,3 +118,13 @@ int32_t slua_ui_text_input(int32_t x, int32_t y, int32_t w, int32_t h, char* buf
 void    slua_ui_set_font_size(int32_t size);
 void    slua_ui_set_accent(int32_t r, int32_t g, int32_t b);
 #endif
+
+#include "modules/slua_fs.h"
+#include "modules/slua_random.h"
+#include "modules/slua_datetime.h"
+#include "modules/slua_path.h"
+#include "modules/slua_process.h"
+#include "modules/slua_json.h"
+#include "modules/slua_net.h"
+#include "modules/slua_sync.h"
+#include "modules/slua_regex.h"

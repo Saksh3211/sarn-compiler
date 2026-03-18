@@ -1,4 +1,4 @@
-#include "slua/TypeChecker.h"
+﻿#include "slua/TypeChecker.h"
 #include <sstream>
 #include <cassert>
 
@@ -288,6 +288,15 @@ namespace slua {
                 else if (v.module_name == "io") { env_->define("io",     make_any()); }
                 else if (v.module_name == "string") { env_->define("string", make_any()); }
                 else if (v.module_name == "stdata") { env_->define("stdata", make_any()); }
+                else if (v.module_name == "fs")       { env_->define("fs",       make_any()); }
+                else if (v.module_name == "random")   { env_->define("random",   make_any()); }
+                else if (v.module_name == "datetime") { env_->define("datetime", make_any()); }
+                else if (v.module_name == "path")     { env_->define("path",     make_any()); }
+                else if (v.module_name == "process")  { env_->define("process",  make_any()); }
+                else if (v.module_name == "json")     { env_->define("json",     make_any()); }
+                else if (v.module_name == "net")      { env_->define("net",      make_any()); }
+                else if (v.module_name == "sync")     { env_->define("sync",     make_any()); }
+                else if (v.module_name == "regex")    { env_->define("regex",    make_any()); }
                 else if (v.module_name == "table")  { env_->define("table",  make_any()); }
             }
         else if constexpr (std::is_same_v<T, FileImportDecl>) {}
