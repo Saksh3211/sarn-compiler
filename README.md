@@ -68,7 +68,7 @@ example.slua
 
 Basic strict mode example:
 
-```lua
+```slua
 --!!strict
 
 local x: int = 10
@@ -89,7 +89,7 @@ Variables can be mutable or constant.
 
 Example:
 
-```lua
+```slua
 --!!strict
 
 local value: int = 10
@@ -105,7 +105,7 @@ Functions support typed parameters and typed return values.
 
 Example:
 
-```lua
+```slua
 --!!strict
 
 function multiply(a: int, b: int): int
@@ -123,7 +123,7 @@ S Lua supports manual memory management for predictable performance.
 
 Example:
 
-```lua
+```slua
 --!!strict
 --!!mem:man
 
@@ -161,7 +161,7 @@ Files can contain directives at the top to configure compilation behavior.
 
 Example:
 
-```lua
+```slua
 --!!type:strict
 --!!mem:man
 ```
@@ -275,10 +275,10 @@ Clone the repository:
 git clone https://github.com/Saksh3211/S-lua
 cd S-lua
 
-there are two ways from now :-
-1. direct and simple build -
+there are two ways from now (i recommend downloading the slua directly via repo or way 1) :-
+1. direct and simple build:    
    .\cmake_configure.bat
-   this do all work at one
+   {this do all work at one}
 
 2. mannual way -
     Create a build directory:
