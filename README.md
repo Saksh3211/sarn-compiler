@@ -275,52 +275,66 @@ Clone the repository:
 git clone https://github.com/Saksh3211/S-lua
 cd S-lua
 
-Create a build directory:
+there are two ways from now :-
+1. direct and simple build -
+   .\cmake_configure.bat
+   this do all work at one
 
-mkdir build
-cd build
-
-Configure the project:
-
-cmake ..
-
-Build the compiler:
-
-cmake --build .
-
-This will generate the compiler executable:
-
-build/compiler/sluac.exe
-
----
-
-# Compiling a Program
-
-To compile a S Lua program into LLVM IR:
-
-.\build\compiler\sluac.exe examples\test_mine.slua -o examples\test_mine.ll
-
-This produces an LLVM IR file.
+2. mannual way -
+    Create a build directory:
+    
+    mkdir build
+    cd build
+    
+    Configure the project:
+    
+    cmake ..
+    
+    Build the compiler:
+    
+    cmake --build .
+    
+    This will generate the compiler executable:
+    
+    build/compiler/sluac.exe
 
 ---
-
-# Generating an Executable
-
-Use clang to convert the LLVM IR file into a native executable.
-
-Example:
-
-clang examples\test_mine.ll build\runtime\slua.lib -o test_mine.exe
-
-This links the program with the S Lua runtime.
-
+# Running Slua code :
 ---
-
-# Running the Program
-
-Run the compiled executable:
-
-.\test_mine.exe
+1. simple and easy way:
+   .\slua.ps1 Slua-Run *.slua
+   replace "*" with the path to your file
+---
+2. quickest way :
+    just download the vscode extention and put paths to the compiler slua.ps1 file
+    then restart vs code IDE and you will see a  run icon on top-right or press f5
+    {make sure you have installed the proper softwares}
+---
+3. complex but flexible way:
+    
+    # Compiling a Program
+    
+    To compile a S Lua program into LLVM IR:
+    
+    .\build\compiler\sluac.exe examples\test_mine.slua -o examples\test_mine.ll
+    
+    This produces an LLVM IR file.
+    
+    # Generating an Executable
+    
+    Use clang to convert the LLVM IR file into a native executable.
+    
+    Example:
+    
+    clang examples\test_mine.ll build\runtime\slua.lib -o test_mine.exe
+    
+    This links the program with the S Lua runtime.
+    
+    # Running the Program
+    
+    Run the compiled executable:
+    
+    .\test_mine.exe
 
 ---
 
