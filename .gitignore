@@ -1,20 +1,29 @@
 examples/*.ll
 examples/*.exe
 
-build/
+tools/lsp/slua-lsp/build/*
+
+build/*
+
+!build/compiler/
+build/compiler/*.cmake
+!build/compiler/sluac.exe
+
+
 *.ll
 *.o
 *.obj
 *.a
 *.lib
-*.exe
 *.out
 *.pdb
+*.obj
 *.ilk
 *.slua.sig
 
 cache/
 
+bin/*
 
 node_modules/
 npm-debug.log
