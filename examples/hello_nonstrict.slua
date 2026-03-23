@@ -1,7 +1,8 @@
 --!!type:nonstrict
+import io
 
 function main()
-    local x             
+    local x = 1            
     local y = x + 5     
     print(y)         
 
@@ -10,13 +11,13 @@ function main()
 
     local scores = { 95, 87, 72, 100, 63 }
     local total = 0
-    for i = 1, #scores do
+    for i = 1, #scores,i+1 do
         total = total + scores[i]
     end
     print(total)
 
-    local raw = read_line()
-    if not raw then
+    local raw = io.read_line()
+    if raw then
         print("You typed: " .. raw)
     end
 end
