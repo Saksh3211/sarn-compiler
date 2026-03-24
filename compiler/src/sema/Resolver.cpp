@@ -410,7 +410,7 @@ void Resolver::resolve_ident(Ident& e, Expr& node) {
 
         static const std::vector<std::string> std_mods = {
             "math","io","os","string","stdata","table",
-            "fs","random","datetime","path","process","json","net","sync","regex"
+            "fs","random","datetime","path","process","json","net","sync","regex","crypto","buf","thread","vec","scene"
         };
         if (!is_builtin) {
             for (auto& m : std_mods)

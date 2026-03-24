@@ -254,3 +254,101 @@ void slua_draw_text_font(int32_t font_id, const char* text,int32_t x, int32_t y,
     DrawTextEx(*f, t, (Vector2){(float)x, (float)y}, fs, spacing, col);
 }
 #endif
+
+#ifdef SLUA_HAS_RAYLIB
+#include <raylib.h>
+#include <raymath.h>
+#include <stdlib.h>
+#include <string.h>
+
+static Camera3D _cam3d = {0};
+
+void slua_camera3d_set(double px, double py, double pz,double tx, double ty, double tz,
+        double ux, double uy, double uz,
+        double fovy, int32_t proj) {
+    _cam3d.position   = (Vector3){(float)px,(float)py,(float)pz};
+    _cam3d.target     = (Vector3){(float)tx,(float)ty,(float)tz};
+    _cam3d.up         = (Vector3){(float)ux,(float)uy,(float)uz};
+    _cam3d.fovy       = (float)fovy;
+    _cam3d.projection = proj;
+}
+void slua_camera3d_update(void)  { UpdateCamera(&_cam3d, CAMERA_FREE); }
+void slua_begin_mode3d(void)  { BeginMode3D(_cam3d); }
+void slua_end_mode3d(void)  { EndMode3D(); }
+void slua_draw_cube(float px,float py,float pz,float w,float h,float d,int32_t r,int32_t g,int32_t b,int32_t a) {
+    DrawCube((Vector3){px,py,pz},w,h,d,slua_mk_color(r,g,b,a));
+}
+void slua_draw_cube_wires(float px,float py,float pz,float w,float h,float d,int32_t r,int32_t g,int32_t b,int32_t a) {
+    DrawCubeWires((Vector3){px,py,pz},w,h,d,slua_mk_color(r,g,b,a));
+}
+void slua_draw_sphere(float px,float py,float pz,float radius,int32_t r,int32_t g,int32_t b,int32_t a) {
+    DrawSphere((Vector3){px,py,pz},radius,slua_mk_color(r,g,b,a));
+}
+void slua_draw_sphere_wires(float px,float py,float pz,float radius,int32_t rings,int32_t slices,int32_t r,int32_t g,int32_t b,int32_t a) {
+    DrawSphereWires((Vector3){px,py,pz},radius,rings,slices,slua_mk_color(r,g,b,a));
+}
+void slua_draw_plane(float px,float py,float pz,float w,float h,int32_t r,int32_t g,int32_t b,int32_t a) {
+    DrawPlane((Vector3){px,py,pz},(Vector2){w,h},slua_mk_color(r,g,b,a));
+}
+void slua_draw_cylinder(float px,float py,float pz,float rt,float rb,float height,int32_t slices,int32_t r,int32_t g,int32_t b,int32_t a) {
+    DrawCylinder((Vector3){px,py,pz},rt,rb,height,slices,slua_mk_color(r,g,b,a));
+}
+void slua_draw_grid(int32_t slices, float spacing) { DrawGrid(slices,spacing); }
+void slua_draw_ray(float px,float py,float pz,float dx,float dy,float dz,int32_t r,int32_t g,int32_t b,int32_t a) {
+    Ray ray; ray.position=(Vector3){px,py,pz}; ray.direction=(Vector3){dx,dy,dz};
+    DrawRay(ray,slua_mk_color(r,g,b,a));
+}
+void slua_draw_line3d(float x1,float y1,float z1,float x2,float y2,float z2,int32_t r,int32_t g,int32_t b,int32_t a) {
+    DrawLine3D((Vector3){x1,y1,z1},(Vector3){x2,y2,z2},slua_mk_color(r,g,b,a));
+}
+
+#define MDL_MAX 64
+static Model _models[MDL_MAX];
+static int   _mused[MDL_MAX];
+static int   _minit;
+static void _m_init(void) { if(!_minit){ memset(_mused,0,sizeof(_mused)); _minit=1; } }
+int32_t slua_model_load(const char* path) {
+    _m_init(); for(int i=0;i<MDL_MAX;i++) if(!_mused[i]){ _models[i]=LoadModel(path); _mused[i]=1; return i; } return -1;
+}
+void slua_model_draw(int32_t id,float px,float py,float pz,float scale,int32_t r,int32_t g,int32_t b,int32_t a) {
+    if(id<0||id>=MDL_MAX||!_mused[id]) return;
+    DrawModel(_models[id],(Vector3){px,py,pz},scale,slua_mk_color(r,g,b,a));
+}
+void slua_model_draw_ex(int32_t id,float px,float py,float pz,float ax,float ay,float az,float angle,float sx,float sy,float sz,int32_t r,int32_t g,int32_t b,int32_t a) {
+    if(id<0||id>=MDL_MAX||!_mused[id]) return;
+    DrawModelEx(_models[id],(Vector3){px,py,pz},(Vector3){ax,ay,az},angle,(Vector3){sx,sy,sz},slua_mk_color(r,g,b,a));
+}
+void slua_model_unload(int32_t id) {
+    if(id<0||id>=MDL_MAX||!_mused[id]) return;
+    UnloadModel(_models[id]); _mused[id]=0;
+}
+
+#define TEX_MAX 64
+static Texture2D _texs[TEX_MAX]; static int _tused[TEX_MAX]; static int _ttinit;
+static void _tt_init(void){ if(!_ttinit){ memset(_tused,0,sizeof(_tused)); _ttinit=1; } }
+int32_t slua_texture_load(const char* path) {
+    _tt_init(); for(int i=0;i<TEX_MAX;i++) if(!_tused[i]){ _texs[i]=LoadTexture(path); _tused[i]=1; return i; } return -1;
+}
+void slua_texture_draw(int32_t id,int32_t x,int32_t y,int32_t r,int32_t g,int32_t b,int32_t a) {
+    if(id<0||id>=TEX_MAX||!_tused[id]) return;
+    DrawTexture(_texs[id],x,y,slua_mk_color(r,g,b,a));
+}
+void slua_texture_draw_ex(int32_t id,float x,float y,float angle,float scale,int32_t r,int32_t g,int32_t b,int32_t a) {
+    if(id<0||id>=TEX_MAX||!_tused[id]) return;
+    DrawTextureEx(_texs[id],(Vector2){x,y},angle,scale,slua_mk_color(r,g,b,a));
+}
+void slua_texture_unload(int32_t id) {
+    if(id<0||id>=TEX_MAX||!_tused[id]) return; UnloadTexture(_texs[id]); _tused[id]=0;
+}
+int32_t slua_texture_width(int32_t id)  { return (id>=0&&id<TEX_MAX&&_tused[id])?_texs[id].width:0; }
+int32_t slua_texture_height(int32_t id) { return (id>=0&&id<TEX_MAX&&_tused[id])?_texs[id].height:0; }
+
+void slua_window_init_3d(int32_t w, int32_t h, const char* title) {
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_MSAA_4X_HINT | FLAG_DEPTH_BUFFER);
+    InitWindow(w, h, title);
+}
+double slua_get_time(void) { return GetTime(); }
+void   slua_draw_fps_counter(int32_t x, int32_t y) { DrawFPS(x, y); }
+float  slua_vec3_dot_f(float ax,float ay,float az,float bx,float by,float bz) { return ax*bx+ay*by+az*bz; }
+
+#endif

@@ -128,3 +128,7 @@ void    slua_ui_set_accent(int32_t r, int32_t g, int32_t b);
 #include "modules/slua_net.h"
 #include "modules/slua_sync.h"
 #include "modules/slua_regex.h"
+#include "modules/slua_crypto.h"
+#include "modules/slua_buf.h"
+#include "modules/slua_thread.h"
+#include "modules/slua_vec.h"

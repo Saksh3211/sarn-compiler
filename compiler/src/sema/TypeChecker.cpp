@@ -297,6 +297,11 @@ namespace slua {
                 else if (v.module_name == "net")      { env_->define("net",      make_any()); }
                 else if (v.module_name == "sync")     { env_->define("sync",     make_any()); }
                 else if (v.module_name == "regex")    { env_->define("regex",    make_any()); }
+                else if (v.module_name == "crypto")  { env_->define("crypto",  make_any()); }
+                else if (v.module_name == "buf")     { env_->define("buf",     make_any()); }
+                else if (v.module_name == "thread")  { env_->define("thread",  make_any()); }
+                else if (v.module_name == "vec")     { env_->define("vec",     make_any()); }
+                else if (v.module_name == "scene")   { env_->define("scene",   make_any()); }
                 else if (v.module_name == "table")  { env_->define("table",  make_any()); }
             }
         else if constexpr (std::is_same_v<T, FileImportDecl>) {}
