@@ -344,7 +344,7 @@ int32_t slua_texture_width(int32_t id)  { return (id>=0&&id<TEX_MAX&&_tused[id])
 int32_t slua_texture_height(int32_t id) { return (id>=0&&id<TEX_MAX&&_tused[id])?_texs[id].height:0; }
 
 void slua_window_init_3d(int32_t w, int32_t h, const char* title) {
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_MSAA_4X_HINT | FLAG_DEPTH_BUFFER);
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_MSAA_4X_HINT);
     InitWindow(w, h, title);
 }
 double slua_get_time(void) { return GetTime(); }

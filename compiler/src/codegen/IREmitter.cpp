@@ -407,7 +407,6 @@ void IREmitter::declare_runtime() {
     declare("slua_math_sign",    f64, {f64});
     declare("slua_math_fract",   f64, {f64});
     declare("slua_math_mod",     f64, {f64, f64});
-    auto* f32 = llvm::Type::getFloatTy(ctx_);
     declare("slua_camera3d_set",     voidT, {f64,f64,f64,f64,f64,f64,f64,f64,f64,f64,i32});
     declare("slua_camera3d_update",  voidT, {});
     declare("slua_begin_mode3d",     voidT, {});

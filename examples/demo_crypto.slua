@@ -1,0 +1,28 @@
+﻿--!!type:strict
+import crypto
+import buf
+
+function main(): int
+    local h: string = crypto.sha256("hello world")
+    print("sha256 : "..h)
+
+    local m: string = crypto.md5("hello world")
+    print("md5 : "..m)
+
+    local enc: string = crypto.base64_encode("hello slua", 10)
+    print("base64 encoded : "..enc)
+
+    local dec: string = crypto.base64_decode(enc)
+    print("decoded : "..dec)
+
+    local crc: int = crypto.crc32("test data", 9)
+    print("crc : "..crc)
+
+    --local b: int = buf.new(16)
+    --buf.write_u32(b, 0, 0xDEADBEEF)
+    --buf.write_f64(b, 4, 3.14159)
+    --local hex: string = buf.to_hex(b)
+    --print(hex)
+    --buf.free(b)
+    return 0
+end
