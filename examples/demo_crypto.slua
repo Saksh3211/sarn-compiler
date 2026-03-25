@@ -18,11 +18,11 @@ function main(): int
     local crc: int = crypto.crc32("test data", 9)
     print("crc : "..crc)
 
-    --local b: int = buf.new(16)
-    --buf.write_u32(b, 0, 0xDEADBEEF)
-    --buf.write_f64(b, 4, 3.14159)
-    --local hex: string = buf.to_hex(b)
-    --print(hex)
-    --buf.free(b)
+    local b: int = buf.new(16)
+    buf.write_u32(b, 0, 0xDEADBEEF)
+    buf.write_f64(b, 4, 3.14159)
+    local hex: string = buf.to_hex(b)
+    print(hex)
+    buf.free(b)
     return 0
 end

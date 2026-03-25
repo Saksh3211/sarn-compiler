@@ -1,4 +1,4 @@
-#include "slua/Lexer.h"
+﻿#include "slua/Lexer.h"
 #include <stdexcept>
 #include <cctype>
 #include <unordered_map>
@@ -233,11 +233,26 @@ Token Lexer::scan_string(char delim) {
 Token Lexer::scan_number() {
     std::string num;
     bool is_float = false;
+    if (src_[pos_] == '0' && pos_+1 < src_.size() && (src_[pos_+1] == 'x' || src_[pos_+1] == 'X')) {
+        num += advance();
+        num += advance();
+        while (pos_ < src_.size() && (std::isxdigit(src_[pos_])))
+            num += advance();
+        uint64_t val = std::stoull(num, nullptr, 16);
+        return Token{TokenKind::TK_INT_LIT, std::to_string(val), loc()};
+    }
+    if (src_[pos_] == '0' && pos_+1 < src_.size() && (src_[pos_+1] == 'b' || src_[pos_+1] == 'B')) {
+        num += advance();
+        num += advance();
+        while (pos_ < src_.size() && (src_[pos_] == '0' || src_[pos_] == '1'))
+            num += advance();
+        uint64_t val = std::stoull(num, nullptr, 2);
+        return Token{TokenKind::TK_INT_LIT, std::to_string(val), loc()};
+    }
     while (pos_ < src_.size() && (std::isdigit(src_[pos_]) || src_[pos_] == '.')) {
         if (src_[pos_] == '.') is_float = true;
         num += advance();
     }
-    
     if (pos_ < src_.size() && (src_[pos_] == 'e' || src_[pos_] == 'E')) {
         is_float = true;
         num += advance();
