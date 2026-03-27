@@ -433,6 +433,23 @@ void IREmitter::declare_runtime() {
     declare("slua_window_init_3d",   voidT, {i32,i32,i8p});
     declare("slua_get_time",         f64,   {});
     declare("slua_draw_fps_counter", voidT, {i32,i32});
+    declare("slua_http_get",         i8p,   {i8p});
+    declare("slua_http_post",        i8p,   {i8p, i8p, i8p});
+    declare("slua_http_post_json",   i8p,   {i8p, i8p});
+    declare("slua_http_status",      i32,   {i8p});
+    declare("slua_tbl_len_rt",       i32,   {i8p});
+    declare("slua_tbl_push",         voidT, {i8p, i64});
+    declare("slua_tbl_push_f",       voidT, {i8p, f64});
+    declare("slua_tbl_push_s",       voidT, {i8p, i8p});
+    declare("slua_tbl_pop",          voidT, {i8p});
+    declare("slua_tbl_contains_s",   i32,   {i8p, i8p});
+    declare("slua_tbl_contains_i",   i32,   {i8p, i64});
+    declare("slua_tbl_keys",         i8p,   {i8p});
+    declare("slua_tbl_remove_at",    voidT, {i8p, i32});
+    declare("slua_tbl_clear",        voidT, {i8p});
+    declare("slua_tbl_merge",        i8p,   {i8p, i8p});
+    declare("slua_tbl_slice",        i8p,   {i8p, i32, i32});
+    declare("slua_tbl_reverse",      voidT, {i8p});
 }
 
 llvm::Function* IREmitter::get_runtime_fn(const std::string& name) {
@@ -1325,8 +1342,21 @@ llvm::Value* IREmitter::emit_unop(Unop& e, SourceLoc loc) {
             val = builder_.CreateICmpEQ(val, llvm::Constant::getNullValue(val->getType()));
         return builder_.CreateNot(val);
     }
-    if (e.op == "#")
-        return llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx_), 0);
+    if (e.op == "#") {
+        auto* i64 = llvm::Type::getInt64Ty(ctx_);
+        if (val->getType()->isPointerTy()) {
+            auto* fn = get_runtime_fn("slua_tbl_len_rt");
+            if (fn) {
+                auto* r = builder_.CreateCall(fn, {val}, "tlen");
+                return builder_.CreateSExt(r, i64);
+            }
+        }
+        if (val->getType()->isIntegerTy()) {
+            auto* fn = get_runtime_fn("slua_str_len");
+            if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {val}, "slen"), i64);
+        }
+        return llvm::ConstantInt::get(i64, 0);
+    }
     return val;
 }
 // here the umm, all the libs -=-========-=-=-=-=-=-=-=-=-=-=-=-=-=-=-========-=-=-=-=-=-=-=-=-=-=-=
@@ -1940,6 +1970,62 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                 if (meth=="free"      && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_sync_mutex_free");    if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"smf")); }
                 return llvm::ConstantInt::get(i64,0);
             }
+            if (mod == "http") {
+                auto* i8p = llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(ctx_));
+                auto* i64 = llvm::Type::getInt64Ty(ctx_);
+                auto* i32 = llvm::Type::getInt32Ty(ctx_);
+                (void)i8p;
+                auto ga  = [&](size_t n) -> llvm::Value* { return e.args.size()>n ? emit_expr(*e.args[n]) : nullptr; };
+                auto sxi = [&](llvm::Value* v) -> llvm::Value* { return builder_.CreateSExt(v,i64); };
+                if (meth=="get"       && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_http_get");       if(fn) return builder_.CreateCall(fn,{ga(0)},"hget"); }
+                if (meth=="post"      && e.args.size()>=3) { auto* fn=get_runtime_fn("slua_http_post");      if(fn) return builder_.CreateCall(fn,{ga(0),ga(1),ga(2)},"hpost"); }
+                if (meth=="post_json" && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_http_post_json"); if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"hpj"); }
+                if (meth=="status"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_http_status");    if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"hst")); }
+                return llvm::ConstantPointerNull::get(llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(ctx_)));
+            }
+            if (mod == "table") {
+                auto* i8p = llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(ctx_));
+                auto* i64 = llvm::Type::getInt64Ty(ctx_);
+                auto* f64 = llvm::Type::getDoubleTy(ctx_);
+                auto* i32 = llvm::Type::getInt32Ty(ctx_);
+                (void)i8p;
+                auto ga   = [&](size_t n) -> llvm::Value* { return e.args.size()>n ? emit_expr(*e.args[n]) : nullptr; };
+                auto c64  = [&](llvm::Value* v) -> llvm::Value* {
+                    if(!v) return llvm::ConstantInt::get(i64,0);
+                    if(v->getType()->isIntegerTy(64)) return v;
+                    if(v->getType()->isIntegerTy()) return builder_.CreateSExt(v,i64);
+                    return v;
+                };
+                auto ci32 = [&](llvm::Value* v) -> llvm::Value* {
+                    if(!v) return llvm::ConstantInt::get(i32,0);
+                    if(v->getType()->isIntegerTy(32)) return v;
+                    if(v->getType()->isIntegerTy()) return builder_.CreateTrunc(v,i32);
+                    if(v->getType()->isDoubleTy()) return builder_.CreateFPToSI(v,i32);
+                    return v;
+                };
+                auto cf64 = [&](llvm::Value* v) -> llvm::Value* {
+                    if(!v) return llvm::ConstantFP::get(f64,0.0);
+                    if(v->getType()->isDoubleTy()) return v;
+                    if(v->getType()->isIntegerTy()) return builder_.CreateSIToFP(v,f64);
+                    return v;
+                };
+                auto sxi  = [&](llvm::Value* v) -> llvm::Value* { return builder_.CreateSExt(v,i64); };
+                if (meth=="len"        && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_tbl_len_rt");    if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"tlen")); }
+                if (meth=="push"       && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_tbl_push");      if(fn){ builder_.CreateCall(fn,{ga(0),c64(ga(1))}); return llvm::ConstantInt::get(i64,0); } }
+                if (meth=="push_float" && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_tbl_push_f");    if(fn){ builder_.CreateCall(fn,{ga(0),cf64(ga(1))}); return llvm::ConstantInt::get(i64,0); } }
+                if (meth=="push_str"   && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_tbl_push_s");    if(fn){ builder_.CreateCall(fn,{ga(0),ga(1)}); return llvm::ConstantInt::get(i64,0); } }
+                if (meth=="pop"        && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_tbl_pop");       if(fn){ builder_.CreateCall(fn,{ga(0)}); return llvm::ConstantInt::get(i64,0); } }
+                if (meth=="contains_str"&&e.args.size()>=2) { auto* fn=get_runtime_fn("slua_tbl_contains_s");if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"tcs")); }
+                if (meth=="contains_int"&&e.args.size()>=2) { auto* fn=get_runtime_fn("slua_tbl_contains_i");if(fn) return sxi(builder_.CreateCall(fn,{ga(0),c64(ga(1))},"tci")); }
+                if (meth=="keys"       && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_tbl_keys");      if(fn) return builder_.CreateCall(fn,{ga(0)},"tkeys"); }
+                if (meth=="remove_at"  && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_tbl_remove_at"); if(fn){ builder_.CreateCall(fn,{ga(0),ci32(ga(1))}); return llvm::ConstantInt::get(i64,0); } }
+                if (meth=="clear"      && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_tbl_clear");     if(fn){ builder_.CreateCall(fn,{ga(0)}); return llvm::ConstantInt::get(i64,0); } }
+                if (meth=="merge"      && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_tbl_merge");     if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"tmerge"); }
+                if (meth=="slice"      && e.args.size()>=3) { auto* fn=get_runtime_fn("slua_tbl_slice");     if(fn) return builder_.CreateCall(fn,{ga(0),ci32(ga(1)),ci32(ga(2))},"tslice"); }
+                if (meth=="reverse"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_tbl_reverse");   if(fn){ builder_.CreateCall(fn,{ga(0)}); return llvm::ConstantInt::get(i64,0); } }
+                if (meth=="new")                             { auto* fn=get_runtime_fn("slua_tbl_new");       if(fn) return builder_.CreateCall(fn,{},"tnew"); }
+                return llvm::ConstantInt::get(i64,0);
+            }
             if (mod == "crypto") {
                 auto* i8p = llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(ctx_));
                 auto* i64 = llvm::Type::getInt64Ty(ctx_);
@@ -2206,7 +2292,25 @@ llvm::Value* IREmitter::emit_method_call(MethodCall& e, SourceLoc loc) {
         if (it != functions_.end()) fn = it->second;
     }
 
-    llvm::Value* self = emit_expr(*e.obj);
+    if (!fn) {
+        if (auto* id2 = std::get_if<Ident>(&e.obj->v)) {
+            for (auto& [sn, _] : struct_fields_) {
+                auto fit2 = functions_.find(sn + "." + e.method);
+                if (fit2 != functions_.end()) { fn = fit2->second; break; }
+            }
+        }
+    }
+
+    llvm::Value* self = nullptr;
+    if (std::holds_alternative<Call>(e.obj->v) || std::holds_alternative<MethodCall>(e.obj->v)) {
+        llvm::Value* tmp = emit_expr(*e.obj);
+        if (tmp && llvm::isa<llvm::StructType>(tmp->getType())) {
+            auto* st = llvm::cast<llvm::StructType>(tmp->getType());
+            auto* slot = create_alloca(st, "_mc_tmp");
+            builder_.CreateStore(tmp, slot);
+            self = slot;
+        } else { self = tmp; }
+    } else { self = emit_expr(*e.obj); }
 
     if (!fn) {
         for (auto& arg : e.args) emit_expr(*arg);

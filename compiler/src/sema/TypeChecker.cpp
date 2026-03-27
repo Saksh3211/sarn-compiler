@@ -302,6 +302,8 @@ namespace slua {
                 else if (v.module_name == "thread")  { env_->define("thread",  make_any()); }
                 else if (v.module_name == "vec")     { env_->define("vec",     make_any()); }
                 else if (v.module_name == "scene")   { env_->define("scene",   make_any()); }
+                else if (v.module_name == "http")    { env_->define("http",    make_any()); }
+                else if (v.module_name == "table")   { env_->define("table",   make_any()); }
                 else if (v.module_name == "table")  { env_->define("table",  make_any()); }
             }
         else if constexpr (std::is_same_v<T, FileImportDecl>) {}

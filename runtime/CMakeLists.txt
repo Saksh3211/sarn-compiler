@@ -32,7 +32,7 @@ else()
 endif()
 
 if(WIN32)
-    target_link_libraries(libslua PUBLIC ws2_32)
+    target_link_libraries(libslua PUBLIC ws2_32 winhttp)
 else()
     find_package(Threads REQUIRED)
     target_link_libraries(libslua PUBLIC Threads::Threads)
