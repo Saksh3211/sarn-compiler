@@ -1,0 +1,52 @@
+﻿--!!type:strict
+import stdgui
+
+export function draw_panel_bg(x: int, y: int, w: int, h: int, title: string): void
+    draw.rect(x, y, w, h, 28, 28, 40, 255)
+    draw.rect(x, y, w, 32, 50, 50, 80, 255)
+    draw.rect_outline(x, y, w, h, 1, 70, 70, 100, 255)
+    draw.text(title, x + 10, y + 8, 16, 200, 200, 220, 255)
+end
+
+export function draw_coin_row(x: int, y: int, w: int, name: string, symbol: string, price: number, change: number, value: number, is_up: int): void
+    local row_col_r: int = 35
+    local row_col_g: int = 35
+    local row_col_b: int = 50
+    draw.rect(x, y, w, 48, row_col_r, row_col_g, row_col_b, 255)
+    draw.rect_outline(x, y, w, 48, 1, 60, 60, 90, 200)
+    draw.text(symbol, x + 12, y + 8, 18, 255, 200, 80, 255)
+    draw.text(name,   x + 12, y + 28, 13, 150, 150, 180, 255)
+    local price_str: string = "$" .. price
+    draw.text(price_str, x + 200, y + 15, 16, 230, 230, 255, 255)
+    local change_str: string = change .. "%"
+    local cr: int = 80
+    local cg: int = 220
+    local cb: int = 120
+    if is_up == 0 then
+        cr = 220
+        cg = 80
+        cb = 80
+    end
+    draw.text(change_str, x + 360, y + 15, 15, cr, cg, cb, 255)
+    local val_str: string = "$" .. value
+    draw.text(val_str, x + 500, y + 15, 15, 200, 200, 255, 255)
+end
+
+export function draw_total_bar(x: int, y: int, w: int, total: number): void
+    draw.rect(x, y, w, 50, 40, 60, 90, 255)
+    draw.text("Portfolio Value", x + 12, y + 8, 14, 150, 200, 255, 255)
+    local total_str: string = "$" .. total
+    draw.text(total_str, x + 12, y + 26, 20, 100, 255, 180, 255)
+end
+
+export function draw_status(x: int, y: int, msg: string, ok: int): void
+    local r: int = 100
+    local g: int = 200
+    local b: int = 100
+    if ok == 0 then
+        r = 200
+        g = 100
+        b = 100
+    end
+    draw.text(msg, x, y, 13, r, g, b, 200)
+end

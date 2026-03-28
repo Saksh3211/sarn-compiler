@@ -3,11 +3,6 @@
 #include <cassert>
 
 namespace slua {
-
-    
-    
-    
-
     std::string SluaType::to_string() const {
         switch (kind) {
             case TypeKind::INT:    return "int";
@@ -358,10 +353,6 @@ namespace slua {
         env_->define(s.name, final_type);
     }
 
-    
-    
-    
-
     void TypeChecker::check_func_decl(FuncDecl& s, SourceLoc loc) {
         
         std::vector<SluaTypePtr> param_types;
@@ -372,11 +363,14 @@ namespace slua {
             ? resolve_type_node(s.ret_type.get())
             : make_void();
 
-        env_->define(s.name, make_func(param_types, ret));
-
+        auto fn_type = make_func(param_types, ret);
+        env_->define(s.name, fn_type);
+        auto dot = s.name.find('.');
+        if (dot != std::string::npos) {
+            env_->define(s.name, fn_type);
+        }
         
         push_env();
-
         
         for (size_t i = 0; i < s.params.size(); i++) {
             auto& [pname, ptype] = s.params[i];
@@ -818,22 +812,30 @@ namespace slua {
         return make_any(); 
     }
 
-    
-    
-    
-
     SluaTypePtr TypeChecker::check_field(Field& e, SourceLoc loc) {
+        if (auto* id = std::get_if<Ident>(&e.table->v)) {
+            SluaTypePtr sym = env_ ? env_->lookup(id->name) : nullptr;
+            if (sym && sym->kind == TypeKind::RECORD) {
+                std::string method_key = id->name + "." + e.name;
+                SluaTypePtr mfn = env_ ? env_->lookup(method_key) : nullptr;
+                if (mfn) return mfn->kind == TypeKind::FUNC ? (mfn->return_type ? mfn->return_type : make_void()) : make_any();
+                return make_any();
+            }
+        }
         SluaTypePtr obj_t = check_expr(*e.table);
         if (!obj_t || obj_t->kind == TypeKind::ANY) return make_any();
 
         if (obj_t->kind == TypeKind::RECORD) {
             for (auto& f : obj_t->fields)
                 if (f.name == e.name) return f.type;
+            std::string method_key = obj_t->name + "." + e.name;
+            SluaTypePtr mfn = env_ ? env_->lookup(method_key) : nullptr;
+            if (mfn) return mfn->kind == TypeKind::FUNC ? (mfn->return_type ? mfn->return_type : make_void()) : make_any();
             if (cfg_.mode == CompileMode::STRICT)
-                diag_.error("E0080",
-                    "record type '" + obj_t->to_string() +
-                    "' has no field '" + e.name + "'", loc);
-            return make_error();
+                diag_.warn("W0080",
+                    "record type ''" + obj_t->to_string() +
+                    "'' has no field ''" + e.name + "''", loc);
+            return make_any();
         }
         return make_any();
     }

@@ -462,6 +462,12 @@ void Resolver::resolve_method_call(MethodCall& e) {
 }
 
 void Resolver::resolve_field(Field& e) {
+    if (auto* id = std::get_if<Ident>(&e.table->v)) {
+        Symbol* sym = current_scope_->lookup(id->name);
+        if (sym && sym->kind == SymbolKind::TYPE) {
+            return;
+        }
+    }
     resolve_expr(*e.table);
 }
 

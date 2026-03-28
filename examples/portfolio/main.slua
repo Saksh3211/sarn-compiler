@@ -1,0 +1,96 @@
+﻿--!!type:nonstrict
+--!!mem:man
+import stdgui
+import http
+import json
+import os
+import stdata
+import ("coin.slua")
+import ("fetcher.slua")
+import ("ui.slua")
+
+function datetime_now_str(): string
+    local t: int = os.time()
+    return stdata.tostring(t)
+end
+
+function main(): int
+    window.init(780, 520, "S Lua Portfolio Tracker", 60)
+    ui.set_accent(70, 110, 200)
+    ui.set_font_size(16)
+
+    local btc: Coin = Coin.new("Bitcoin",  "BTC", 0.5)
+    local eth: Coin = Coin.new("Ethereum", "ETH", 4.0)
+    local sol: Coin = Coin.new("Solana",   "SOL", 20.0)
+
+    local status_msg: string = "Press R to refresh prices"
+    local status_ok:  int    = 1
+    local total:      number = 0.0
+
+    const KEY_R:   int = 82
+    const KEY_ESC: int = 256
+
+    while window.should_close() == 0 do
+        if input.key_pressed(KEY_ESC) == 1 then
+            window.close()
+        end
+
+        if input.key_pressed(KEY_R) == 1 then
+            status_msg = "Fetching prices..."
+            status_ok  = 1
+            window.begin_drawing()
+            window.clear(18, 18, 28, 255)
+            draw.text("Fetching live prices...", 260, 240, 22, 255, 220, 80, 255)
+            window.end_drawing()
+
+            local resp: string = fetch_all_prices("bitcoin,ethereum,solana")
+
+            if resp == "" then
+                status_msg = "Fetch failed - check internet connection"
+                status_ok  = 0
+            else
+                local btc_price: number = json.get_float(resp, "bitcoin")
+                local eth_price: number = json.get_float(resp, "ethereum")
+                local sol_price: number = json.get_float(resp, "solana")
+
+                btc   = Coin.update_price(btc, btc_price, 0.0)
+                eth   = Coin.update_price(eth, eth_price, 0.0)
+                sol   = Coin.update_price(sol, sol_price, 0.0)
+                total = Coin.value(btc) + Coin.value(eth) + Coin.value(sol)
+
+                status_msg = "Updated at " .. datetime_now_str()
+                status_ok  = 1
+            end
+        end
+
+        window.begin_drawing()
+        window.clear(18, 18, 28, 255)
+
+        draw.rect(0, 0, 780, 56, 25, 25, 38, 255)
+        draw.text("S Lua Portfolio Tracker", 20, 15, 22, 120, 200, 255, 255)
+        draw.text("R = refresh   ESC = quit", 560, 20, 13, 80, 80, 120, 255)
+        draw.rect(0, 56, 780, 1, 60, 60, 90, 255)
+
+        draw_panel_bg(10, 68, 760, 320, "Holdings")
+
+        draw.text("Coin",          22,  108, 13, 120, 120, 160, 255)
+        draw.text("Price (USD)",  222,  108, 13, 120, 120, 160, 255)
+        draw.text("24h %",        382,  108, 13, 120, 120, 160, 255)
+        draw.text("Your Value",   522,  108, 13, 120, 120, 160, 255)
+        draw.rect(10, 124, 760, 1, 60, 60, 90, 180)
+
+        draw_coin_row(10, 130, 760, btc.name, btc.symbol, btc.price, btc.change, Coin.value(btc), Coin.is_up(btc))
+        draw_coin_row(10, 182, 760, eth.name, eth.symbol, eth.price, eth.change, Coin.value(eth), Coin.is_up(eth))
+        draw_coin_row(10, 234, 760, sol.name, sol.symbol, sol.price, sol.change, Coin.value(sol), Coin.is_up(sol))
+
+        draw_total_bar(10, 400, 760, total)
+        draw_status(20, 462, status_msg, status_ok)
+
+        draw.text("S Lua v0.3  |  built with raylib + WinHTTP + LLVM", 180, 498, 11, 50, 50, 80, 200)
+
+        window.end_drawing()
+    end
+
+    window.close()
+    return 0
+end
