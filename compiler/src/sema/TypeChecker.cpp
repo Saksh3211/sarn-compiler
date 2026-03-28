@@ -814,23 +814,38 @@ namespace slua {
 
     SluaTypePtr TypeChecker::check_field(Field& e, SourceLoc loc) {
         if (auto* id = std::get_if<Ident>(&e.table->v)) {
+            std::string method_key = id->name + "." + e.name;
+            SluaTypePtr mfn = env_ ? env_->lookup(method_key) : nullptr;
+            if (mfn) {
+                if (mfn->kind == TypeKind::FUNC)
+                    return mfn->return_type ? mfn->return_type : make_void();
+                return make_any();
+            }
+            
             SluaTypePtr sym = env_ ? env_->lookup(id->name) : nullptr;
-            if (sym && sym->kind == TypeKind::RECORD) {
-                std::string method_key = id->name + "." + e.name;
-                SluaTypePtr mfn = env_ ? env_->lookup(method_key) : nullptr;
-                if (mfn) return mfn->kind == TypeKind::FUNC ? (mfn->return_type ? mfn->return_type : make_void()) : make_any();
+            if (sym && (sym->kind == TypeKind::RECORD ||sym->kind == TypeKind::GENERIC ||sym->kind == TypeKind::ANY)) {
                 return make_any();
             }
         }
+        
         SluaTypePtr obj_t = check_expr(*e.table);
         if (!obj_t || obj_t->kind == TypeKind::ANY) return make_any();
 
         if (obj_t->kind == TypeKind::RECORD) {
-            for (auto& f : obj_t->fields)
-                if (f.name == e.name) return f.type;
-            std::string method_key = obj_t->name + "." + e.name;
-            SluaTypePtr mfn = env_ ? env_->lookup(method_key) : nullptr;
-            if (mfn) return mfn->kind == TypeKind::FUNC ? (mfn->return_type ? mfn->return_type : make_void()) : make_any();
+            
+            for (auto& rf : obj_t->fields)
+                if (rf.name == e.name) return rf.type;
+            
+            if (!obj_t->name.empty()) {
+                std::string mk = obj_t->name + "." + e.name;
+                SluaTypePtr mfn2 = env_ ? env_->lookup(mk) : nullptr;
+                if (mfn2) {
+                    if (mfn2->kind == TypeKind::FUNC)
+                        return mfn2->return_type ? mfn2->return_type : make_void();
+                    return make_any();
+                }
+            }
+            
             if (cfg_.mode == CompileMode::STRICT)
                 diag_.warn("W0080",
                     "record type ''" + obj_t->to_string() +

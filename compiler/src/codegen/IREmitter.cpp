@@ -1361,6 +1361,40 @@ llvm::Value* IREmitter::emit_unop(Unop& e, SourceLoc loc) {
 }
 // here the umm, all the libs -=-========-=-=-=-=-=-=-=-=-=-=-=-=-=-=-========-=-=-=-=-=-=-=-=-=-=-=
 llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
+    if (auto* fld = std::get_if<Field>(&e.callee->v)) {
+        if (auto* base_id = std::get_if<Ident>(&fld->table->v)) {
+            std::string full_name = base_id->name + "." + fld->name;
+            auto fit = functions_.find(full_name);
+            if (fit != functions_.end()) {
+                llvm::Function* fn = fit->second;
+                auto* ftype = fn->getFunctionType();
+                std::vector<llvm::Value*> args;
+                for (size_t i = 0; i < e.args.size(); i++) {
+                    llvm::Value* av = emit_expr(*e.args[i]);
+                    if (i < ftype->getNumParams()) {
+                        llvm::Type* pt = ftype->getParamType((unsigned)i);
+                        if (av && av->getType() != pt) {
+                            if (pt->isDoubleTy() && av->getType()->isIntegerTy())
+                                av = builder_.CreateSIToFP(av, pt, "coerce_f");
+                            else if (pt->isIntegerTy() && av->getType()->isDoubleTy())
+                                av = builder_.CreateFPToSI(av, pt, "coerce_i");
+                            else if (pt->isIntegerTy() && av->getType()->isIntegerTy() && pt->getIntegerBitWidth() != av->getType()->getIntegerBitWidth())
+                                av = builder_.CreateSExtOrTrunc(av, pt, "coerce_sz");
+                            else if (pt->isPointerTy() && !av->getType()->isPointerTy())
+                                av = builder_.CreateIntToPtr(av, pt, "coerce_p");
+                            else if (!pt->isPointerTy() && av->getType()->isPointerTy())
+                                av = builder_.CreatePtrToInt(av, pt, "coerce_pi");
+                        }
+                        args.push_back(av);
+                    } else {
+                        args.push_back(av);
+                    }
+                }
+                return builder_.CreateCall(fn, args, "oop_ret");
+            }
+        }
+    }
+
     if (auto* fi = std::get_if<Field>(&e.callee->v)) {
         if (auto* mod_id = std::get_if<Ident>(&fi->table->v)) {
             const std::string& mod  = mod_id->name;

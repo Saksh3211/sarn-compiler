@@ -8,19 +8,19 @@ type Coin = {
      owned:  number
 }
 
-export function Coin.new(name: string, symbol: string, owned: number): Coin
+function Coin.new(name: string, symbol: string, owned: number): Coin
      return { name = name, symbol = symbol, price = 0.0, change = 0.0, owned = owned }
 end
 
-export function Coin.value(self: Coin): number
+function Coin.value(self: Coin): number
     return self.price * self.owned
 end
 
-export function Coin.update_price(self: Coin, price: number, change: number): Coin
+function Coin.update_price(self: Coin, price: number, change: number): Coin
      return { name = self.name, symbol = self.symbol, price = price, change = change, owned = self.owned }
 end
 
-export function Coin.is_up(self: Coin): int
+function Coin.is_up(self: Coin): int
      if self.change >= 0.0 then
           return 1
      end

@@ -1,4 +1,4 @@
-﻿--!!type:nonstrict
+﻿--!!type:strict
 --!!mem:man
 import stdgui
 import http

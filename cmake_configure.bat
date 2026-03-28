@@ -32,7 +32,6 @@ echo.
 echo ================================================================
 echo   BUILD SUCCESSFUL  -  build\compiler\sluac.exe
 echo ================================================================
-echo Test it:
-echo   build\compiler\sluac.exe examples\hello_strict.slua --emit-ir
+echo Test it with running files in the "examples" folder with slua.ps1/slua extenstion, e.g.:
+echo   slua examples/hello_world.slua
 pause
-
