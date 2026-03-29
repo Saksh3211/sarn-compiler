@@ -1,4 +1,4 @@
-﻿#ifdef SLUA_HAS_LLVM
+#ifdef SLUA_HAS_LLVM
 
 #include "slua/IREmitter.h"
 #include <llvm/IR/Constants.h>
@@ -326,6 +326,9 @@ void IREmitter::declare_runtime() {
     declare("slua_json_has_key",       i32, {i8p, i8p});
     declare("slua_json_minify",        i8p, {i8p});
     declare("slua_json_get_array_item",i8p, {i8p, i8p, i32});
+    declare("slua_json_get_nested_float", f64, {i8p, i8p, i8p});
+    declare("slua_json_get_nested_int",   i64, {i8p, i8p, i8p});
+    declare("slua_json_get_nested_str",   i8p, {i8p, i8p, i8p});
     declare("slua_net_init",        i32, {});
     declare("slua_net_connect",     i64, {i8p, i32});
     declare("slua_net_listen",      i64, {i32});
@@ -1990,6 +1993,9 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                 if (meth=="has_key"       && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_json_has_key");        if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"jhk")); }
                 if (meth=="minify"        && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_json_minify");         if(fn) return builder_.CreateCall(fn,{ga(0)},"jmn"); }
                 if (meth=="get_array_item"&& e.args.size()>=3) { auto* fn=get_runtime_fn("slua_json_get_array_item"); if(fn) return builder_.CreateCall(fn,{ga(0),ga(1),ci32(ga(2))},"jai"); }
+                if (meth=="get_nested_float"&& e.args.size()>=3) { auto* fn=get_runtime_fn("slua_json_get_nested_float"); if(fn) return builder_.CreateCall(fn,{ga(0),ga(1),ga(2)},"jgnf"); }
+                if (meth=="get_nested_int"  && e.args.size()>=3) { auto* fn=get_runtime_fn("slua_json_get_nested_int");   if(fn) return builder_.CreateCall(fn,{ga(0),ga(1),ga(2)},"jgni"); }
+                if (meth=="get_nested_str"  && e.args.size()>=3) { auto* fn=get_runtime_fn("slua_json_get_nested_str");   if(fn) return builder_.CreateCall(fn,{ga(0),ga(1),ga(2)},"jgns"); }
                 return llvm::ConstantInt::get(i64,0);
             }
             if (mod == "net") {

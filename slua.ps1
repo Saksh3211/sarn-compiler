@@ -27,3 +27,8 @@ function Slua-Run {
 if ($Command -eq "Slua-Run" -and $File) {
     Slua-Run $File
 }
+if ($Command -eq "Slua-Install" -and $File) {
+    $ver = "latest"
+    if ($args.Count -ge 1 -and $args[0] -eq "--version" -and $args.Count -ge 2) { $ver = $args[1] }
+    Slua-Install $File $ver
+}

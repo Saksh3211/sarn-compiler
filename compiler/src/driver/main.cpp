@@ -318,6 +318,8 @@ int main(int argc, char** argv) {
             for (auto& s : m.stmts) {
                 if (auto* fi = std::get_if<slua::FileImportDecl>(&s->v)) {
                     std::string fpath = base_dir + fi->path;
+                    std::string pkg_path = std::string(getenv("SLUA_ROOT") ? getenv("SLUA_ROOT") : ".") + "/packages/" + fi->path;
+                    if (!std::ifstream(fpath).good() && std::ifstream(pkg_path).good()) fpath = pkg_path;
                     std::ifstream ff(fpath, std::ios::binary);
                     if (!ff) { fprintf(stderr, "sluac: cannot open import '%s'\n", fpath.c_str()); exit(1); }
                     std::ostringstream ss; ss << ff.rdbuf();
@@ -381,4 +383,3 @@ int main(int argc, char** argv) {
     return 1;
 #endif
 }
-

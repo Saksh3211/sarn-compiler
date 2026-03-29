@@ -1,19 +1,15 @@
-﻿--!!type:strict
+--!!type:strict
 import http
 import json
 
 export function fetch_price(coin_id: string): number
     local url: string = "https://api.coingecko.com/api/v3/simple/price?ids=" .. coin_id .. "&vs_currencies=usd"
     local resp: string = http.get(url)
-    if resp == "" then
-        return 0.0
-    end
-    local price: number = json.get_float(resp, coin_id)
-    return price
+    if resp == "" then return 0.0 end
+    return json.get_nested_float(resp, coin_id, "usd")
 end
 
 export function fetch_all_prices(ids: string): string
     local url: string = "https://api.coingecko.com/api/v3/simple/price?ids=" .. ids .. "&vs_currencies=usd&include_24hr_change=true"
     return http.get(url)
 end
-
