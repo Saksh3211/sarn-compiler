@@ -57,3 +57,55 @@ char* slua_json_get_array_item(const char* json, const char* key, int32_t index)
     const char* e=v; while (*e&&*e!=','&&*e!=']') e++;
     size_t n=(size_t)(e-v); char* r=(char*)malloc(n+1); memcpy(r,v,n); r[n]='\0'; return r;
 }
+
+double slua_json_get_nested_float(const char* json, const char* outer, const char* inner) {
+    const char* pat1 = outer;
+    char needle[512]; snprintf(needle, sizeof(needle), "\"%s\"", pat1);
+    const char* p = strstr(json, needle);
+    if (!p) return 0.0;
+    p += strlen(needle);
+    while (*p==' '||*p=='\t'||*p=='\n') p++;
+    if (*p != ':') return 0.0; p++;
+    while (*p==' ') p++;
+    if (*p != '{') return 0.0;
+    char sub[4096]; size_t depth=0, i=0;
+    do { if(*p=='{') depth++; else if(*p=='}') depth--; if(i<4095) sub[i++]=*p; p++; } while(*p && depth>0);
+    sub[i]='\0';
+    char needle2[512]; snprintf(needle2, sizeof(needle2), "\"%s\"", inner);
+    const char* q = strstr(sub, needle2);
+    if (!q) return 0.0;
+    q += strlen(needle2);
+    while (*q==' ') q++;
+    if (*q != ':') return 0.0; q++;
+    while (*q==' ') q++;
+    return strtod(q, NULL);
+}
+
+int64_t slua_json_get_nested_int(const char* json, const char* outer, const char* inner) {
+    return (int64_t)slua_json_get_nested_float(json, outer, inner);
+}
+
+char* slua_json_get_nested_str(const char* json, const char* outer, const char* inner) {
+    const char* pat1 = outer;
+    char needle[512]; snprintf(needle, sizeof(needle), "\"%s\"", pat1);
+    const char* p = strstr(json, needle);
+    if (!p) return strdup("");
+    p += strlen(needle);
+    while (*p==' '||*p=='\t'||*p=='\n') p++;
+    if (*p != ':') return strdup(""); p++;
+    while (*p==' ') p++;
+    if (*p != '{') return strdup("");
+    char sub[4096]; size_t depth=0, i=0;
+    do { if(*p=='{') depth++; else if(*p=='}') depth--; if(i<4095) sub[i++]=*p; p++; } while(*p && depth>0);
+    sub[i]='\0';
+    char needle2[512]; snprintf(needle2, sizeof(needle2), "\"%s\"", inner);
+    const char* q = strstr(sub, needle2);
+    if (!q) return strdup("");
+    q += strlen(needle2);
+    while (*q==' ') q++;
+    if (*q != ':') return strdup(""); q++;
+    while (*q==' ') q++;
+    if (*q != '"') return strdup(""); q++;
+    const char* e = q; while(*e && *e!='"') e++;
+    size_t n=(size_t)(e-q); char* r=(char*)malloc(n+1); memcpy(r,q,n); r[n]='\0'; return r;
+}

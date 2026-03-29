@@ -936,6 +936,39 @@ void IREmitter::emit_return_stmt(ReturnStmt& s, SourceLoc loc) {
     if (cur_ret_slot_) {
         llvm::Type* ret_ty = cur_ret_slot_->getAllocatedType();
         if (s.values.size() == 1) {
+            if (auto* tc = std::get_if<TableCtor>(&s.values[0]->v)) {
+                if (ret_ty->isStructTy()) {
+                    auto* st = llvm::cast<llvm::StructType>(ret_ty);
+                    std::string sname = st->getName().str();
+                    auto fit = struct_fields_.find(sname);
+                    if (fit != struct_fields_.end()) {
+                        llvm::Value* agg = llvm::Constant::getNullValue(ret_ty);
+                        for (auto& entry : tc->entries) {
+                            if (!entry.key) continue;
+                            std::string fname;
+                            if (auto* sl = std::get_if<StrLit>(&(*entry.key)->v))
+                                fname = sl->val;
+                            if (fname.empty()) continue;
+                            for (unsigned i = 0; i < fit->second.size(); i++) {
+                                if (fit->second[i] == fname) {
+                                    llvm::Value* fval = emit_expr(*entry.val);
+                                    if (fval) {
+                                        fval = coerce(fval, st->getElementType(i), loc);
+                                        agg = builder_.CreateInsertValue(agg, fval, {i});
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        builder_.CreateStore(agg, cur_ret_slot_);
+                        for (int i = (int)defer_stack_.size()-1; i >= 0; i--)
+                            for (int j = (int)defer_stack_[i].size()-1; j >= 0; j--)
+                                defer_stack_[i][j].emit_fn();
+                        builder_.CreateBr(cur_ret_bb_);
+                        return;
+                    }
+                }
+            }
             llvm::Value* val = emit_expr(*s.values[0]);
             if (val) {
                 val = coerce(val, ret_ty, loc);

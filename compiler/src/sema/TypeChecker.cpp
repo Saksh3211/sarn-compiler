@@ -765,11 +765,17 @@ namespace slua {
         return make_any();
     }
 
-    
-    
-    
-
     SluaTypePtr TypeChecker::check_call_expr(Call& e, SourceLoc loc) {
+        if (auto* fi = std::get_if<Field>(&e.callee->v)) {
+        if (auto* id = std::get_if<Ident>(&fi->table->v)) {
+            std::string key = id->name + "." + fi->name;
+            SluaTypePtr fn_t = env_ ? env_->lookup(key) : nullptr;
+            if (fn_t && fn_t->kind == TypeKind::FUNC) {
+                for (auto& arg : e.args) check_expr(*arg);
+                return fn_t->return_type ? fn_t->return_type : make_void();
+            }
+        }
+        }
         SluaTypePtr callee_t = check_expr(*e.callee);
 
         std::vector<SluaTypePtr> arg_types;
@@ -1021,7 +1027,7 @@ namespace slua {
             for (auto& tf : to->fields) {
                 bool found = false;
                 for (auto& ff : from->fields) {
-                    if (ff.name == tf.name && types_equal(ff.type, tf.type)) {
+                    if (ff.name == tf.name && (types_equal(ff.type, tf.type) || ff.type->kind == TypeKind::ANY || tf.type->kind == TypeKind::ANY)) {
                         found = true; break;
                     }
                 }
