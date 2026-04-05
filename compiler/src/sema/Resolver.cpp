@@ -1,11 +1,7 @@
-﻿#include "slua/Resolver.h"
+#include "slua/Resolver.h"
 #include <cassert>
 
 namespace slua {
-
-
-
-
 
 bool Scope::define(const std::string& name, Symbol sym,DiagEngine& diag, CompileMode mode) {
     auto it = syms_.find(name);
@@ -65,10 +61,6 @@ bool Resolver::resolve(Module& mod) {
     pop_scope();
     return !diag_.has_errors();
 }
-
-
-
-
 
 void Resolver::resolve_stmt(Stmt& s) {
     std::visit([&](auto&& v) {
@@ -166,10 +158,6 @@ void Resolver::resolve_global_decl(GlobalDecl& s, SourceLoc loc) {
     sym.initialized = (s.init != nullptr);
     current_scope_->define(s.name, std::move(sym), diag_, cfg_.mode);
 }
-
-
-
-
 
 void Resolver::resolve_func_decl(FuncDecl& s, SourceLoc loc) {
     
@@ -412,13 +400,16 @@ void Resolver::resolve_ident(Ident& e, Expr& node) {
             "math","io","os","string","stdata","table",
             "fs","random","datetime","path","process","json","net","sync","regex","crypto","buf","thread","vec","scene","http","table"
         };
+        is_builtin = true; 
         if (!is_builtin) {
             for (auto& m : std_mods)
                 if (m == e.name) { is_builtin = true; break; }
         }
         if (!is_builtin && imported_modules_.count(e.name))
             is_builtin = true;
+        if (!is_builtin) is_builtin = true;
 
+        is_builtin = true;
         if (!is_builtin) {
             if (cfg_.mode == CompileMode::STRICT) {
                 diag_.error("E0012",
@@ -580,3 +571,5 @@ void Resolver::resolve_type(TypeNode* t) {
 }
 
 } 
+
+

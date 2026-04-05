@@ -12,6 +12,7 @@
 #include <sstream>
 #include <iostream>
 #include <cstring>
+#include <unordered_set>
 
 static std::string read_file(const std::string& path) {
     std::ifstream f(path, std::ios::binary);
@@ -315,21 +316,51 @@ int main(int argc, char** argv) {
             if (slash != std::string::npos) base_dir = base_dir.substr(0, slash + 1);
             else base_dir = "";
             std::vector<std::unique_ptr<slua::Stmt>> expanded;
+            static const std::unordered_set<std::string> slua_builtins = {
+                "io","math","os","string","stdata","table","fs","random",
+                "datetime","path","process","json","net","sync","regex",
+                "crypto","buf","thread","vec","scene","http","stdgui"
+            };
+            const char* slua_root_env = getenv("SLUA_ROOT");
+            std::string slua_root = slua_root_env ? slua_root_env : ".";
             for (auto& s : m.stmts) {
                 if (auto* fi = std::get_if<slua::FileImportDecl>(&s->v)) {
                     std::string fpath = base_dir + fi->path;
-                    std::string pkg_path = std::string(getenv("SLUA_ROOT") ? getenv("SLUA_ROOT") : ".") + "/packages/" + fi->path;
-                    if (!std::ifstream(fpath).good() && std::ifstream(pkg_path).good()) fpath = pkg_path;
                     std::ifstream ff(fpath, std::ios::binary);
                     if (!ff) { fprintf(stderr, "sluac: cannot open import '%s'\n", fpath.c_str()); exit(1); }
                     std::ostringstream ss; ss << ff.rdbuf();
-                    std::string fsrc = ss.str();
-                    slua::Lexer  flex(fsrc, fpath, mode);
+                    slua::Lexer  flex(ss.str(), fpath, mode);
                     slua::Parser fpar(flex, diag, mode);
                     auto fmod = fpar.parse_module(fpath);
                     resolve_imports(*fmod, fpath);
                     for (auto& fs : fmod->stmts)
                         expanded.push_back(std::move(fs));
+                } else if (auto* id = std::get_if<slua::ImportDecl>(&s->v)) {
+                    if (slua_builtins.count(id->module_name) == 0) {
+                        std::vector<std::string> search = {
+                            base_dir + "packages/" + id->module_name + "/__init__.slua",
+                            base_dir + id->module_name + "/__init__.slua",
+                            slua_root + "/packages/" + id->module_name + "/__init__.slua"
+                        };
+                        bool pkg_found = false;
+                        for (auto& fpath : search) {
+                            std::ifstream ff(fpath, std::ios::binary);
+                            if (ff) {
+                                std::ostringstream ss; ss << ff.rdbuf();
+                                slua::Lexer  flex(ss.str(), fpath, mode);
+                                slua::Parser fpar(flex, diag, mode);
+                                auto fmod = fpar.parse_module(fpath);
+                                resolve_imports(*fmod, fpath);
+                                for (auto& fs : fmod->stmts)
+                                    expanded.push_back(std::move(fs));
+                                pkg_found = true;
+                                break;
+                            }
+                        }
+                        if (!pkg_found) expanded.push_back(std::move(s));
+                    } else {
+                        expanded.push_back(std::move(s));
+                    }
                 } else {
                     expanded.push_back(std::move(s));
                 }
@@ -383,3 +414,4 @@ int main(int argc, char** argv) {
     return 1;
 #endif
 }
+

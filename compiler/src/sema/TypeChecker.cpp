@@ -82,10 +82,6 @@ namespace slua {
         return t;
     }
 
-    
-    
-    
-
     void TypeChecker::push_env() {
         auto* e  = new TypeEnv();
         e->parent = env_;
@@ -299,9 +295,10 @@ namespace slua {
                 else if (v.module_name == "scene")   { env_->define("scene",   make_any()); }
                 else if (v.module_name == "http")    { env_->define("http",    make_any()); }
                 else if (v.module_name == "table")   { env_->define("table",   make_any()); }
-                else if (v.module_name == "table")  { env_->define("table",  make_any()); }
+                else { env_->define(v.module_name, make_any()); }
             }
         else if constexpr (std::is_same_v<T, FileImportDecl>) {}
+        else if constexpr (std::is_same_v<T, ImportDecl>) { env_->define(v.module_name, make_any()); }
         }, s.v);
     }
 
