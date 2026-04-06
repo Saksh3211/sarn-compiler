@@ -338,9 +338,8 @@ int main(int argc, char** argv) {
                 } else if (auto* id = std::get_if<slua::ImportDecl>(&s->v)) {
                     if (slua_builtins.count(id->module_name) == 0) {
                         std::vector<std::string> search = {
-                            base_dir + "packages/" + id->module_name + "/__init__.slua",
-                            base_dir + id->module_name + "/__init__.slua",
-                            slua_root + "/packages/" + id->module_name + "/__init__.slua"
+                            base_dir + ".packages/" + id->module_name + "/__init__.slua",
+                            slua_root + "/.packages/" + id->module_name + "/__init__.slua"
                         };
                         bool pkg_found = false;
                         for (auto& fpath : search) {

@@ -1,7 +1,11 @@
 --!!type:nonstrict
 
-local function square(a)
+function square(a)
     return a*a
 end
-local result = square(3)
-print(result)
+
+function main()
+    local result = square(3)
+    print(result)
+    return 0
+end

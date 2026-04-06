@@ -1,0 +1,9 @@
+--!!type:strict
+
+export function mymath_add(a: int, b: int): int
+     return a + b
+end
+
+export function mymath_square(x: number): number
+     return x * x
+end
