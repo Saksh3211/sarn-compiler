@@ -9,7 +9,7 @@ function main()
     local name = "World"
     print("Hello, " .. name)
 
-    local scores = { 95, 87, 72, 100, 63 }
+    local scores = {95,87,72,100,63}
     local total = 0
     for i = 1, #scores,i+1 do
         total = total + scores[i]
@@ -20,4 +20,5 @@ function main()
     if raw then
         print("You typed: " .. raw)
     end
+    return 0
 end

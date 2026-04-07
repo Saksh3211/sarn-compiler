@@ -59,12 +59,11 @@ llvm::Type* IREmitter::llvm_type_named(const std::string& name) {
     if (name == "int"   || name == "int64") return llvm::Type::getInt64Ty(ctx_);
     if (name == "int32" || name == "int16") return llvm::Type::getInt32Ty(ctx_);
     if (name == "int8"  || name == "char" || name == "byte" ||
-        name == "uint8")                    return llvm::Type::getInt8Ty(ctx_);
-    if (name == "uint16")                   return llvm::Type::getInt16Ty(ctx_);
-    if (name == "uint32")                   return llvm::Type::getInt32Ty(ctx_);
-    if (name == "uint64")                   return llvm::Type::getInt64Ty(ctx_);
-    if (name == "number" || name == "float" ||
-        name == "double")                   return llvm::Type::getDoubleTy(ctx_);
+        name == "uint8")    return llvm::Type::getInt8Ty(ctx_);
+    if (name == "uint16")  return llvm::Type::getInt16Ty(ctx_);
+    if (name == "uint32")   return llvm::Type::getInt32Ty(ctx_);
+    if (name == "uint64")   return llvm::Type::getInt64Ty(ctx_);
+    if (name == "number" || name == "float" ||name == "double")   return llvm::Type::getDoubleTy(ctx_);
     if (name == "bool")                     return llvm::Type::getInt1Ty(ctx_);
     if (name == "void")                     return llvm::Type::getVoidTy(ctx_);
     if (name == "string" || name == "table")
@@ -471,9 +470,12 @@ bool IREmitter::emit(slua::Module& mod) {
             for (auto& [pn, pt] : fd->params)
                 param_tys.push_back(llvm_type(pt.get()));
 
+            auto* i64_t = llvm::Type::getInt64Ty(ctx_);
             llvm::Type* ret_ty = fd->ret_type
                 ? llvm_type(fd->ret_type.get())
-                : llvm::Type::getVoidTy(ctx_);
+                : (cur_mode_ == CompileMode::NONSTRICT ? i64_t : llvm::Type::getVoidTy(ctx_));
+            for (auto& pt : param_tys)
+                if (pt == llvm::Type::getVoidTy(ctx_)) pt = i64_t;
 
             auto* ft = llvm::FunctionType::get(ret_ty, param_tys, false);
             auto* fn = llvm::Function::Create(
@@ -579,7 +581,6 @@ void IREmitter::emit_stmt(Stmt& s) {
         else if constexpr (std::is_same_v<T, ReturnStmt>)   emit_return_stmt(v, s.loc);
         else if constexpr (std::is_same_v<T, Assign>)       emit_assign(v, s.loc);
         else if constexpr (std::is_same_v<T, CallStmt>)     emit_call_stmt(v);
-        else if constexpr (std::is_same_v<T, DeferStmt>)    emit_defer_stmt(v);
         else if constexpr (std::is_same_v<T, DoBlock>)      emit_do_block(v);
         else if constexpr (std::is_same_v<T, StoreStmt>)    emit_store_stmt(v);
         else if constexpr (std::is_same_v<T, FreeStmt>)     emit_free_stmt(v);
@@ -607,16 +608,11 @@ void IREmitter::emit_stmt(Stmt& s) {
 }
 
 void IREmitter::emit_local_decl(LocalDecl& s, SourceLoc loc) {
-    llvm::Type* ty = s.type_ann
-        ? llvm_type(s.type_ann.get())
-        : llvm::Type::getInt64Ty(ctx_);
-
-    llvm::AllocaInst* slot = create_alloca(ty, s.name);
-
+    llvm::Value* val = nullptr;
     if (s.init) {
-        llvm::Value* val = nullptr;
         if (auto* tc = std::get_if<TableCtor>(&s.init->v)) {
-            if (s.type_ann && ty->isStructTy()) {
+            llvm::Type* ty = s.type_ann ? llvm_type(s.type_ann.get()) : nullptr;
+            if (ty && ty->isStructTy()) {
                 auto* st = llvm::cast<llvm::StructType>(ty);
                 std::string sname = st->getName().str();
                 auto fit = struct_fields_.find(sname);
@@ -649,10 +645,22 @@ void IREmitter::emit_local_decl(LocalDecl& s, SourceLoc loc) {
         } else {
             val = emit_expr(*s.init);
         }
-        if (val) {
-            val = coerce(val, ty, loc);
-            builder_.CreateStore(val, slot);
-        }
+    }
+
+    llvm::Type* ty;
+    if (s.type_ann) {
+        ty = llvm_type(s.type_ann.get());
+    } else if (!s.type_ann && val && cur_mode_ == CompileMode::NONSTRICT) {
+        ty = val->getType();
+    } else {
+        ty = llvm::Type::getInt64Ty(ctx_);
+    }
+
+    llvm::AllocaInst* slot = create_alloca(ty, s.name);
+
+    if (val) {
+        val = coerce(val, ty, loc);
+        builder_.CreateStore(val, slot);
     } else {
         builder_.CreateStore(llvm::Constant::getNullValue(ty), slot);
     }
@@ -708,7 +716,7 @@ void IREmitter::emit_func_decl(FuncDecl& s, SourceLoc loc) {
     size_t i = 0;
     for (auto& arg : fn->args()) {
         auto& [pname, ptype] = s.params[i++];
-        llvm::Type* pty = llvm_type(ptype.get());
+        llvm::Type* pty = ptype ? llvm_type(ptype.get()) : llvm::Type::getInt64Ty(ctx_);
         llvm::AllocaInst* slot = create_alloca(pty, pname);
         builder_.CreateStore(&arg, slot);
         env_->define(pname, slot);
@@ -865,25 +873,24 @@ void IREmitter::emit_numeric_for(NumericFor& s) {
     break_targets_.push_back(end_bb);
     continue_targets_.push_back(loop_bb);
 
-    llvm::AllocaInst* i_slot = create_alloca(i64, s.var);
-    builder_.CreateStore(start, i_slot);
     builder_.CreateBr(loop_bb);
-
     builder_.SetInsertPoint(loop_bb);
-    llvm::Value* i_val = builder_.CreateLoad(i64, i_slot);
+    auto* i_slot = create_alloca(i64, "for_i");
+    builder_.CreateStore(start, i_slot);
+    llvm::Value* i_val = i_slot;
     llvm::Value* cond  = builder_.CreateICmpSLE(i_val, stop, "for.cond");
     builder_.CreateCondBr(cond, body_bb, end_bb);
 
     builder_.SetInsertPoint(body_bb);
     push_env(); push_defer_scope();
-    env_->define(s.var, i_slot);
+    env_->define(s.var, i_val);
     for (auto& st : s.body) emit_stmt(*st);
     pop_defer_scope(); pop_env();
 
     if (!builder_.GetInsertBlock()->getTerminator()) {
-        llvm::Value* i_cur  = builder_.CreateLoad(i64, i_slot);
+        llvm::Value* i_cur  = builder_.CreateLoad(i64, i_val);
         llvm::Value* i_next = builder_.CreateAdd(i_cur, step);
-        builder_.CreateStore(i_next, i_slot);
+        builder_.CreateStore(i_next, i_val);
         builder_.CreateBr(loop_bb);
     }
 
@@ -1208,7 +1215,7 @@ llvm::Value* IREmitter::emit_expr(Expr& e) {
                 param_tys.push_back(llvm_type(pt.get()));
             llvm::Type* ret_ty = v.ret_type
                 ? llvm_type(v.ret_type.get())
-                : llvm::Type::getVoidTy(ctx_);
+                : (cur_mode_ == CompileMode::NONSTRICT ? llvm::Type::getInt64Ty(ctx_) : llvm::Type::getVoidTy(ctx_));
 
             auto* fty = llvm::FunctionType::get(ret_ty, param_tys, false);
             auto* fn  = llvm::Function::Create(fty, llvm::Function::InternalLinkage, name, *mod_);
@@ -1853,7 +1860,6 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     if(!v) return llvm::ConstantInt::get(i64,0);
                     if(v->getType()->isIntegerTy(64)) return v;
                     if(v->getType()->isIntegerTy()) return builder_.CreateSExt(v,i64);
-                    if(v->getType()->isDoubleTy()) return builder_.CreateFPToSI(v,i64);
                     return v;
                 };
                 auto sxi = [&](llvm::Value* v) -> llvm::Value* { return builder_.CreateSExt(v,i64); };
@@ -1978,6 +1984,7 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     if(!v) return llvm::ConstantInt::get(i32,0);
                     if(v->getType()->isIntegerTy(32)) return v;
                     if(v->getType()->isIntegerTy()) return builder_.CreateTrunc(v,i32);
+                    if(v->getType()->isDoubleTy()) return builder_.CreateFPToSI(v,i32);
                     return v;
                 };
                 auto sxi  = [&](llvm::Value* v) -> llvm::Value* { return builder_.CreateSExt(v,i64); };
@@ -2139,6 +2146,7 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     if(!v) return llvm::ConstantInt::get(i32,0);
                     if(v->getType()->isIntegerTy(32)) return v;
                     if(v->getType()->isIntegerTy()) return builder_.CreateTrunc(v,i32);
+                    if(v->getType()->isDoubleTy()) return builder_.CreateFPToSI(v,i32);
                     return v;
                 };
                 auto cf64 = [&](llvm::Value* v) -> llvm::Value* {
@@ -2352,7 +2360,7 @@ llvm::Value* IREmitter::emit_method_call(MethodCall& e, SourceLoc loc) {
     if (auto* id = std::get_if<Ident>(&e.obj->v)) {
         llvm::Value* slot = env_ ? env_->lookup(id->name) : nullptr;
         if (auto* ai = llvm::dyn_cast_or_null<llvm::AllocaInst>(slot)) {
-            if (auto* st = llvm::dyn_cast<llvm::StructType>(ai->getAllocatedType())) {
+            if (auto* st = llvm::cast<llvm::StructType>(ai->getAllocatedType())) {
                 if (!st->getName().empty())
                     type_name = st->getName().str();
             }
@@ -2447,6 +2455,7 @@ llvm::Value* IREmitter::emit_index(Index& e, SourceLoc loc, TypeNode* result_typ
     if (!base || !key) return nullptr;
 
     auto* i64 = llvm::Type::getInt64Ty(ctx_);
+    key = coerce(key, i64, {});
 
     std::string inferred;
     if (result_type) {
@@ -2474,6 +2483,7 @@ llvm::Value* IREmitter::emit_table_ctor(TableCtor& e, SourceLoc loc) {
     auto* i8p = llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(ctx_));
     auto* i64 = llvm::Type::getInt64Ty(ctx_);
     auto* i32 = llvm::Type::getInt32Ty(ctx_);
+    auto* f64 = llvm::Type::getDoubleTy(ctx_);
 
     auto* new_fn = get_runtime_fn("slua_tbl_new");
     if (!new_fn) return llvm::ConstantPointerNull::get(i8p);
