@@ -12,8 +12,24 @@ Every `.slua` file should start with directives on line 1+.
 
 `strict` enforces full type checking and errors on violations.
 `nonstrict` allows untyped variables and looser checks.
+
 `mem:man` is manual memory management (default).
 `mem:auto` disables manual memory warnings.
+
+---
+
+## Program Entry Point
+
+Program execution starts at the `main` function:
+```lua
+function main(): int
+    -- your code here
+    return 0
+end
+```
+
+The `main` function must exist and returns an exit code (0 for success).
+You can call other functions and import modules before defining `main`.
 
 ---
 
@@ -185,12 +201,13 @@ repeat
 until i >= 10
 ```
 
-### numeric for (inclusive range)
+### numeric for
 ```lua
 for i = 0, 9, 1 do
     print(i)
 end
 -- step is optional, defaults to 1
+-- start (0) is inclusive, end (9) is exclusive — loop runs 0..8
 ```
 
 ### C-style for
@@ -380,6 +397,65 @@ File imports inline all declarations from the target file before the current fil
 
 ---
 
+## Packages and Module System
+
+### Using Built-in Packages
+
+S Lua provides built-in standard library packages that are imported by name:
+```lua
+import math
+import string
+import fs
+import http
+import json
+-- ... and many others
+```
+
+These are compiled standard library modules provided by the S Lua runtime.
+
+### Creating and Using Custom Packages (Modules)
+
+You can create reusable modules by splitting code into separate `.slua` files. Each file acts as a package:
+
+**mymath.slua:**
+```lua
+--!!type:strict
+
+function add(a: int, b: int): int
+    return a + b
+end
+
+export function multiply(a: int, b: int): int
+    return a * b
+end
+```
+
+**main.slua:**
+```lua
+--!!type:strict
+import ("mymath.slua")
+
+function main(): int
+    -- add is not exported, only accessible within mymath.slua
+    -- multiply is exported, but accessed via the import
+    print(multiply(3, 4))
+    return 0
+end
+```
+
+### Export and Visibility
+
+- Functions declared with `export` are visible to importing files
+- Functions without `export` are private to their module
+- All `type` and `enum` declarations are accessible by default across modules
+- Imported files must have matching `--!!type` directives
+
+### Package Registration
+
+The S Lua runtime uses a module registry system. Built-in packages are registered at startup and can be imported without file paths. External C modules can be registered programmatically to extend the runtime.
+
+---
+
 ## OOP pattern
 
 S Lua uses a static dispatch OOP pattern — no vtables, no inheritance overhead.
@@ -423,6 +499,11 @@ math.sqrt(x)      math.pow(b, e)    math.sin(x)
 math.cos(x)       math.tan(x)       math.log(x)
 math.log2(x)      math.exp(x)       math.inf()
 math.nan()        math.pi           math.e
+math.clamp(v, lo, hi)              -- clamp value to range
+math.lerp(a, b, t)                 -- linear interpolation
+math.min2(a, b)   math.max2(a, b)  -- min/max of two values
+math.abs(x)       math.floor(x)     math.ceil(x)    math.round(x)
+math.sign(x)      math.fract(x)     math.mod(a, b)
 ```
 
 ### io (`import io`)
@@ -609,7 +690,8 @@ crypto.xor(data, len, key, keylen)      -- string
 
 ### buf (`import buf`)
 ```lua
-local b: int = buf.new(size)
+local b: int = buf.new(size)               -- create buffer
+local b: int = buf.from_str(s, len)        -- create from string
 buf.write_u8(b, offset, val)
 buf.write_u16(b, offset, val)
 buf.write_u32(b, offset, val)
@@ -629,6 +711,16 @@ buf.fill(b, offset, len, val)
 buf.copy(dst, doff, src, soff, len)
 buf.size(b)                 -- int
 buf.free(b)
+```
+
+### regex (`import regex`)
+```lua
+regex.match(str, pattern)              -- int: 1 if matches, 0 if not
+regex.find(str, pattern, from)         -- int: position of first match (-1 if none)
+regex.replace(str, pattern, repl)      -- string: replace all matches
+regex.groups(str, pattern)             -- extract regex capture groups
+regex.count(str, pattern)              -- int: count total matches
+regex.find_all(str, pattern)           -- find all match positions
 ```
 
 ### vec (`import vec`)
