@@ -188,6 +188,8 @@ void IREmitter::declare_runtime() {
     declare("slua_str_find", i32,   {i8p, i8p, i32});
     declare("slua_str_trim",i8p,   {i8p});
     declare("slua_str_to_int",i64,   {i8p});
+    declare("slua_str_split", i8p, {i8p, i8p, i32});
+    declare("slua_str_count", i32, {i8p, i8p});
     declare("slua_str_to_float",f64,   {i8p});
 
     declare("slua_os_time",i64,   {});
@@ -207,6 +209,8 @@ void IREmitter::declare_runtime() {
     declare("slua_exp",   f64, {f64});
     declare("slua_inf",   f64, {});
     declare("slua_nan",   f64, {});
+    declare("slua_pi",    f64, {});
+    declare("slua_e",     f64, {});
 
     declare("slua_tbl_new",       i8p,   {});
     declare("slua_tbl_iset_i64",  voidT, {i8p, i64, i64});
@@ -873,24 +877,25 @@ void IREmitter::emit_numeric_for(NumericFor& s) {
     break_targets_.push_back(end_bb);
     continue_targets_.push_back(loop_bb);
 
-    builder_.CreateBr(loop_bb);
-    builder_.SetInsertPoint(loop_bb);
     auto* i_slot = create_alloca(i64, "for_i");
     builder_.CreateStore(start, i_slot);
-    llvm::Value* i_val = i_slot;
-    llvm::Value* cond  = builder_.CreateICmpSLE(i_val, stop, "for.cond");
+    
+    builder_.CreateBr(loop_bb);
+    builder_.SetInsertPoint(loop_bb);
+    llvm::Value* i_loaded = builder_.CreateLoad(i64, i_slot);
+    llvm::Value* cond  = builder_.CreateICmpSLT(i_loaded, stop, "for.cond");  // FIXED: SLE->SLT for exclusive end
     builder_.CreateCondBr(cond, body_bb, end_bb);
 
     builder_.SetInsertPoint(body_bb);
     push_env(); push_defer_scope();
-    env_->define(s.var, i_val);
+    env_->define(s.var, i_slot);  // Store the slot, not the value
     for (auto& st : s.body) emit_stmt(*st);
     pop_defer_scope(); pop_env();
 
     if (!builder_.GetInsertBlock()->getTerminator()) {
-        llvm::Value* i_cur  = builder_.CreateLoad(i64, i_val);
+        llvm::Value* i_cur  = builder_.CreateLoad(i64, i_slot);
         llvm::Value* i_next = builder_.CreateAdd(i_cur, step);
-        builder_.CreateStore(i_next, i_val);
+        builder_.CreateStore(i_next, i_slot);
         builder_.CreateBr(loop_bb);
     }
 
@@ -1491,6 +1496,12 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     if (fn) builder_.CreateCall(fn, {});
                     return llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx_), 0);
                 }
+                if (meth == "write" && !e.args.empty()) {
+                    auto* fn = get_runtime_fn("slua_print_str_no_newline");
+                    auto* arg = emit_expr(*e.args[0]);
+                    if (fn && arg) builder_.CreateCall(fn, {arg});
+                    return llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx_), 0);
+                }
                 return llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx_), 0);
             }
 
@@ -1529,6 +1540,16 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                 if (meth == "nan") {
                     auto* fn = get_runtime_fn("slua_nan");
                     if (fn) return builder_.CreateCall(fn, {}, "nan");
+                }
+                if (meth == "pi") {
+                    auto* fn = get_runtime_fn("slua_pi");
+                    if (fn) return builder_.CreateCall(fn, {}, "pi");
+                    return llvm::ConstantFP::get(f64, 3.14159265358979323846);
+                }
+                if (meth == "e") {
+                    auto* fn = get_runtime_fn("slua_e");
+                    if (fn) return builder_.CreateCall(fn, {}, "e");
+                    return llvm::ConstantFP::get(f64, 2.71828182845904523536);
                 }
                 return llvm::ConstantFP::get(f64, 0.0);
             }
@@ -1599,6 +1620,16 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     auto* fn = get_runtime_fn("slua_str_concat");
                     auto* a  = arg0(); auto* b = arg1();
                     if (fn && a && b) return builder_.CreateCall(fn, {a, b}, "scat");
+                }
+                if (meth == "split" && e.args.size() >= 3) {
+                    auto* fn = get_runtime_fn("slua_str_split");
+                    auto* a = arg0(); auto* b = arg1(); auto* c = ci32(arg2());
+                    if (fn && a && b) return builder_.CreateCall(fn, {a, b, c}, "ssplit");
+                }
+                if (meth == "count" && e.args.size() >= 2) {
+                    auto* fn = get_runtime_fn("slua_str_count");
+                    auto* a = arg0(); auto* b = arg1();
+                    if (fn && a && b) return builder_.CreateSExt(builder_.CreateCall(fn, {a, b}, "scnt"), i64);
                 }
                 return llvm::ConstantInt::get(i64, 0);
             }

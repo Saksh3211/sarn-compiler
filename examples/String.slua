@@ -1,7 +1,19 @@
 --!!type:strict
 import string
+import math
+import io
 
 function main():int64
+    io.write("pi = ")
+    print(math.pi())
+    local parts: int = string.count("a,b,c,de", ",")
+    local first: string = string.split("hello world foo", " ", 0)
+    local second: string = string.split("hello world foo", " ", 1)
+    print(first)
+    print(second)
+    print(parts)
+
+
     local s:string = "Hello World"
     local up:string = string.upper(s)
     local low:string = string.lower(s)

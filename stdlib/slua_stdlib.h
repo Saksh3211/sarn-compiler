@@ -1,4 +1,4 @@
-﻿#ifndef SLUA_STDLIB_H
+#ifndef SLUA_STDLIB_H
 #define SLUA_STDLIB_H
 
 #include <stdint.h>
@@ -19,6 +19,8 @@ double slua_log2(double x);
 double slua_exp(double x);
 double slua_inf(void);
 double slua_nan(void);
+double slua_pi(void);
+double slua_e(void);
 
 int32_t slua_str_len(const char* s);
 int32_t slua_str_byte(const char* s, int32_t i);
@@ -34,6 +36,8 @@ int32_t slua_str_find(const char* haystack, const char* needle, int32_t from);
 char* slua_str_trim(const char* s);
 
 char* slua_str_concat(const char* a, const char* b);
+char* slua_str_split(const char* s, const char* sep, int32_t index);
+int32_t slua_str_count(const char* s, const char* sep);
 
 SluaTable* slua_tbl_new(void);
 

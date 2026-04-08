@@ -80,7 +80,7 @@ function Slua-Run {
         "-lmsvcrt", "-lucrt", "-lvcruntime"
     ) + $pkg_libs + @("-o", $exe)
 
-    #clang @link_args 2>&1
+    clang @link_args 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0) {
         Write-Host "[ERROR] clang link failed." -ForegroundColor Red
         return

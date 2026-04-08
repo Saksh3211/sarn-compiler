@@ -207,7 +207,8 @@ for i = 0, 9, 1 do
     print(i)
 end
 -- step is optional, defaults to 1
--- start (0) is inclusive, end (9) is exclusive — loop runs 0..8
+-- start (0) is inclusive, end (9) is EXCLUSIVE — loop runs 0..8
+-- FIXED: Now correctly uses exclusive end comparison
 ```
 
 ### C-style for
@@ -498,7 +499,7 @@ dog:speak()      -- same as Animal.speak(dog)
 math.sqrt(x)      math.pow(b, e)    math.sin(x)
 math.cos(x)       math.tan(x)       math.log(x)
 math.log2(x)      math.exp(x)       math.inf()
-math.nan()        math.pi           math.e
+math.nan()        math.pi()         math.e()          -- pi and e are function calls
 math.clamp(v, lo, hi)              -- clamp value to range
 math.lerp(a, b, t)                 -- linear interpolation
 math.min2(a, b)   math.max2(a, b)  -- min/max of two values
@@ -900,6 +901,42 @@ Or use the PowerShell runner:
 | E0092 | Type mismatch |
 | W0001 | Missing mode directive |
 | W0012 | Undefined identifier (nonstrict) |
+
+---
+
+## Known Issues and Recent Fixes
+
+### Recent Bug Fixes (April 8, 2026)
+
+✅ **Fixed: For Loop Semantics** 
+- Numeric for loops now use exclusive end condition (as documented)
+- `for i = 0, 9 do` iterates 0→8 (not 0→9)
+- Uses strict less-than comparison instead of less-than-or-equal
+
+✅ **Fixed: Math Constants as Functions**
+- `math.pi()` and `math.e()` are now proper function calls
+- Return IEEE 754 double precision constants
+- Both still work as expressions: `local x = math.pi()`
+
+### Known Limitations
+
+⚠️ **Optional Types Not Fully Implemented**
+- Optional types (`int?`) are treated as `any` type in strict mode
+- Cannot assign `null` to strict mode optional variables
+- Workaround: Use nonstrict mode or use plain pointers (`ptr<...>`)
+
+⚠️ **No For-In Loops**
+- Iterator syntax `for k,v in pairs(table)` not supported
+- Use C-style for loops or while loops instead
+
+⚠️ **No Variadic Functions**
+- Cannot use `...` parameter in function definitions
+- Design restriction for static type system
+
+⚠️ **String Memory Management**
+- String operations allocate but don't auto-free
+- No garbage collection; manual management required
+- Use with caution in long-running loops
 
 ---
 

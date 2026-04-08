@@ -27,6 +27,8 @@ double slua_log2(double x) { return log2(x); }
 double slua_exp(double x) { return exp(x); }
 double slua_inf(void) { return HUGE_VAL; }
 double slua_nan(void) { return nan(""); }
+double slua_pi(void) { return 3.14159265358979323846; }
+double slua_e(void) { return 2.71828182845904523536; }
 
 
 /* ── String utils ───────────────────────────────────────────────────────── */
@@ -399,4 +401,36 @@ char* slua_os_cwd() {
     strcpy(out, buf);
 
     return out;
+}
+
+char* slua_str_split(const char* s, const char* sep, int32_t index) {
+    if (!s || !sep) return strdup("");
+    size_t seplen = strlen(sep);
+    if (seplen == 0) return strdup(s);
+    int32_t count = 0;
+    const char* p = s;
+    while ((p = strstr(p, sep)) != NULL) { count++; p += seplen; }
+    count++;
+    if (index < 0 || index >= count) return strdup("");
+    p = s;
+    for (int32_t i = 0; i < index; i++) {
+        const char* next = strstr(p, sep);
+        if (!next) return strdup("");
+        p = next + seplen;
+    }
+    const char* end = strstr(p, sep);
+    size_t len = end ? (size_t)(end - p) : strlen(p);
+    char* out = (char*)malloc(len + 1);
+    memcpy(out, p, len);
+    out[len] = '\0';
+    return out;
+}
+
+int32_t slua_str_count(const char* s, const char* sep) {
+    if (!s || !sep || strlen(sep) == 0) return 0;
+    int32_t count = 0;
+    size_t seplen = strlen(sep);
+    const char* p = s;
+    while ((p = strstr(p, sep)) != NULL) { count++; p += seplen; }
+    return count + 1;
 }
