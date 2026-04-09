@@ -1,9 +1,0 @@
-{
-     "name": "mathimath",
-     "version": "1.0.0",
-     "description": "Math helpers",
-     "author": "you",
-     "files": ["__init__.slua"],
-     "c_sources": [],
-     "deps": []
-}

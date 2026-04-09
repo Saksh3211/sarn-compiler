@@ -1,9 +1,0 @@
-{
-  "name": "cMath",
-  "version": "1.0.0",
-  "description": "Fast C math operations",
-  "author": "",
-  "files": ["__init__.slua", "native.c"],
-  "c_sources": ["native.c"],
-  "deps": []
-}
