@@ -1,0 +1,31 @@
+--!!type:strict
+import io
+
+function main(): int
+    io.print_color("=== IO Examples ===\n", "cyan")
+    
+    io.set_color("green")
+    io.print("This is green ")
+    io.print_color("text", "green")
+    io.reset_color()
+    
+    print("")
+    
+    io.print_color("Enter your name: ", "yellow")
+    local name: string = io.read_line()
+    
+    io.print_color("Hello, ", "cyan")
+    print(name)
+    
+    io.print_color("\n=== Color Test ===\n", "magenta")
+    
+    io.print_color("Red text\n", "red")
+    io.print_color("Green text\n", "green")
+    io.print_color("Yellow text\n", "yellow")
+    io.print_color("Blue text\n", "blue")
+    io.print_color("Cyan text\n", "cyan")
+    io.print_color("Magenta text\n", "magenta")
+    io.print_color("White text\n", "white")
+    
+    return 0
+end

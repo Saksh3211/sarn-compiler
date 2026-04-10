@@ -1,0 +1,17 @@
+--!!type:strict
+
+function process_value(x: int | string): int
+    if x == 0 then
+        return 0
+    else
+        return 1
+    end
+end
+
+function main(): int
+    local a: int = 42
+    local result: int = process_value(a)
+    print(result)
+    
+    return 0
+end

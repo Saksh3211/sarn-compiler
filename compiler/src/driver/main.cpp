@@ -350,8 +350,14 @@ int main(int argc, char** argv) {
                                 slua::Parser fpar(flex, diag, mode);
                                 auto fmod = fpar.parse_module(fpath);
                                 resolve_imports(*fmod, fpath);
-                                for (auto& fs : fmod->stmts)
+                                for (auto& fs : fmod->stmts) {
+                                    if (auto* fd = std::get_if<slua::FuncDecl>(&fs->v)) {
+                                        if (fd->exported) {
+                                            fd->name = id->module_name + "." + fd->name;
+                                        }
+                                    }
                                     expanded.push_back(std::move(fs));
+                                }
                                 pkg_found = true;
                                 break;
                             }

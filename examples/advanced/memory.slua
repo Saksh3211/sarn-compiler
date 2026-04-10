@@ -1,0 +1,25 @@
+--!!type:strict
+--!!mem:man
+
+function main(): int
+    local SIZE: int = 10
+    
+    local arr: ptr<int> = alloc_typed(int, SIZE)
+    
+    if arr == null then
+        panic("allocation failed")
+    end
+    
+    defer free(arr)
+    
+    for i = 0, SIZE, 1 do
+        store(arr + i, i * 2)
+    end
+    
+    for i = 0, SIZE, 1 do
+        local val: int = deref(arr + i)
+        print(val)
+    end
+    
+    return 0
+end

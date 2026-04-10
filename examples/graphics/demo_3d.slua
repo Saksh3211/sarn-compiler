@@ -1,4 +1,4 @@
-﻿--!!type:strict
+--!!type:strict
 import stdgui
 import scene
 import vec

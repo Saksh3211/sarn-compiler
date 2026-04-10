@@ -1,5 +1,56 @@
 # S Lua Language Reference
 
+## Learning Path & Examples
+
+S Lua examples are organized by increasing complexity:
+
+**basics/** - Start here
+1. `variables.slua` - Variable declaration, local/const/global
+2. `types.slua` - Type annotations and inference
+3. `functions.slua` - Function definitions and calls
+4. `control_flow.slua` - if/elseif/else statements
+5. `loops.slua` - For and while loops
+6. `loop_control.slua` - break and continue
+7. `tables.slua` - Arrays and maps
+8. `strings.slua` - String literals and concatenation
+9. `operators.slua` - Arithmetic, comparison, logic
+10. `logic.slua` - Logical operators and expressions
+11. `scoping.slua` - Variable scope and shadowing
+12. `defer.slua` - Defer statements for cleanup
+13. `multiple_return.slua` - Functions with multiple returns
+
+**stdlib/** - Standard library usage
+1. `math.slua` - Math module (sqrt, pow, sin, cos, etc.)
+2. `string.slua` - String manipulation functions
+3. `io.slua` - Input/output with colors
+4. `os.slua` - Operating system functions
+5. `fs_path.slua` - Filesystem and path operations
+6. `json.slua` - JSON parsing and encoding
+7. `random_datetime.slua` - Random numbers and datetime
+8. `crypto.slua` - Cryptography and hashing
+9. `reflection.slua` - Type checking and conversion (stdata module)
+10. `table_ops.slua` - Table manipulation functions
+
+**advanced/** - Advanced language features
+1. `memory.slua` - Manual memory management (alloc, free, deref)
+2. `pointers.slua` - Pointer operations and dereferencing
+3. `casting.slua` - Type casting and conversions
+4. `records.slua` - Record types (structs)
+5. `enums.slua` - Enum types
+6. `error_handling.slua` - panic() and error handling
+7. `oop.slua` - Object-oriented patterns with methods
+8. `union_types.slua` - Union type declarations
+9. `multiple_returns.slua` - Advanced return values
+10. `recursion.slua` - Recursive functions
+11. `defer_order.slua` - Multiple defer statements
+
+**graphics/** - Graphics and UI
+1. `demo_3d.slua` - 3D rendering with Raylib
+2. `fonts.slua` - Font loading and text rendering
+3. `ui_demo.slua` - Interactive UI components
+
+---
+
 ## File directives
 
 Every `.slua` file should start with directives on line 1+.
@@ -110,11 +161,7 @@ Short-circuit: `and` returns rhs if lhs is truthy, else lhs.
 "hello" .. " " .. "world"
 ```
 
-### Bitwise
-```
-&  |  ~  <<  >>
-```
-Operands must be `int`.
+
 
 ### Unary
 ```
@@ -130,7 +177,6 @@ not x   -- boolean not
 local x: int
 local p: ptr<int>
 local f: (int, int) -> int
-local opt: int?             -- optional (can be null)
 local u: int | string       -- union type
 ```
 
@@ -149,7 +195,7 @@ end
 
 local q, r = divmod(17, 5)
 
--- anonymous function
+-- anonymous function (EXPERIMENTAL - limited support)
 local square = function(x: int): int
     return x * x
 end
@@ -331,23 +377,7 @@ if d == DOWN then print("going down") end
 
 Enum members are `int` constants in the enclosing scope.
 
----
 
-## Generics
-```lua
-type Stack<T> = { data: ptr<T>, size: int, cap: int }
-
-function Stack.new<T>(cap: int): Stack<T>
-    return { data = alloc_typed(T, cap), size = 0, cap = cap }
-end
-
-function Stack.push<T>(s: Stack<T>, val: T): void
-    store(s.data + s.size, val)
-    s.size = s.size + 1
-end
-```
-
----
 
 ## Memory management
 ```lua
@@ -918,12 +948,28 @@ Or use the PowerShell runner:
 - Return IEEE 754 double precision constants
 - Both still work as expressions: `local x = math.pi()`
 
-### Known Limitations
+### Not Implemented
 
-⚠️ **Optional Types Not Fully Implemented**
-- Optional types (`int?`) are treated as `any` type in strict mode
-- Cannot assign `null` to strict mode optional variables
-- Workaround: Use nonstrict mode or use plain pointers (`ptr<...>`)
+❌ **Bitwise Operators**
+- Operators `&`, `|`, `~`, `<<`, `>>` are not supported
+- Parser rejects these tokens
+
+❌ **Generics**
+- Generic type parameters `<T>` syntax not supported
+- Type parameterization not implemented
+- Workaround: Use `table` or `any` for flexible containers
+
+❌ **Optional Types**
+- Optional syntax (`int?`) is not fully implemented
+- Causes uninitialized variable errors in strict mode
+- Workaround: Use plain pointers (`ptr<...>`) or nonstrict mode
+
+❌ **Anonymous Functions**
+- Lambda expressions have compiler IR generation bugs
+- Function references not fully supported
+- Workaround: Define named functions instead
+
+### Known Limitations
 
 ⚠️ **No For-In Loops**
 - Iterator syntax `for k,v in pairs(table)` not supported

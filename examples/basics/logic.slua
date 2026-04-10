@@ -1,0 +1,24 @@
+--!!type:nonstrict
+
+function main()
+    if true and false then
+        print("true")
+    else
+        print("false")
+    end
+    
+    if true or false then
+        print("true")
+    end
+    
+    if not false then
+        print("not false is true")
+    end
+    
+    local x = 5
+    if x > 0 and x < 10 then
+        print("x in range")
+    end
+    
+    return 0
+end

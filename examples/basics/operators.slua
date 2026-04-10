@@ -1,0 +1,28 @@
+--!!type:strict
+
+function main(): int
+    local a: int = 10
+    local b: int = 3
+    
+    print(a + b)
+    print(a - b)
+    print(a * b)
+    print(a / b)
+    print(a % b)
+    
+    print(-a)
+    
+    if a > b then
+        print("a > b")
+    end
+    
+    if a == 10 then
+        print("a is 10")
+    end
+    
+    if a ~= b then
+        print("not equal")
+    end
+    
+    return 0
+end

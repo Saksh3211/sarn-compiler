@@ -1,0 +1,42 @@
+--!!type:strict
+import math
+
+function main(): int
+    local x: number = math.sqrt(16.0)
+    print(x)
+    
+    local y: number = math.pow(2.0, 8.0)
+    print(y)
+    
+    local z: number = math.sin(math.pi())
+    print(z)
+    
+    local c: number = math.cos(0.0)
+    print(c)
+    
+    local pi: number = math.pi()
+    print(pi)
+    
+    local e: number = math.e()
+    print(e)
+    
+    local abs_val: number = math.abs(-3.14)
+    print(abs_val)
+    
+    local clamped: number = math.clamp(5.0, 0.0, 3.0)
+    print(clamped)
+    
+    local lerp_val: number = math.lerp(0.0, 10.0, 0.5)
+    print(lerp_val)
+    
+    local floor_val: number = math.floor(3.7)
+    print(floor_val)
+    
+    local ceil_val: number = math.ceil(3.2)
+    print(ceil_val)
+    
+    local round_val: number = math.round(3.5)
+    print(round_val)
+    
+    return 0
+end

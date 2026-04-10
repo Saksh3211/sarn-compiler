@@ -1,0 +1,20 @@
+--!!type:strict
+--!!mem:man
+
+function process_data(): int
+    local buffer: ptr<uint8> = alloc_typed(uint8, 1024)
+    defer free(buffer)
+    
+    defer print("cleanup 2")
+    defer print("cleanup 1")
+    
+    print("processing")
+    
+    return 0
+end
+
+function main(): int
+    process_data()
+    print("done")
+    return 0
+end

@@ -1,0 +1,15 @@
+--!!type:strict
+
+function multi_return(): int, string, number
+    return 42, "hello", 3.14
+end
+
+function main(): int
+    local i: int, s: string, n: number = multi_return()
+    
+    print(i)
+    print(s)
+    print(n)
+    
+    return 0
+end

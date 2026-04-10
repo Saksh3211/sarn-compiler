@@ -1,0 +1,21 @@
+--!!type:strict
+
+function fib(n: int): int
+    if n <= 1 then
+        return n
+    end
+    return fib(n - 1) + fib(n - 2)
+end
+
+function factorial(n: int): int
+    if n <= 1 then
+        return 1
+    end
+    return n * factorial(n - 1)
+end
+
+function main(): int
+    print(fib(7))
+    print(factorial(5))
+    return 0
+end

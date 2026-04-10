@@ -1,0 +1,27 @@
+--!!type:strict
+
+function divide(a: int, b: int): int
+    if b == 0 then
+        panic("division by zero")
+    end
+    return a / b
+end
+
+function safe_allocate(size: int): ptr<uint8>
+    local ptr: ptr<uint8> = alloc_typed(uint8, size)
+    if ptr == null then
+        panic("allocation failed")
+    end
+    return ptr
+end
+
+function main(): int
+    print(divide(10, 2))
+    
+    local buf: ptr<uint8> = safe_allocate(256)
+    defer free(buf)
+    
+    print("success")
+    
+    return 0
+end

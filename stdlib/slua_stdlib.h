@@ -61,6 +61,11 @@ double slua_tbl_sget_f64(SluaTable* t, const char* key);
 const char* slua_tbl_sget_str(SluaTable* t, const char* key);
 int32_t slua_tbl_sget_bool(SluaTable* t, const char* key);
 
+void slua_print_str(const char* s);
+void slua_print_int(int64_t n);
+void slua_print_float(double x);
+void slua_print_bool(int32_t b);
+void slua_print_null(void);
 void slua_print_str_no_newline(const char* s);
 void slua_write_bytes(const uint8_t* buf, int32_t len);
 void slua_flush(void);

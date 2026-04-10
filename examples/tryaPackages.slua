@@ -1,7 +1,0 @@
---!!type:strict
-import cMath
-
-function main(): int
-     print(cMath.add(3, 4))
-     return 0
-end

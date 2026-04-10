@@ -1,0 +1,18 @@
+--!!type:strict
+
+function main(): int
+    local x: int = 10
+    local y: number = 3.14
+    local s: string = "hello"
+    local b: bool = true
+    
+    print(x)
+    print(y)
+    print(s)
+    print(b)
+    
+    const MAX: int = 100
+    print(MAX)
+    
+    return 0
+end

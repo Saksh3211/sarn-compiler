@@ -1312,14 +1312,20 @@ llvm::Value* IREmitter::emit_binop(Binop& e, SourceLoc loc) {
     if (!lhs || !rhs) return nullptr;
 
     bool is_float = lhs->getType()->isDoubleTy() || rhs->getType()->isDoubleTy();
+    bool lhs_ptr = lhs->getType()->isPointerTy();
+    bool rhs_ptr = rhs->getType()->isPointerTy();
 
-    if (is_float && !lhs->getType()->isPointerTy() && !rhs->getType()->isPointerTy()) {
+    if (is_float && !lhs_ptr && !rhs_ptr) {
         if (!lhs->getType()->isDoubleTy())
             lhs = builder_.CreateSIToFP(lhs, llvm::Type::getDoubleTy(ctx_));
         if (!rhs->getType()->isDoubleTy())
             rhs = builder_.CreateSIToFP(rhs, llvm::Type::getDoubleTy(ctx_));
-    } else {
-        if (lhs->getType() != rhs->getType()) {
+    } else if (lhs->getType() != rhs->getType()) {
+        if (lhs_ptr && !rhs_ptr && (e.op == "==" || e.op == "~=")) {
+            rhs = builder_.CreateIntToPtr(rhs, lhs->getType());
+        } else if (!lhs_ptr && rhs_ptr && (e.op == "==" || e.op == "~=")) {
+            lhs = builder_.CreateIntToPtr(lhs, rhs->getType());
+        } else if (!lhs_ptr && !rhs_ptr) {
             auto* i64 = llvm::Type::getInt64Ty(ctx_);
             if (lhs->getType()->isIntegerTy()) lhs = builder_.CreateSExt(lhs, i64);
             if (rhs->getType()->isIntegerTy()) rhs = builder_.CreateSExt(rhs, i64);
@@ -1485,9 +1491,17 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                 }
                 if (meth == "print" && !e.args.empty()) {
                     auto* arg = emit_expr(*e.args[0]);
-                    if (arg && arg->getType()->isPointerTy()) {
-                        auto* fn = get_runtime_fn("slua_print_str");
-                        if (fn) builder_.CreateCall(fn, {arg});
+                    if (arg) {
+                        if (arg->getType()->isPointerTy()) {
+                            auto* fn = get_runtime_fn("slua_print_str");
+                            if (fn) builder_.CreateCall(fn, {arg});
+                        } else if (arg->getType()->isIntegerTy(64) || arg->getType()->isIntegerTy()) {
+                            auto* fn = get_runtime_fn("slua_print_int");
+                            if (fn) builder_.CreateCall(fn, {arg});
+                        } else if (arg->getType()->isDoubleTy()) {
+                            auto* fn = get_runtime_fn("slua_print_float");
+                            if (fn) builder_.CreateCall(fn, {arg});
+                        }
                     }
                     return llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx_), 0);
                 }

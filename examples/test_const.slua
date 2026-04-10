@@ -1,5 +1,0 @@
---!!strict
-function main(): int
-    const x: int = 10
-    return 0
-end

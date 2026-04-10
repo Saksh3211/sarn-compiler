@@ -1,0 +1,28 @@
+--!!type:strict
+import table
+
+function main(): int
+    local t: table = table.new()
+    
+    table.push(t, 10)
+    table.push(t, 20)
+    table.push(t, 30)
+    
+    print(table.len(t))
+    
+    local popped: int = table.pop(t)
+    print(popped)
+    
+    table.push(t, 40)
+    table.push(t, 50)
+    
+    local contains: int = table.contains_int(t, 20)
+    print(contains)
+    
+    table.reverse(t)
+    
+    table.clear(t)
+    print(table.len(t))
+    
+    return 0
+end

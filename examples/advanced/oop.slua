@@ -1,0 +1,27 @@
+--!!type:strict
+
+type Animal = { name: string, sound: string }
+
+function Animal.new(name: string, sound: string): Animal
+    return { name = name, sound = sound }
+end
+
+function Animal.speak(self: Animal): string
+    return self.name .. " says " .. self.sound
+end
+
+function Animal.change_sound(self: Animal, new_sound: string): void
+    self.sound = new_sound
+end
+
+function main(): int
+    local dog: Animal = Animal.new("Dog", "woof")
+    
+    print(Animal.speak(dog))
+    
+    dog:change_sound("bark")
+    
+    print(dog:speak())
+    
+    return 0
+end

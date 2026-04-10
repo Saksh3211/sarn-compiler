@@ -48,20 +48,16 @@ function Get-PackageLibs {
     param([string]$src_dir)
 
     $libs = @()
-    $roots = @(
-        (Join-Path $env:SLUA_ROOT ".packages")
-    )
+    $root = Join-Path $env:SLUA_ROOT ".packages"
 
-    foreach ($root in $roots) {
-        if (-not (Test-Path $root)) { continue }
+    if (-not (Test-Path $root)) { return @() }
 
-        Get-ChildItem $root -Directory | ForEach-Object {
-            $pkg_name = $_.Name
-            $pkg_dir  = $_.FullName
-
-            $init = Join-Path $pkg_dir "__init__.slua"
-            if (-not (Test-Path $init)) { return }
-
+    Get-ChildItem $root -Directory | ForEach-Object {
+        $pkg_name = $_.Name
+        $pkg_dir  = $_.FullName
+        $init = Join-Path $pkg_dir "__init__.slua"
+        
+        if ((Test-Path $init)) {
             $lib = Compile-PackageC $pkg_dir $pkg_name
             if ($lib) { $libs += $lib }
         }
@@ -89,18 +85,23 @@ function Slua-Run {
 
     $pkg_libs = Get-PackageLibs $src_dir
 
-    $link_args = @(
+    $link_cmd = @(
         $ll,
         "$env:SLUA_ROOT\build\runtime\slua.lib",
         "C:\vcpkg\installed\x64-windows\lib\raylib.lib",
         "-lOpenGL32","-lgdi32","-lwinmm",
         "-lUser32","-lShell32","-lGdi32",
-        "-lmsvcrt","-lucrt","-lvcruntime"
-    ) + $pkg_libs + @("-o", $exe)
+        "-lmsvcrt","-lucrt","-lvcruntime",
+        "-o", $exe
+    )
+    
+    foreach ($lib in $pkg_libs) {
+        $link_cmd += $lib
+    }
 
-    clang @link_args 2>&1 | Out-Null
+    clang @link_cmd 2>&1 | Out-Null
 
-    if ($LASTEXITCODE -ne 0) {
+    if (-not (Test-Path $exe)) {
         Write-Host "[ERROR] Linking failed" -ForegroundColor Red
         return
     }

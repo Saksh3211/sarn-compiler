@@ -1,0 +1,21 @@
+--!!type:strict
+
+enum Direction = { UP = 0, DOWN = 1, LEFT = 2, RIGHT = 3 }
+enum Color = { RED, GREEN, BLUE }
+
+function main(): int
+    local dir: int = UP
+    print(dir)
+    
+    local opposite: int = DOWN
+    print(opposite)
+    
+    if dir == UP then
+        print("going up")
+    end
+    
+    local color: int = GREEN
+    print(color)
+    
+    return 0
+end

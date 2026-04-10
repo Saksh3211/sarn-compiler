@@ -1,0 +1,17 @@
+--!!type:nonstrict
+
+function main()
+    do
+        local x = 42
+        print(x)
+    end
+    
+    local y = 10
+    do
+        local y = 20
+        print(y)
+    end
+    print(y)
+    
+    return 0
+end

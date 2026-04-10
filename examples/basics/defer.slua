@@ -1,0 +1,14 @@
+--!!type:strict
+--!!mem:man
+
+function cleanup(x: int): void
+    print("cleanup called")
+end
+
+function main(): int
+    defer cleanup(5)
+    
+    print("doing work")
+    
+    return 0
+end
