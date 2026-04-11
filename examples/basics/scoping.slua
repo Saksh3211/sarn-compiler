@@ -1,6 +1,6 @@
 --!!type:nonstrict
 
-function main()
+function main():int
     do
         local x = 42
         print(x)

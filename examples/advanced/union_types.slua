@@ -1,7 +1,15 @@
 --!!type:strict
 
-function process_value(x: int | string): int
+function process_int(x: int): int
     if x == 0 then
+        return 0
+    else
+        return x + 100
+    end
+end
+
+function process_string(s: string): int
+    if s == "" then
         return 0
     else
         return 1
@@ -9,9 +17,11 @@ function process_value(x: int | string): int
 end
 
 function main(): int
-    local a: int = 42
-    local result: int = process_value(a)
-    print(result)
+    local result1: int = process_int(42)
+    print(result1)
+    
+    local result2: int = process_string("hello")
+    print(result2)
     
     return 0
 end

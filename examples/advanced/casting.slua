@@ -16,5 +16,6 @@ function cast_demo(): int
 end
 
 function main(): int
-    return cast_demo()
+    cast_demo()
+    return 0
 end

@@ -10,18 +10,24 @@ function Animal.speak(self: Animal): string
     return self.name .. " says " .. self.sound
 end
 
-function Animal.change_sound(self: Animal, new_sound: string): void
-    self.sound = new_sound
+-- Returns a new animal with changed sound (records are by-value)
+function Animal.with_sound(self: Animal, new_sound: string): Animal
+    return { name = self.name, sound = new_sound }
 end
 
 function main(): int
     local dog: Animal = Animal.new("Dog", "woof")
+    local cat: Animal = Animal.new("Cat", "meow")
     
     print(Animal.speak(dog))
+    print(Animal.speak(cat))
     
-    dog:change_sound("bark")
+    -- Create new records with modified sounds
+    dog = Animal.with_sound(dog, "bark")
+    cat = Animal.with_sound(cat, "hiss")
     
-    print(dog:speak())
+    print(Animal.speak(dog))
+    print(Animal.speak(cat))
     
     return 0
 end

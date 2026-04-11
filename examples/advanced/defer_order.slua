@@ -1,20 +1,20 @@
 --!!type:strict
 --!!mem:man
 
-function process_data(): int
-    local buffer: ptr<uint8> = alloc_typed(uint8, 1024)
-    defer free(buffer)
-    
+function main(): int
+    print("start of program")
+
+    local buf: ptr<uint8> = alloc_typed(uint8, 256)
+    if buf == null then
+        panic("allocation failed")
+    end
+    defer free(buf)
+    defer print("cleanup 3")
     defer print("cleanup 2")
     defer print("cleanup 1")
     
     print("processing")
+    store(buf, 42)
     
-    return 0
-end
-
-function main(): int
-    process_data()
-    print("done")
     return 0
 end

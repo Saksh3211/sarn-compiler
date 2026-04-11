@@ -36,6 +36,6 @@ function main(): int
     
     local float_str: number = string.to_float("3.14")
     print(float_str)
-    
+    )
     return 0
 end

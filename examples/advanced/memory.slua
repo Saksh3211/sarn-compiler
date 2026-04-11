@@ -13,11 +13,11 @@ function main(): int
     defer free(arr)
     
     for i = 0, SIZE, 1 do
-        store(arr + i, i * 2)
+        store(ptr_cast(ptr<int>, cast(int, arr) + i * sizeof(int)), i * 2)
     end
     
     for i = 0, SIZE, 1 do
-        local val: int = deref(arr + i)
+        local val: int = deref(ptr_cast(ptr<int>, cast(int, arr) + i * sizeof(int)))
         print(val)
     end
     
