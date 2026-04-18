@@ -1,15 +1,16 @@
 .packages/
+Learn-sarn/
 
 examples/*.ll
 examples/*.exe
 
-tools/lsp/slua-lsp/build/*
+tools/lsp/sarn-lsp/build/*
 
 build/*
 
-!build/compiler/
+build/compiler/
 build/compiler/*.cmake
-!build/compiler/sluac.exe
+!build/compiler/sarnc.exe
 
 
 *.ll
@@ -21,7 +22,7 @@ build/compiler/*.cmake
 *.pdb
 *.obj
 *.ilk
-*.slua.sig
+*.sarn.sig
 
 cache/
 

@@ -13,6 +13,7 @@
 #include <iostream>
 #include <cstring>
 #include <unordered_set>
+#include <functional>
 
 static std::string read_file(const std::string& path) {
     std::ifstream f(path, std::ios::binary);

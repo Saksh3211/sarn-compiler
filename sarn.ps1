@@ -4,12 +4,12 @@ param(
     [string]$Version = "latest"
 )
 
-$env:SLUA_ROOT = "C:\Users\rajeev\slua-compiler"
-$env:SLUA_BIN  = "$env:SLUA_ROOT\bin"
+$env:SARN_ROOT = "C:\Users\rajeev\slua-compiler"
+$env:SARN_BIN  = "$env:SARN_ROOT\bin"
 $env:PATH      = "C:\vcpkg\installed\x64-windows\bin;" + $env:PATH
 
-New-Item -ItemType Directory -Force -Path $env:SLUA_BIN | Out-Null
-New-Item -ItemType Directory -Force -Path (Join-Path $env:SLUA_ROOT ".packages") | Out-Null
+New-Item -ItemType Directory -Force -Path $env:SARN_BIN | Out-Null
+New-Item -ItemType Directory -Force -Path (Join-Path $env:SARN_ROOT ".packages") | Out-Null
 
 function Compile-PackageC {
     param([string]$pkg_dir, [string]$pkg_name)
@@ -23,7 +23,7 @@ function Compile-PackageC {
     $meta = Get-Content $pkg_json -Raw | ConvertFrom-Json
     if (-not $meta.c_sources -or $meta.c_sources.Count -eq 0) { return $null }
 
-    $inc  = Join-Path $env:SLUA_ROOT "runtime\include"
+    $inc  = Join-Path $env:SARN_ROOT "runtime\include"
     $objs = @()
 
     foreach ($src in $meta.c_sources) {
@@ -48,14 +48,14 @@ function Get-PackageLibs {
     param([string]$src_dir)
 
     $libs = @()
-    $root = Join-Path $env:SLUA_ROOT ".packages"
+    $root = Join-Path $env:SARN_ROOT ".packages"
 
     if (-not (Test-Path $root)) { return @() }
 
     Get-ChildItem $root -Directory | ForEach-Object {
         $pkg_name = $_.Name
         $pkg_dir  = $_.FullName
-        $init = Join-Path $pkg_dir "__init__.slua"
+        $init = Join-Path $pkg_dir "__init__.sarn"
         
         if ((Test-Path $init)) {
             $lib = Compile-PackageC $pkg_dir $pkg_name
@@ -66,17 +66,17 @@ function Get-PackageLibs {
     return $libs | Select-Object -Unique
 }
 
-function Slua-Run {
+function Sarn-Run {
     param([string]$src)
 
     $name    = [System.IO.Path]::GetFileNameWithoutExtension($src)
-    $abs     = Join-Path $env:SLUA_ROOT $src
+    $abs     = Join-Path $env:SARN_ROOT $src
     $src_dir = [System.IO.Path]::GetDirectoryName($abs)
 
-    $ll  = Join-Path $env:SLUA_BIN ($name + ".ll")
-    $exe = Join-Path $env:SLUA_BIN ($name + ".exe")
+    $ll  = Join-Path $env:SARN_BIN ($name + ".ll")
+    $exe = Join-Path $env:SARN_BIN ($name + ".exe")
 
-    & "$env:SLUA_ROOT\build\compiler\sluac.exe" $abs -o $ll
+    & "$env:SARN_ROOT\build\compiler\sarnc.exe" $abs -o $ll
 
     if ($LASTEXITCODE -ne 0) {
         Write-Host "[ERROR] Compile failed" -ForegroundColor Red
@@ -87,7 +87,7 @@ function Slua-Run {
 
     $link_cmd = @(
         $ll,
-        "$env:SLUA_ROOT\build\runtime\slua.lib",
+        "$env:SARN_ROOT\build\runtime\sarn.lib",
         "C:\vcpkg\installed\x64-windows\lib\raylib.lib",
         "-lOpenGL32","-lgdi32","-lwinmm",
         "-lUser32","-lShell32","-lGdi32",
@@ -109,11 +109,11 @@ function Slua-Run {
     & $exe
 }
 
-function Slua-Install {
+function Sarn-Install {
     param([string]$pkg)
 
-    $registry_path = Join-Path $env:SLUA_ROOT "packageReg.json"
-    $pkg_root = Join-Path $env:SLUA_ROOT ".packages"
+    $registry_path = Join-Path $env:SARN_ROOT "packageReg.json"
+    $pkg_root = Join-Path $env:SARN_ROOT ".packages"
 
     # Direct GitHub install
     if ($pkg -match "^https://github.com") {
@@ -156,10 +156,10 @@ function Slua-Install {
     Write-Host "[OK] Installed $pkg"
 }
 
-function Slua-Update {
+function Sarn-Update {
     param([string]$pkg)
 
-    $pkg_dir = Join-Path $env:SLUA_ROOT ".packages\$pkg"
+    $pkg_dir = Join-Path $env:SARN_ROOT ".packages\$pkg"
 
     if (-not (Test-Path $pkg_dir)) {
         Write-Host "[ERROR] Not installed" -ForegroundColor Red
@@ -175,10 +175,10 @@ function Slua-Update {
     Write-Host "[OK] Updated $pkg"
 }
 
-function Slua-Remove {
+function Sarn-Remove {
     param([string]$pkg)
 
-    $pkg_dir = Join-Path $env:SLUA_ROOT ".packages\$pkg"
+    $pkg_dir = Join-Path $env:SARN_ROOT ".packages\$pkg"
 
     if (Test-Path $pkg_dir) {
         Remove-Item -Recurse -Force $pkg_dir
@@ -188,8 +188,8 @@ function Slua-Remove {
     }
 }
 
-function Slua-List {
-    $pkg_root = Join-Path $env:SLUA_ROOT ".packages"
+function Sarn-List {
+    $pkg_root = Join-Path $env:SARN_ROOT ".packages"
 
     Get-ChildItem $pkg_root -Directory | ForEach-Object {
         Write-Host $_.Name
@@ -197,7 +197,7 @@ function Slua-List {
 }
 
 
-function Slua-New-Package {
+function Sarn-New-Package {
     param([string]$name)
     $dir = Join-Path (Get-Location) $name
     New-Item -ItemType Directory -Force -Path $dir | Out-Null
@@ -207,13 +207,13 @@ function Slua-New-Package {
 function $name.hello(): string
     return "Hello from $name!"
 end
-"@ | Set-Content (Join-Path $dir "__init__.slua")
+"@ | Set-Content (Join-Path $dir "__init__.sarn")
 
 @"
 {
     "name": "$name",
     "version": "1.0.0",
-    "files": ["__init__.slua"],
+    "files": ["__init__.sarn"],
     "c_sources": [],
     "deps": []
 }
@@ -223,11 +223,11 @@ end
 }
 
 switch ($Command) {
-    "Slua-Run"     { Slua-Run $File }
-    "install" { Slua-Install $File }
-    "update"  { Slua-Update $File }
-    "remove"  { Slua-Remove $File }
-    "list"    { Slua-List }
-    "newpkg"  { Slua-New-Package $File }
+    "Sarn-Run"     { Sarn-Run $File }
+    "install" { Sarn-Install $File }
+    "update"  { Sarn-Update $File }
+    "remove"  { Sarn-Remove $File }
+    "list"    { Sarn-List }
+    "newpkg"  { Sarn-New-Package $File }
     default   { Write-Host "Commands: run | install | update | remove | list | newpkg" }
 }

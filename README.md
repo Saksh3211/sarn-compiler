@@ -1,7 +1,7 @@
 
-# S Lua
+# Sarn
 
-S Lua is a compiled systems programming language that compiles directly to native machine code via LLVM.
+Sarn is a compiled systems programming language that compiles directly to native machine code via LLVM.
 
 ## Key Features
 
@@ -26,14 +26,14 @@ cmake -B build -G Ninja && ninja -C build
 --!!type:strict
 
 function main(): int
-    print("Hello, S Lua!")
+    print("Hello, Sarn!")
     return 0
 end
 ```
 
 Compile and run:
 ```bash
-./slua.ps1 Slua-Run hello.slua
+./sarn.ps1 Sarn-Run hello.sarn
 ```
 
 ## Documentation
@@ -60,41 +60,41 @@ Start here based on your needs:
 - **[examples/graphics/](examples/graphics/)** - Raylib integration examples
 - **[docs.md#gui](docs.md#gui--windowdrawinputuifontscene)** - Graphics library reference
 
-## Learn S Lua
+## Learn Sarn
 
 Examples are organized by increasing complexity:
 
 ### basics/ - Fundamentals (Start here!)
-- `variables.slua` - Variable declaration and scope
-- `types.slua` - Type system
-- `functions.slua` - Function definition and calling
-- `control_flow.slua` - if/else statements
-- `loops.slua` - For and while loops
-- `tables.slua` - Arrays and maps
-- `operators.slua` - Arithmetic, comparison, logic
+- `variables.sarn` - Variable declaration and scope
+- `types.sarn` - Type system
+- `functions.sarn` - Function definition and calling
+- `control_flow.sarn` - if/else statements
+- `loops.sarn` - For and while loops
+- `tables.sarn` - Arrays and maps
+- `operators.sarn` - Arithmetic, comparison, logic
 - And more...
 
 ### stdlib/ - Standard Library
-- `math.slua` - Math functions (sqrt, sin, cos, etc.)
-- `string.slua` - String manipulation
-- `io.slua` - Input/output with colors
-- `fs_path.slua` - Files and paths
-- `json.slua` - JSON parsing
-- `crypto.slua` - Hashing and encoding
+- `math.sarn` - Math functions (sqrt, sin, cos, etc.)
+- `string.sarn` - String manipulation
+- `io.sarn` - Input/output with colors
+- `fs_path.sarn` - Files and paths
+- `json.sarn` - JSON parsing
+- `crypto.sarn` - Hashing and encoding
 - And more...
 
 ### advanced/ - Advanced Features
-- `memory.slua` - Manual memory allocation
-- `records.slua` - Record types (structs)
-- `oop.slua` - Object-oriented patterns
-- `error_handling.slua` - Panic and error recovery
-- `recursion.slua` - Recursive algorithms
+- `memory.sarn` - Manual memory allocation
+- `records.sarn` - Record types (structs)
+- `oop.sarn` - Object-oriented patterns
+- `error_handling.sarn` - Panic and error recovery
+- `recursion.sarn` - Recursive algorithms
 - And more...
 
 ### graphics/ - Graphics & UI
-- `demo_3d.slua` - 3D rendering with Raylib
-- `ui_demo.slua` - Interactive UI components
-- `fonts.slua` - Font loading and rendering
+- `demo_3d.sarn` - 3D rendering with Raylib
+- `ui_demo.sarn` - Interactive UI components
+- `fonts.sarn` - Font loading and rendering
 
 ## Language Highlights
 

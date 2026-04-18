@@ -2,15 +2,15 @@
      "version": "2.0.0",
      "tasks": [
           {
-               "label": "slua: run current file",
+               "label": "sarn: run current file",
                "type": "shell",
                "command": "powershell",
                "args": [
                     "-ExecutionPolicy",
                     "Bypass",
                     "-File",
-                    "${workspaceFolder}\\slua.ps1",
-                    "Slua-Run",
+                    "${workspaceFolder}\\sarn.ps1",
+                    "Sarn-Run",
                     "${relativeFile}"
                ],
                "group": {
@@ -25,7 +25,7 @@
                     "showReuseMessage": false
                },
                "problemMatcher": {
-                    "owner": "sluac",
+                    "owner": "sarnc",
                     "fileLocation": [
                          "relative",
                          "${workspaceFolder}"
@@ -41,7 +41,7 @@
                }
           },
           {
-               "label": "slua: build compiler",
+               "label": "sarn: build compiler",
                "type": "shell",
                "command": "${workspaceFolder}\\cmake_configure.bat",
                "group": {
@@ -57,9 +57,9 @@
                "problemMatcher": []
           },
           {
-               "label": "sluac: emit AST (current file)",
+               "label": "sarnc: emit AST (current file)",
                "type": "shell",
-               "command": "${workspaceFolder}\\build\\compiler\\sluac.exe",
+               "command": "${workspaceFolder}\\build\\compiler\\sarnc.exe",
                "args": [
                     "${file}",
                     "--emit-ast"
@@ -74,9 +74,9 @@
                "problemMatcher": []
           },
           {
-               "label": "sluac: emit IR (current file)",
+               "label": "sarnc: emit IR (current file)",
                "type": "shell",
-               "command": "${workspaceFolder}\\build\\compiler\\sluac.exe",
+               "command": "${workspaceFolder}\\build\\compiler\\sarnc.exe",
                "args": [
                     "${file}",
                     "-o",
