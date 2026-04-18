@@ -1,4 +1,4 @@
-#ifdef SLUA_HAS_LLVM
+#ifdef SARN_HAS_LLVM
 
 #include "slua/IREmitter.h"
 #include <llvm/IR/Constants.h>

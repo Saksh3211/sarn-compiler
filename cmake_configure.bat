@@ -53,7 +53,7 @@ if exist build\CMakeCache.txt (
 )
 
 REM Configure with Visual Studio (more reliable than Ninja on Windows)
-cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
+cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows -DLLVM_DIR=C:/vcpkg/installed/x64-windows/share/llvm -DLLVM_ROOT=C:/vcpkg/installed/x64-windows -Draylib_DIR=C:/vcpkg/installed/x64-windows/share/raylib
 
 if !ERRORLEVEL! neq 0 (
     echo [ERROR] CMake configuration failed!
@@ -85,4 +85,5 @@ echo.
 echo Test with: .\sarn.ps1 Sarn-Run learn-sarn\examples\...
 echo.
 pause
+
 

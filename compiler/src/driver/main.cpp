@@ -5,7 +5,7 @@
 #include "slua/Parser.h"
 #include "slua/Resolver.h"
 #include "slua/TypeChecker.h"
-#ifdef SLUA_HAS_LLVM
+#ifdef SARN_HAS_LLVM
 #include "slua/IREmitter.h"
 #endif
 #include <fstream>
@@ -402,7 +402,7 @@ int main(int argc, char** argv) {
         for (auto& s : mod->stmts) print_stmt(s.get(), 1);
         return 0;
     }
-#ifdef SLUA_HAS_LLVM
+#ifdef SARN_HAS_LLVM
     {
         fprintf(stderr, "sluac: creating emitter\n"); fflush(stderr);
         slua::IREmitter emitter(diag, cfg, input_file);
@@ -420,4 +420,5 @@ int main(int argc, char** argv) {
     return 1;
 #endif
 }
+
 

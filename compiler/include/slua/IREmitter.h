@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef SLUA_HAS_LLVM
+#ifdef SARN_HAS_LLVM
 
 #include "AST.h"
 #include "Diagnostics.h"
@@ -126,6 +126,7 @@ private:
 } 
 
 #endif 
+
 
 
 

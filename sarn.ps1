@@ -4,7 +4,7 @@ param(
     [string]$Version = "latest"
 )
 
-$env:SARN_ROOT = "C:\Users\rajeev\slua-compiler"
+$env:SARN_ROOT = $PSScriptRoot
 $env:SARN_BIN  = "$env:SARN_ROOT\bin"
 $env:PATH      = "C:\vcpkg\installed\x64-windows\bin;" + $env:PATH
 
@@ -76,7 +76,7 @@ function Sarn-Run {
     $ll  = Join-Path $env:SARN_BIN ($name + ".ll")
     $exe = Join-Path $env:SARN_BIN ($name + ".exe")
 
-    & "$env:SARN_ROOT\build\compiler\sarnc.exe" $abs -o $ll
+    & "$env:SARN_ROOT\build\compiler\Release\sarnc.exe" $abs -o $ll
 
     if ($LASTEXITCODE -ne 0) {
         Write-Host "[ERROR] Compile failed" -ForegroundColor Red
@@ -87,7 +87,7 @@ function Sarn-Run {
 
     $link_cmd = @(
         $ll,
-        "$env:SARN_ROOT\build\runtime\sarn.lib",
+        $( $r = Resolve-Path "$env:SARN_ROOT\build\runtime\*\sarn.lib" -ErrorAction SilentlyContinue | Select-Object -First 1; if ($r) { $r.Path } else { "$env:SARN_ROOT\build\runtime\sarn.lib" } ),
         "C:\vcpkg\installed\x64-windows\lib\raylib.lib",
         "-lOpenGL32","-lgdi32","-lwinmm",
         "-lUser32","-lShell32","-lGdi32",
@@ -231,3 +231,6 @@ switch ($Command) {
     "newpkg"  { Sarn-New-Package $File }
     default   { Write-Host "Commands: run | install | update | remove | list | newpkg" }
 }
+
+
+
