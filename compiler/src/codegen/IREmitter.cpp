@@ -198,6 +198,9 @@ void IREmitter::declare_runtime() {
     declare("slua_os_system", voidT, {i8p});
     declare("slua_os_cwd",i8p,   {});
     declare("slua_os_sleepS", voidT, {i64});
+    declare("slua_os_is_admin",    i32,   {});
+    declare("slua_os_add_to_path", i32,   {i8p});
+    declare("slua_os_get_temp_dir",i8p,   {});
 
     declare("slua_sqrt",  f64, {f64});
     declare("slua_pow",   f64, {f64, f64});
@@ -2704,3 +2707,5 @@ void IREmitter::emit_multi_local_decl(MultiLocalDecl& s, SourceLoc loc) {
 }
 }
 #endif
+
+

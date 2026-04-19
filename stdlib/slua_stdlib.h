@@ -82,6 +82,9 @@ void slua_io_print_color(const char* msg, const char* color);
 
 #endif
 
+int32_t slua_os_is_admin(void);
+int32_t slua_os_add_to_path(const char* dir);
+char*   slua_os_get_temp_dir(void);
 int64_t slua_os_time();
 void slua_os_sleep(int64_t ms);
 char* slua_os_getenv(const char* key);
@@ -143,3 +146,4 @@ void    slua_ui_set_accent(int32_t r, int32_t g, int32_t b);
 #include "modules/slua_vec.h"
 #include "modules/slua_http.h"
 #include "modules/slua_tbl_extra.h"
+

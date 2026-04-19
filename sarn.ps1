@@ -85,21 +85,57 @@ function Sarn-Run {
 
     $pkg_libs = Get-PackageLibs $src_dir
 
+    $obj = [System.IO.Path]::ChangeExtension($ll, ".obj")
+    
+    $llvm_bin = "C:\Program Files\LLVM\bin"
+    if (-not (Test-Path $llvm_bin)) {
+        $llvm_bin = "C:\Program Files (x86)\LLVM\bin"
+    }
+    
+    $llc_path = Join-Path $llvm_bin "llc.exe"
+    if (Test-Path $llc_path) {
+        & $llc_path $ll -o $obj 2>&1 | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "[ERROR] LLVM IR compilation to object failed" -ForegroundColor Red
+            return
+        }
+    } else {
+        $obj = $ll
+    }
+    
+    if (-not (Test-Path $obj)) {
+        Write-Host "[ERROR] Object file not found" -ForegroundColor Red
+        return
+    }
+
     $link_cmd = @(
-        $ll,
+        $obj,
         $( $r = Resolve-Path "$env:SARN_ROOT\build\runtime\*\sarn.lib" -ErrorAction SilentlyContinue | Select-Object -First 1; if ($r) { $r.Path } else { "$env:SARN_ROOT\build\runtime\sarn.lib" } ),
-        "C:\vcpkg\installed\x64-windows\lib\raylib.lib",
-        "-lOpenGL32","-lgdi32","-lwinmm",
-        "-lUser32","-lShell32","-lGdi32",
-        "-lmsvcrt","-lucrt","-lvcruntime",
-        "-o", $exe
+        "C:\vcpkg\installed\x64-windows\lib\raylib.lib"
     )
     
     foreach ($lib in $pkg_libs) {
         $link_cmd += $lib
     }
+    
+    $link_cmd += @(
+        "-lOpenGL32","-lgdi32","-lwinmm","-ladvapi32",
+        "-lUser32","-lShell32","-lGdi32",
+        "-lmsvcrt","-lucrt","-lvcruntime",
+        "-o", $exe
+    )
 
-    clang @link_cmd 2>&1 | Out-Null
+    $clang_path = Join-Path $llvm_bin "clang.exe"
+    $clang_output = $null
+    if (Test-Path $clang_path) {
+        $clang_output = & $clang_path @link_cmd 2>&1
+    } else {
+        $clang_output = clang @link_cmd 2>&1
+    }
+    
+    if ($clang_output) {
+        Write-Host "Clang output: $clang_output"
+    }
 
     if (-not (Test-Path $exe)) {
         Write-Host "[ERROR] Linking failed" -ForegroundColor Red
@@ -231,6 +267,3 @@ switch ($Command) {
     "newpkg"  { Sarn-New-Package $File }
     default   { Write-Host "Commands: run | install | update | remove | list | newpkg" }
 }
-
-
-

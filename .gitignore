@@ -1,5 +1,5 @@
 .packages/
-Learn-sarn/
+sarn/
 
 examples/*.ll
 examples/*.exe

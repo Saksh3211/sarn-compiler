@@ -1,0 +1,520 @@
+--!!type:strict
+import stdgui
+import os
+import fs
+import process
+import string
+
+global g_page: int = 0
+global g_add_path: int = 1
+global g_proc_id: int = -1
+global g_progress: int = 0
+global g_status: string = "Ready"
+global g_done: int = 0
+global g_success: int = 0
+global g_install_dir: string = "C:\\sarn-compiler"
+global g_tmp: string = "C:\\Windows\\Temp"
+global g_pfile: string = "C:\\Windows\\Temp\\sarn_prog.txt"
+global g_wfile: string = "C:\\Windows\\Temp\\sarn_worker.ps1"
+global g_anim: int = 0
+global g_tick: int = 0
+global g_err_msg: string = ""
+global g_font_id: int = -1
+
+function clr_bg(): int
+    window.clear(14, 14, 22, 255)
+    return 0
+end
+
+function draw_header(): int
+    draw.rect(0, 0, 640, 56, 18, 18, 30, 255)
+    draw.rect(0, 54, 640, 2, 60, 110, 190, 255)
+    draw.rect(8, 8, 40, 40, 60, 110, 190, 255)
+    draw.rect(12, 12, 32, 32, 14, 14, 22, 255)
+    draw.rect(20, 18, 16, 4, 60, 110, 190, 255)
+    draw.rect(20, 26, 16, 4, 60, 110, 190, 255)
+    draw.rect(20, 34, 16, 4, 60, 110, 190, 255)
+    if g_font_id >= 0 then
+        draw.text_font(g_font_id, "Sarn Compiler", 60, 8, 20, 1.0, 230, 240, 255, 255)
+        draw.text_font(g_font_id, "Installation Wizard  v1.0", 60, 30, 12, 1.0, 100, 130, 170, 255)
+    else
+        draw.text("Sarn Compiler", 60, 10, 20, 230, 240, 255, 255)
+        draw.text("Installation Wizard  v1.0", 60, 34, 12, 100, 130, 170, 255)
+    end
+    return 0
+end
+
+function draw_footer(): int
+    draw.rect(0, 436, 640, 44, 18, 18, 30, 255)
+    draw.rect(0, 436, 640, 1, 40, 40, 60, 255)
+    return 0
+end
+
+function draw_card(x: int, y: int, w: int, h: int): int
+    draw.rect(x, y, w, h, 22, 22, 36, 255)
+    draw.rect(x, y, 3, h, 60, 110, 190, 255)
+    draw.rect(x + 3, y, w - 3, 1, 35, 35, 55, 255)
+    draw.rect(x + 3, y + h - 1, w - 3, 1, 35, 35, 55, 255)
+    draw.rect(x + w - 1, y, 1, h, 35, 35, 55, 255)
+    return 0
+end
+
+function draw_bullet(x: int, y: int, text: string): int
+    draw.rect(x, y + 6, 6, 6, 60, 110, 190, 255)
+    draw.text(text, x + 14, y, 13, 160, 200, 160, 255)
+    return 0
+end
+
+function draw_page_welcome(): int
+    clr_bg()
+    draw_header()
+
+    draw_card(30, 70, 580, 350)
+
+    if g_font_id >= 0 then
+        draw.text_font(g_font_id, "Welcome to Sarn", 50, 85, 22, 1.0, 230, 240, 255, 255)
+    else
+        draw.text("Welcome to Sarn", 50, 90, 22, 230, 240, 255, 255)
+    end
+    draw.text("A compiled systems language with LLVM backend", 50, 118, 13, 100, 130, 170, 255)
+    draw.rect(50, 138, 560, 1, 38, 38, 56, 255)
+
+    draw.text("This installer will set up:", 50, 152, 14, 190, 200, 220, 255)
+    draw_bullet(50, 175, "LLVM 18.1.6 + Clang  (pre-compiled, ~290 MB download)")
+    draw_bullet(50, 197, "CMake 3.28 + Ninja build system")
+    draw_bullet(50, 219, "raylib 5.0  (pre-built via vcpkg)")
+    draw_bullet(50, 241, "VS Build Tools  (if not already installed)")
+    draw_bullet(50, 263, "Sarn compiler  (sarnc.exe)  built from source")
+
+    draw.rect(50, 290, 560, 1, 38, 38, 56, 255)
+
+    draw.text("Estimated install time: 2 - 5 minutes on fast internet", 50, 304, 12, 110, 130, 150, 255)
+    draw.text("Requires: Administrator privileges and internet access", 50, 320, 12, 110, 130, 150, 255)
+    draw.text("Install path: C:\\sarn-compiler", 50, 336, 12, 110, 130, 150, 255)
+    draw.text("LLVM path:    C:\\Program Files\\LLVM", 50, 352, 12, 110, 130, 150, 255)
+    draw.text("vcpkg path:   C:\\vcpkg", 50, 368, 12, 110, 130, 150, 255)
+
+    draw_footer()
+
+    local is_admin: int = os.is_admin()
+    if is_admin == 0 then
+        draw.rect(0, 412, 640, 22, 100, 30, 30, 255)
+        draw.text("  WARNING: Not running as Administrator — click Next to attempt UAC elevation", 4, 416, 12, 255, 180, 180, 255)
+    end
+
+    ui.set_accent(60, 110, 190)
+
+    if ui.button(515, 446, 110, 26, "Next  >") == 1 then
+        g_page = 1
+    end
+
+    return 0
+end
+
+function draw_page_options(): int
+    clr_bg()
+    draw_header()
+    draw_card(30, 70, 580, 350)
+
+    draw.text("Installation Options", 50, 90, 20, 230, 240, 255, 255)
+    draw.rect(50, 116, 560, 1, 38, 38, 56, 255)
+
+    draw.text("Install directory:", 50, 130, 13, 160, 180, 210, 255)
+    draw.rect(50, 148, 540, 26, 26, 26, 40, 255)
+    draw.rect(50, 148, 540, 26, 45, 45, 65, 255)
+    draw.text(g_install_dir, 60, 156, 13, 200, 210, 230, 255)
+
+    draw.text("(To change path, edit C:\\sarn-compiler in sarn.ps1 after install)", 50, 180, 11, 80, 90, 110, 255)
+
+    draw.rect(50, 200, 560, 1, 38, 38, 56, 255)
+    draw.text("Options:", 50, 214, 13, 160, 180, 210, 255)
+    ui.set_accent(60, 110, 190)
+    g_add_path = ui.checkbox(50, 234, 18, "Add sarnc and clang to system PATH", g_add_path)
+
+    draw.rect(50, 268, 560, 1, 38, 38, 56, 255)
+    draw.text("Components (all required):", 50, 282, 13, 160, 180, 210, 255)
+    draw.text("  Git             — source control", 60, 302, 12, 130, 160, 130, 255)
+    draw.text("  CMake + Ninja   — build system", 60, 318, 12, 130, 160, 130, 255)
+    draw.text("  LLVM 18.1.6     — compiler backend (pre-compiled)", 60, 334, 12, 130, 160, 130, 255)
+    draw.text("  raylib 5.0      — graphics library via vcpkg", 60, 350, 12, 130, 160, 130, 255)
+    draw.text("  VS Build Tools  — C++ toolchain (if missing)", 60, 366, 12, 130, 160, 130, 255)
+    draw.text("  sarnc.exe       — Sarn compiler (built from source)", 60, 382, 12, 130, 160, 130, 255)
+
+    draw_footer()
+
+    if ui.button(30, 446, 100, 26, "<  Back") == 1 then
+        g_page = 0
+    end
+
+    if ui.button(515, 446, 110, 26, "Install") == 1 then
+        start_install()
+    end
+
+    return 0
+end
+
+function write_worker(): int
+    local s: string = "param([string]$InstallDir=\"C:\\sarn-compiler\",[string]$ProgressFile,[int]$AddToPath=1)\n"
+    s = s .. "$ErrorActionPreference='Stop'\n"
+    s = s .. "$VcpkgDir='C:\\vcpkg'\n"
+    s = s .. "function Set-P($p,$m){\"$p|$m\"|Set-Content $ProgressFile -Encoding UTF8;Write-Host \"[$p%] $m\"}\n"
+    s = s .. "function Has-Cmd($n){return [bool](Get-Command $n -ErrorAction SilentlyContinue)}\n"
+    s = s .. "function Refresh-Env{$env:PATH=[System.Environment]::GetEnvironmentVariable('PATH','Machine')+';'+[System.Environment]::GetEnvironmentVariable('PATH','User')}\n"
+    s = s .. "try{\n"
+    s = s .. "Set-P 2 'Checking administrator privileges...'\n"
+    s = s .. "$isAdmin=([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)\n"
+    s = s .. "if(-not $isAdmin){Set-P -1 'ERROR: Run installer as Administrator';exit 1}\n"
+    s = s .. "New-Item -ItemType Directory -Force -Path $InstallDir|Out-Null\n"
+    s = s .. "$DepsDir=Join-Path $InstallDir '.deps'\n"
+    s = s .. "New-Item -ItemType Directory -Force -Path $DepsDir|Out-Null\n"
+    s = s .. "Set-P 5 'Checking Git...'\n"
+    s = s .. "if(-not(Has-Cmd 'git')){Set-P 6 'Installing Git...';winget install --id Git.Git -e --source winget --silent --accept-package-agreements --accept-source-agreements 2>&1|Out-Null;Refresh-Env}\n"
+    s = s .. "if(-not(Has-Cmd 'git')){Set-P -1 'ERROR: Git install failed';exit 1}\n"
+    s = s .. "Set-P 10 'Checking CMake...'\n"
+    s = s .. "if(-not(Has-Cmd 'cmake')){Set-P 11 'Installing CMake...';winget install --id Kitware.CMake -e --source winget --silent --accept-package-agreements --accept-source-agreements 2>&1|Out-Null;Refresh-Env}\n"
+    s = s .. "if(-not(Has-Cmd 'cmake')){Set-P -1 'ERROR: CMake install failed';exit 1}\n"
+    s = s .. "Set-P 15 'Checking Visual Studio C++ toolchain...'\n"
+    s = s .. "$vswhere=\"${env:ProgramFiles(x86)}\\Microsoft Visual Studio\\Installer\\vswhere.exe\"\n"
+    s = s .. "$vsPath=$null\n"
+    s = s .. "if(Test-Path $vswhere){$vsPath=& $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath 2>$null}\n"
+    s = s .. "if(-not $vsPath){Set-P 16 'Downloading VS Build Tools...';$vsBoot=Join-Path $DepsDir 'vs_buildtools.exe';(New-Object System.Net.WebClient).DownloadFile('https://aka.ms/vs/17/release/vs_BuildTools.exe',$vsBoot);Set-P 22 'Installing VS Build Tools (several minutes)...';Start-Process -FilePath $vsBoot -ArgumentList '--quiet','--wait','--norestart','--add','Microsoft.VisualStudio.Workload.VCTools','--includeRecommended' -Wait;Refresh-Env;$vsPath=& $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath 2>$null}\n"
+    s = s .. "if(-not $vsPath){Set-P -1 'ERROR: VS Build Tools not found';exit 1}\n"
+    s = s .. "$vcvars=\"$vsPath\\VC\\Auxiliary\\Build\\vcvars64.bat\"\n"
+    s = s .. "Set-P 30 'Checking LLVM 18...'\n"
+    s = s .. "$llvmInstalled=(Test-Path 'C:\\Program Files\\LLVM\\bin\\clang.exe')\n"
+    s = s .. "if(-not $llvmInstalled){Set-P 32 'Downloading LLVM 18.1.6 pre-compiled (~290MB)...';$llvmExe=Join-Path $DepsDir 'LLVM-18.1.6-win64.exe';if(-not(Test-Path $llvmExe)){(New-Object System.Net.WebClient).DownloadFile('https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.6/LLVM-18.1.6-win64.exe',$llvmExe)};Set-P 52 'Installing LLVM 18.1.6...';Start-Process -FilePath $llvmExe -ArgumentList '/S' -Wait;Remove-Item $llvmExe -ErrorAction SilentlyContinue;Refresh-Env}\n"
+    s = s .. "$llvmBin=''\n"
+    s = s .. "foreach($p in @('C:\\Program Files\\LLVM\\bin','C:\\Program Files (x86)\\LLVM\\bin')){if(Test-Path \"$p\\clang.exe\"){$llvmBin=$p;break}}\n"
+    s = s .. "if(-not $llvmBin){Set-P -1 'ERROR: LLVM not found after install';exit 1}\n"
+    s = s .. "$llvmRoot=Split-Path $llvmBin -Parent\n"
+    s = s .. "$env:PATH=\"$llvmBin;\"+$env:PATH\n"
+    s = s .. "Set-P 55 'Checking vcpkg...'\n"
+    s = s .. "if(-not(Test-Path $VcpkgDir)){Set-P 56 'Cloning vcpkg...';git clone https://github.com/microsoft/vcpkg $VcpkgDir 2>&1|Out-Null;& \"$VcpkgDir\\bootstrap-vcpkg.bat\" -disableMetrics 2>&1|Out-Null}\n"
+    s = s .. "$vcpkg=\"$VcpkgDir\\vcpkg.exe\"\n"
+    s = s .. "Set-P 58 'Installing raylib via vcpkg...'\n"
+    s = s .. "$raylibInstalled=& $vcpkg list 2>&1|Select-String '^raylib'\n"
+    s = s .. "if(-not $raylibInstalled){& $vcpkg install raylib:x64-windows 2>&1|Out-Null}\n"
+    s = s .. "& $vcpkg install ninja:x64-windows 2>&1|Out-Null\n"
+    s = s .. "Set-P 63 'Checking Ninja...'\n"
+    s = s .. "if(-not(Has-Cmd 'ninja')){$np=\"$VcpkgDir\\installed\\x64-windows\\tools\\ninja\";if(Test-Path \"$np\\ninja.exe\"){$env:PATH+=\";$np\";[System.Environment]::SetEnvironmentVariable('PATH',[System.Environment]::GetEnvironmentVariable('PATH','Machine')+\";$np\",'Machine')}}\n"
+    s = s .. "Set-P 67 'Setting up Sarn repository...'\n"
+    s = s .. "if(Test-Path(Join-Path $InstallDir '.git')){Set-P 68 'Updating Sarn repository...';Push-Location $InstallDir;git pull 2>&1|Out-Null;Pop-Location}else{Set-P 68 'Cloning Sarn repository...';git clone 'https://github.com/Saksh3211/S-lua' $InstallDir 2>&1|Out-Null}\n"
+    s = s .. "Set-P 75 'Configuring CMake build...'\n"
+    s = s .. "$llvmCmake=($llvmRoot -replace '\\\\','/')+'/lib/cmake/llvm'\n"
+    s = s .. "$raylibCmake=\"$VcpkgDir/installed/x64-windows/share/raylib\"\n"
+    s = s .. "$toolchain=\"$VcpkgDir/scripts/buildsystems/vcpkg.cmake\"\n"
+    s = s .. "$llvmR=($llvmRoot -replace '\\\\','/')\n"
+    s = s .. "$cmakeArgs=\"-S . -B build -G 'Visual Studio 17 2022' -A x64 -DCMAKE_BUILD_TYPE=Release -DLLVM_DIR='$llvmCmake' -DLLVM_ROOT='$llvmR' -DCMAKE_TOOLCHAIN_FILE='$toolchain' -DVCPKG_TARGET_TRIPLET=x64-windows -Draylib_DIR='$raylibCmake'\"\n"
+    s = s .. "Push-Location $InstallDir\n"
+    s = s .. "cmd /c \"`\"$vcvars`\" 2>nul && cmake $cmakeArgs\" 2>&1|Out-Null\n"
+    s = s .. "if($LASTEXITCODE -ne 0){Pop-Location;Set-P -1 'ERROR: CMake configure failed';exit 1}\n"
+    s = s .. "Set-P 85 'Building Sarn compiler...'\n"
+    s = s .. "cmd /c \"`\"$vcvars`\" 2>nul && cmake --build build --config Release --parallel\" 2>&1|Out-Null\n"
+    s = s .. "if($LASTEXITCODE -ne 0){Pop-Location;Set-P -1 'ERROR: Build failed';exit 1}\n"
+    s = s .. "Pop-Location\n"
+    s = s .. "Set-P 93 'Configuring sarn.ps1...'\n"
+    s = s .. "$ps1=Join-Path $InstallDir 'sarn.ps1'\n"
+    s = s .. "if(Test-Path $ps1){$pc=Get-Content $ps1 -Raw;$pc=$pc -replace '\\$env:SARN_ROOT = .*','\\$env:SARN_ROOT = \\$PSScriptRoot';$rll=\"$VcpkgDir\\installed\\x64-windows\\lib\\raylib.lib\";$pc=$pc -replace 'C:\\\\vcpkg\\\\installed\\\\x64-windows\\\\lib\\\\raylib\\.lib',$rll;Set-Content $ps1 $pc}\n"
+    s = s .. "if($AddToPath -eq 1){Set-P 96 'Adding to system PATH...';$cp=[System.Environment]::GetEnvironmentVariable('PATH','Machine');if($cp -notmatch [regex]::Escape($InstallDir)){[System.Environment]::SetEnvironmentVariable('PATH',\"$cp;$InstallDir;$llvmBin\",'Machine')}}\n"
+    s = s .. "Set-P 100 'Installation complete!'\n"
+    s = s .. "}catch{Set-P -1 \"ERROR: $($_.Exception.Message)\";exit 1}\n"
+
+    fs.write(g_wfile, s)
+    return 0
+end
+
+function start_install(): int
+    write_worker()
+    fs.write(g_pfile, "0|Starting...")
+
+    local add: int = g_add_path
+    local cmd: string = "powershell -ExecutionPolicy Bypass -File " .. g_wfile
+    cmd = cmd .. " -InstallDir " .. g_install_dir
+    cmd = cmd .. " -ProgressFile " .. g_pfile
+    if add == 1 then
+        cmd = cmd .. " -AddToPath 1"
+    else
+        cmd = cmd .. " -AddToPath 0"
+    end
+
+    g_proc_id = process.spawn(cmd)
+    g_page = 2
+    g_done = 0
+    g_success = 0
+    g_progress = 0
+    g_status = "Starting..."
+    return 0
+end
+
+function parse_progress(): int
+    if fs.exists(g_pfile) == 0 then
+        return 0
+    end
+
+    local raw: string = fs.read(g_pfile)
+    if string.len(raw) == 0 then
+        return 0
+    end
+
+    local pipe: int = string.find(raw, "|", 0)
+    if pipe < 0 then
+        return 0
+    end
+
+    local pct_str: string = string.sub(raw, 0, pipe - 1)
+    local msg: string = string.sub(raw, pipe + 1, string.len(raw) - 1)
+
+    local pct: int = string.to_int(pct_str)
+
+    if pct == -1 then
+        g_success = 0
+        g_done = 1
+        g_err_msg = msg
+        return 0
+    end
+
+    if pct == 100 then
+        g_success = 1
+        g_done = 1
+    end
+
+    g_progress = pct
+    g_status = msg
+    return 0
+end
+
+function draw_prog_bar(x: int, y: int, w: int, h: int, pct: int): int
+    draw.rect(x, y, w, h, 26, 26, 40, 255)
+    draw.rect(x, y, w, h, 40, 40, 60, 255)
+    if pct > 0 then
+        local fill: int = w * pct / 100
+        draw.rect(x, y, fill, h, 60, 110, 190, 255)
+    end
+    return 0
+end
+
+function draw_spinner(x: int, y: int): int
+    local f: int = g_anim
+    local segs: int = 8
+    local seg: int = 0
+    while seg < segs do
+        local bright: int = 60
+        local diff: int = f - seg
+        if diff < 0 then
+            diff = diff + segs
+        end
+        if diff == 0 then
+            bright = 220
+        elseif diff == 1 then
+            bright = 170
+        elseif diff == 2 then
+            bright = 120
+        end
+        local rx: int = seg * 12
+        draw.rect(x + rx, y, 8, 8, bright, bright, bright, 255)
+        seg = seg + 1
+    end
+    return 0
+end
+
+function draw_check_item(x: int, y: int, label: string, done: int): int
+    if done == 1 then
+        draw.rect(x, y + 3, 12, 12, 50, 160, 80, 255)
+        draw.text("v", x + 3, y + 3, 10, 255, 255, 255, 255)
+        draw.text(label, x + 18, y, 13, 160, 200, 160, 255)
+    else
+        draw.rect(x, y + 3, 12, 12, 40, 40, 60, 255)
+        draw.text(label, x + 18, y, 13, 100, 110, 130, 255)
+    end
+    return 0
+end
+
+function draw_page_installing(): int
+    clr_bg()
+    draw_header()
+
+    if g_done == 0 then
+        parse_progress()
+        if process.alive(g_proc_id) == 0 then
+            if g_done == 0 then
+                g_done = 1
+                g_success = 1
+            end
+        end
+        g_tick = g_tick + 1
+        if g_tick >= 4 then
+            g_tick = 0
+            g_anim = g_anim + 1
+            if g_anim >= 8 then
+                g_anim = 0
+            end
+        end
+    end
+
+    draw_card(30, 70, 580, 350)
+
+    draw.text("Installing Sarn...", 50, 90, 20, 230, 240, 255, 255)
+    draw.rect(50, 116, 560, 1, 38, 38, 56, 255)
+
+    draw_prog_bar(50, 132, 540, 22, g_progress)
+
+    local pct_s: string = string.from_int(g_progress)
+    local pct_label: string = string.concat(pct_s, "%")
+    draw.text(pct_label, 50, 162, 12, 120, 140, 180, 255)
+
+    draw.text(g_status, 100, 162, 12, 180, 210, 240, 255)
+
+    draw.rect(50, 185, 560, 1, 38, 38, 56, 255)
+
+    draw.text("Progress:", 50, 200, 13, 140, 160, 190, 255)
+
+    draw_check_item(50, 222, "Git                   ", (g_progress >= 10) and 1 or 0)
+    draw_check_item(50, 242, "CMake                 ", (g_progress >= 15) and 1 or 0)
+    draw_check_item(50, 262, "Visual Studio Tools   ", (g_progress >= 30) and 1 or 0)
+    draw_check_item(50, 282, "LLVM 18.1.6 (pre-built)", (g_progress >= 55) and 1 or 0)
+    draw_check_item(50, 302, "vcpkg + raylib        ", (g_progress >= 63) and 1 or 0)
+    draw_check_item(50, 322, "Sarn repository       ", (g_progress >= 70) and 1 or 0)
+    draw_check_item(50, 342, "CMake configure       ", (g_progress >= 80) and 1 or 0)
+    draw_check_item(50, 362, "Build sarnc.exe       ", (g_progress >= 92) and 1 or 0)
+    draw_check_item(50, 382, "System PATH + finish  ", (g_progress >= 96) and 1 or 0)
+
+    if g_done == 0 then
+        draw_spinner(50, 406)
+    end
+
+    draw_footer()
+
+    if g_done == 1 then
+        if g_success == 1 then
+            g_page = 3
+        else
+            g_page = 4
+        end
+    end
+
+    return 0
+end
+
+function draw_page_done(): int
+    clr_bg()
+    draw_header()
+    draw_card(30, 70, 580, 350)
+
+    draw.rect(50, 110, 50, 50, 50, 160, 80, 255)
+    draw.text("OK", 60, 125, 20, 255, 255, 255, 255)
+
+    draw.text("Installation Successful!", 120, 110, 22, 100, 220, 130, 255)
+    draw.text("Sarn compiler is ready to use.", 120, 138, 14, 160, 200, 170, 255)
+
+    draw.rect(50, 176, 560, 1, 38, 38, 56, 255)
+
+    draw.text("Installed to:", 50, 192, 13, 140, 160, 190, 255)
+    draw.text(g_install_dir, 50, 210, 13, 200, 220, 240, 255)
+
+    draw.text("Quick start:", 50, 240, 13, 140, 160, 190, 255)
+    draw.rect(50, 258, 540, 26, 16, 16, 28, 255)
+    draw.text(". sarn.ps1 Sarn-Run examples\\hello_strict.sarn", 60, 265, 12, 100, 200, 150, 255)
+
+    draw.rect(50, 295, 560, 1, 38, 38, 56, 255)
+
+    draw.text("Restart PowerShell to apply PATH changes.", 50, 310, 13, 150, 170, 200, 255)
+    draw.text("Documentation: open docs.md in the install folder.", 50, 330, 13, 150, 170, 200, 255)
+
+    draw.rect(50, 356, 560, 1, 38, 38, 56, 255)
+    draw.text("Sarn is open source: github.com/Saksh3211/S-lua", 50, 370, 12, 90, 110, 150, 255)
+
+    draw_footer()
+    ui.set_accent(50, 160, 80)
+
+    if ui.button(515, 446, 110, 26, "Finish") == 1 then
+        window.close()
+    end
+
+    return 0
+end
+
+function draw_page_error(): int
+    clr_bg()
+    draw_header()
+    draw_card(30, 70, 580, 350)
+
+    draw.rect(50, 110, 50, 50, 160, 50, 50, 255)
+    draw.text("!", 68, 125, 26, 255, 255, 255, 255)
+
+    draw.text("Installation Failed", 120, 110, 22, 220, 100, 100, 255)
+    draw.text("An error occurred during installation.", 120, 138, 14, 180, 140, 140, 255)
+
+    draw.rect(50, 176, 560, 1, 38, 38, 56, 255)
+
+    draw.text("Error:", 50, 192, 13, 200, 100, 100, 255)
+    draw.text(g_err_msg, 50, 212, 12, 220, 180, 180, 255)
+
+    draw.rect(50, 250, 560, 1, 38, 38, 56, 255)
+
+    draw.text("Troubleshooting:", 50, 266, 13, 140, 160, 190, 255)
+    draw.text("  1. Ensure you are running as Administrator", 50, 286, 12, 150, 170, 200, 255)
+    draw.text("  2. Check internet connectivity", 50, 304, 12, 150, 170, 200, 255)
+    draw.text("  3. Check error log:", 50, 322, 12, 150, 170, 200, 255)
+    local logpath: string = g_install_dir .. "\\.deps\\error.log"
+    draw.text(logpath, 60, 338, 11, 120, 140, 170, 255)
+    draw.text("  4. Re-run the installer", 50, 356, 12, 150, 170, 200, 255)
+
+    draw_footer()
+
+    ui.set_accent(100, 50, 50)
+    if ui.button(400, 446, 110, 26, "<  Retry") == 1 then
+        g_page = 1
+        g_done = 0
+        g_success = 0
+        g_progress = 0
+        g_status = "Ready"
+        g_err_msg = ""
+        g_proc_id = -1
+    end
+
+    if ui.button(515, 446, 110, 26, "Quit") == 1 then
+        window.close()
+    end
+
+    return 0
+end
+
+function main(): int
+    window.init(640, 488, "Sarn Installer")
+    window.set_fps(30)
+    ui.set_font_size(14)
+    g_font_id = font.load("C:/Windows/Fonts/segoeui.ttf", 20)
+
+    while window.should_close() == 0 do
+        window.begin_drawing()
+
+        if g_page == 0 then
+            draw_page_welcome()
+        elseif g_page == 1 then
+            draw_page_options()
+        elseif g_page == 2 then
+            draw_page_installing()
+        elseif g_page == 3 then
+            draw_page_done()
+        elseif g_page == 4 then
+            draw_page_error()
+        end
+
+        window.end_drawing()
+    end
+
+    window.close()
+
+    if g_font_id >= 0 then
+        font.unload(g_font_id)
+    end
+
+    if fs.exists(g_pfile) == 1 then
+        fs.delete(g_pfile)
+    end
+    if fs.exists(g_wfile) == 1 then
+        fs.delete(g_wfile)
+    end
+
+    return 0
+end

@@ -434,3 +434,56 @@ int32_t slua_str_count(const char* s, const char* sep) {
     while ((p = strstr(p, sep)) != NULL) { count++; p += seplen; }
     return count + 1;
 }
+
+int32_t slua_os_is_admin(void) {
+#ifdef _WIN32
+    BOOL result = FALSE;
+    PSID admins = NULL;
+    SID_IDENTIFIER_AUTHORITY auth = SECURITY_NT_AUTHORITY;
+    if (AllocateAndInitializeSid(&auth, 2,
+        SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS,
+        0, 0, 0, 0, 0, 0, &admins)) {
+        CheckTokenMembership(NULL, admins, &result);
+        FreeSid(admins);
+    }
+    return result ? 1 : 0;
+#else
+    return (getuid() == 0) ? 1 : 0;
+#endif
+}
+
+int32_t slua_os_add_to_path(const char* dir) {
+#ifdef _WIN32
+    HKEY hKey;
+    LONG res = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+        "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment",
+        0, KEY_READ | KEY_WRITE, &hKey);
+    if (res != ERROR_SUCCESS) return 0;
+    char cur[32768] = {0};
+    DWORD sz = sizeof(cur);
+    DWORD type = REG_EXPAND_SZ;
+    RegQueryValueExA(hKey, "Path", NULL, &type, (LPBYTE)cur, &sz);
+    if (strstr(cur, dir)) { RegCloseKey(hKey); return 1; }
+    char newval[32768];
+    if (cur[0]) snprintf(newval, sizeof(newval), "%s;%s", cur, dir);
+    else        snprintf(newval, sizeof(newval), "%s", dir);
+    RegSetValueExA(hKey, "Path", 0, type, (LPBYTE)newval, (DWORD)strlen(newval) + 1);
+    RegCloseKey(hKey);
+    SendMessageTimeoutA(HWND_BROADCAST, WM_SETTINGCHANGE, 0, (LPARAM)"Environment", SMTO_ABORTIFHUNG, 3000, NULL);
+    return 1;
+#else
+    return 0;
+#endif
+}
+
+char* slua_os_get_temp_dir(void) {
+#ifdef _WIN32
+    char buf[MAX_PATH];
+    GetTempPathA(MAX_PATH, buf);
+    char* r = (char*)malloc(strlen(buf) + 1);
+    strcpy(r, buf);
+    return r;
+#else
+    return strdup("/tmp");
+#endif
+}
