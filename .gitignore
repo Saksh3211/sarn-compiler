@@ -8,9 +8,13 @@ tools/lsp/sarn-lsp/build/*
 
 build/*
 
-build/compiler/
+!build/compiler/
+!build/compiler/Release/sarnc.exe
+build/compiler/*.vcxproj
+build/compiler/*.filters
 build/compiler/*.cmake
-!build/compiler/sarnc.exe
+build/compiler/sarnc.dir/
+build/compiler/CmakeFiles/
 
 
 *.ll

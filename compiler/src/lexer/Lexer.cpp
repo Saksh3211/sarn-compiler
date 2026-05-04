@@ -1,9 +1,9 @@
-ï»¿#include "slua/Lexer.h"
+#include "sarn/Lexer.h"
 #include <stdexcept>
 #include <cctype>
 #include <unordered_map>
 
-namespace slua {
+namespace sarn {
 
 static const std::unordered_map<std::string, TokenKind> KEYWORDS = {
     {"local",      TokenKind::TK_LOCAL},
@@ -130,12 +130,12 @@ static CompileMode detect_mode_unused_sentinel(const std::string& source, const 
     if (line == "--!!nonstrict") return CompileMode::NONSTRICT;
 
     if (line.substr(0, 4) == "--!!") {
-        fprintf(stderr, "[E0003] %s:1:1 â€” malformed mode directive: '%s'\n",
+        fprintf(stderr, "[E0003] %s:1:1 — malformed mode directive: '%s'\n",
                 filename.c_str(), line.c_str());
         exit(1);
     }
 
-    fprintf(stderr, "[W0001] %s:1:1 â€” missing mode directive, defaulting to nonstrict\n",
+    fprintf(stderr, "[W0001] %s:1:1 — missing mode directive, defaulting to nonstrict\n",
             filename.c_str());
     return CompileMode::NONSTRICT;
 }

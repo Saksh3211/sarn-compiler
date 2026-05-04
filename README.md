@@ -17,7 +17,7 @@ Sarn is a compiled systems programming language that compiles directly to native
 
 ### Installation
 ```bash
-cd slua-compiler
+cd sarn-compiler
 cmake -B build -G Ninja && ninja -C build
 ```
 
@@ -36,18 +36,23 @@ Compile and run:
 ./sarn.ps1 Sarn-Run hello.sarn
 ```
 
+Or use the interactive REPL:
+```bash
+./sarn.ps1 sarn
+```
+
 ## Documentation
 
 Start here based on your needs:
 
 ### Beginners
-- **[GETTING_STARTED.md](GETTING_STARTED.md)** - Step-by-step intro and core concepts
-- **[examples/basics/](examples/basics/)** - Starter code examples
-- **[FAQ.md](FAQ.md)** - Common questions answered
+- **[sarn/GETTING_STARTED.md](sarn/GETTING_STARTED.md)** - Step-by-step intro and core concepts
+- **[examples/](examples/)** - Starter code examples
+- **[sarn/FAQ.md](sarn/FAQ.md)** - Common questions answered
 
 ### Developers
-- **[docs.md](docs.md)** - Complete language reference
-- **[PATTERNS.md](PATTERNS.md)** - Common idioms and design patterns
+- **[sarn/docs.md](sarn/docs.md)** - Complete language reference
+- **[sarn/PATTERNS.md](sarn/PATTERNS.md)** - Common idioms and design patterns
 - **[examples/advanced/](examples/advanced/)** - Advanced language features
 - **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Compiler error reference
 

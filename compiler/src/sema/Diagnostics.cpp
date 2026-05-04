@@ -1,8 +1,8 @@
-#include "slua/Diagnostics.h"
+#include "sarn/Diagnostics.h"
 #include <stdio.h>
 #include <iostream>
 
-namespace slua {
+namespace sarn {
 
 void DiagEngine::emit(DiagLevel level, std::string code, std::string msg, SourceLoc loc) {
     diags_.push_back({level, code, msg, loc});

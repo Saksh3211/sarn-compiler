@@ -502,6 +502,108 @@ exit /b !EXIT_CODE!
     Write-Host "[*] Usage: Run '$bat_name' from the package directory" -ForegroundColor Cyan
 }
 
+function Sarn-REPL {
+    Write-Host "===================================================" -ForegroundColor Cyan
+    Write-Host "Sarn Interactive REPL (v0.3)" -ForegroundColor Cyan
+    Write-Host "Type 'exit' or 'quit' to exit" -ForegroundColor Cyan
+    Write-Host "===================================================" -ForegroundColor Cyan
+    Write-Host ""
+
+    $repl_id = Get-Random
+    $temp_dir = Join-Path $env:TEMP "sarn_repl_$repl_id"
+    New-Item -ItemType Directory -Force -Path $temp_dir | Out-Null
+
+    $llvm_bin = "C:\Program Files\LLVM\bin"
+    if (-not (Test-Path $llvm_bin)) {
+        $llvm_bin = "C:\Program Files (x86)\LLVM\bin"
+    }
+
+    while ($true) {
+        Write-Host "sarn> " -NoNewline -ForegroundColor Green
+        $input_line = Read-Host
+
+        if ($input_line -match "^(exit|quit)$") {
+            Write-Host "Exiting Sarn REPL..." -ForegroundColor Yellow
+            Remove-Item -Recurse -Force $temp_dir -ErrorAction SilentlyContinue
+            break
+        }
+
+        if ([string]::IsNullOrWhiteSpace($input_line)) {
+            continue
+        }
+
+        # Collect multi-line input if needed
+        $code = $input_line
+        $open_blocks = ($code | Select-String -Pattern '\bif\b|\bfor\b|\bwhile\b|\bfunction\b|\btry\b' | Measure-Object).Count
+        $close_blocks = ($code | Select-String -Pattern '\bend\b' | Measure-Object).Count
+
+        while ($open_blocks -gt $close_blocks) {
+            Write-Host "...> " -NoNewline -ForegroundColor Green
+            $next_line = Read-Host
+            $code += "`n$next_line"
+            $open_blocks = ($code | Select-String -Pattern '\bif\b|\bfor\b|\bwhile\b|\bfunction\b|\btry\b' | Measure-Object).Count
+            $close_blocks = ($code | Select-String -Pattern '\bend\b' | Measure-Object).Count
+        }
+
+        # Create temporary Sarn file
+        $temp_file = Join-Path $temp_dir "repl_$repl_id.sarn"
+        $code | Set-Content $temp_file
+
+        # Compile
+        $ll_file = Join-Path $temp_dir "repl_$repl_id.ll"
+        & "$env:SARN_ROOT\build\compiler\Release\sarnc.exe" $temp_file -o $ll_file 2>&1
+
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "Compile error" -ForegroundColor Red
+            continue
+        }
+
+        # Convert LLVM IR to object code
+        $obj_file = [System.IO.Path]::ChangeExtension($ll_file, ".obj")
+        $llc_path = Join-Path $llvm_bin "llc.exe"
+
+        if (Test-Path $llc_path) {
+            & $llc_path $ll_file -o $obj_file 2>&1 | Out-Null
+        } else {
+            $obj_file = $ll_file
+        }
+
+        # Link and execute
+        $exe_file = Join-Path $temp_dir "repl_$repl_id.exe"
+
+        $link_cmd = @(
+            $obj_file,
+            $( $r = Resolve-Path "$env:SARN_ROOT\build\runtime\*\sarn.lib" -ErrorAction SilentlyContinue | Select-Object -First 1; if ($r) { $r.Path } else { "$env:SARN_ROOT\build\runtime\sarn.lib" } ),
+            "C:\vcpkg\installed\x64-windows\lib\raylib.lib",
+            "-lOpenGL32","-lgdi32","-lwinmm","-ladvapi32",
+            "-lUser32","-lShell32","-lGdi32",
+            "-lmsvcrt","-lucrt","-lvcruntime",
+            "-o", $exe_file
+        )
+
+        $clang_path = Join-Path $llvm_bin "clang.exe"
+        if (Test-Path $clang_path) {
+            & $clang_path @link_cmd 2>&1 | Out-Null
+        } else {
+            clang @link_cmd 2>&1 | Out-Null
+        }
+
+        if (Test-Path $exe_file) {
+            Write-Host "" -ForegroundColor Gray
+            & $exe_file
+            Write-Host "" -ForegroundColor Gray
+        } else {
+            Write-Host "Linking failed" -ForegroundColor Red
+        }
+
+        # Cleanup temp files
+        Remove-Item $temp_file -ErrorAction SilentlyContinue
+        Remove-Item $ll_file -ErrorAction SilentlyContinue
+        Remove-Item $obj_file -ErrorAction SilentlyContinue
+        Remove-Item $exe_file -ErrorAction SilentlyContinue
+    }
+}
+
 switch ($Command) {
     "Sarn-Run"     { Sarn-Run $File }
     "build"    { Sarn-Build $File $Version }
@@ -511,5 +613,6 @@ switch ($Command) {
     "remove"  { Sarn-Remove $File }
     "list"    { Sarn-List }
     "newpkg"  { Sarn-New-Package $File }
+    "sarn" {Sarn-REPL}
     default   { Write-Host "Commands: Sarn-Run | build | standalone | install | update | remove | list | newpkg" }
 }

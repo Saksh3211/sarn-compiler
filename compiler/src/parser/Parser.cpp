@@ -1,7 +1,7 @@
-#include "slua/Parser.h"
+#include "sarn/Parser.h"
 #include <stdexcept>
 
-namespace slua {
+namespace sarn {
 
 Parser::Parser(Lexer& lexer, DiagEngine& diag, CompileMode mode)
     : lex_(lexer), diag_(diag), mode_(mode) {
@@ -20,6 +20,12 @@ bool Parser::check(TokenKind k) const { return cur_.kind == k; }
 bool Parser::match(TokenKind k) {
     if (check(k)) { advance(); return true; }
     return false;
+}
+
+void Parser::skip_semicolons() {
+    while (match(TokenKind::TK_SEMICOLON)) {
+        // Consume semicolons as statement separators
+    }
 }
 
 Token Parser::expect(TokenKind k, const std::string& ctx) {
@@ -67,6 +73,9 @@ std::unique_ptr<Module> Parser::parse_module(const std::string& filename) {
         auto stmt = parse_stmt();
         if (stmt)
             mod->stmts.push_back(std::move(stmt));
+        
+        // Allow optional semicolons as statement separators
+        skip_semicolons();
     }
     return mod;
 }
@@ -343,8 +352,11 @@ StmtPtr Parser::parse_func_decl(bool exported) {
     }
 
     std::vector<StmtPtr> body;
-    while (!check(TokenKind::TK_END) && !check(TokenKind::TK_EOF))
-        if (auto st = parse_stmt()) body.push_back(std::move(st));
+    while (!check(TokenKind::TK_END) && !check(TokenKind::TK_EOF)) {
+        if (auto st = parse_stmt())
+            body.push_back(std::move(st));
+        skip_semicolons();
+    }
     expect(TokenKind::TK_END, "function body");
 
     auto s = std::make_unique<Stmt>();
@@ -365,6 +377,7 @@ StmtPtr Parser::parse_if_stmt() {
         !check(TokenKind::TK_END)    &&
         !check(TokenKind::TK_EOF)) {
         if (auto st = parse_stmt()) then_body.push_back(std::move(st));
+        skip_semicolons();
     }
 
     std::vector<std::pair<ExprPtr, std::vector<StmtPtr>>> elseif_clauses;
@@ -378,6 +391,7 @@ StmtPtr Parser::parse_if_stmt() {
             !check(TokenKind::TK_END)    &&
             !check(TokenKind::TK_EOF)) {
             if (auto st = parse_stmt()) ei_body.push_back(std::move(st));
+            skip_semicolons();
         }
         elseif_clauses.push_back({std::move(ei_cond), std::move(ei_body)});
     }
@@ -385,8 +399,10 @@ StmtPtr Parser::parse_if_stmt() {
     std::optional<std::vector<StmtPtr>> else_body;
     if (match(TokenKind::TK_ELSE)) {
         std::vector<StmtPtr> eb;
-        while (!check(TokenKind::TK_END) && !check(TokenKind::TK_EOF))
+        while (!check(TokenKind::TK_END) && !check(TokenKind::TK_EOF)) {
             if (auto st = parse_stmt()) eb.push_back(std::move(st));
+            skip_semicolons();
+        }
         else_body = std::move(eb);
     }
 
@@ -405,8 +421,10 @@ StmtPtr Parser::parse_while_stmt() {
     expect(TokenKind::TK_DO, "while condition");
 
     std::vector<StmtPtr> body;
-    while (!check(TokenKind::TK_END) && !check(TokenKind::TK_EOF))
+    while (!check(TokenKind::TK_END) && !check(TokenKind::TK_EOF)) {
         if (auto st = parse_stmt()) body.push_back(std::move(st));
+        skip_semicolons();
+    }
     expect(TokenKind::TK_END, "while loop");
 
     auto s = std::make_unique<Stmt>();
@@ -419,8 +437,10 @@ StmtPtr Parser::parse_repeat_stmt() {
     SourceLoc loc = advance().loc;
 
     std::vector<StmtPtr> body;
-    while (!check(TokenKind::TK_UNTIL) && !check(TokenKind::TK_EOF))
+    while (!check(TokenKind::TK_UNTIL) && !check(TokenKind::TK_EOF)) {
         if (auto st = parse_stmt()) body.push_back(std::move(st));
+        skip_semicolons();
+    }
     expect(TokenKind::TK_UNTIL, "repeat loop");
     auto cond = parse_expr();
 
@@ -450,8 +470,10 @@ StmtPtr Parser::parse_numeric_for() {
         auto step_expr = parse_expr();
         expect(TokenKind::TK_DO, "for body");
         std::vector<StmtPtr> body;
-        while (!check(TokenKind::TK_END) && !check(TokenKind::TK_EOF))
+        while (!check(TokenKind::TK_END) && !check(TokenKind::TK_EOF)) {
             if (auto st = parse_stmt()) body.push_back(std::move(st));
+            skip_semicolons();
+        }
         expect(TokenKind::TK_END, "for loop");
         auto s = std::make_unique<Stmt>();
         s->v   = CStyleFor{var, std::move(init_expr), std::move(second_expr), std::move(step_expr), std::move(body)};

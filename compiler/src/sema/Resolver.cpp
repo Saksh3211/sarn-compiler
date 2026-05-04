@@ -1,7 +1,7 @@
-#include "slua/Resolver.h"
+#include "sarn/Resolver.h"
 #include <cassert>
 
-namespace slua {
+namespace sarn {
 
 bool Scope::define(const std::string& name, Symbol sym,DiagEngine& diag, CompileMode mode) {
     auto it = syms_.find(name);

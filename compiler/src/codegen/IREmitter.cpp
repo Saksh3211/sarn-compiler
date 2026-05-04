@@ -1,6 +1,6 @@
 #ifdef SARN_HAS_LLVM
 
-#include "slua/IREmitter.h"
+#include "sarn/IREmitter.h"
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/GlobalVariable.h>
@@ -11,7 +11,7 @@
 #include <cassert>
 #include <sstream>
 
-namespace slua {
+namespace sarn {
 
 IREmitter::IREmitter(DiagEngine& diag, SemanticConfig cfg,const std::string& module_name)
     : diag_(diag), cfg_(cfg),mod_(std::make_unique<llvm::Module>(module_name, ctx_)),
@@ -130,7 +130,7 @@ llvm::Type* IREmitter::llvm_type(const TypeNode* t) {
 llvm::Type* IREmitter::tagvalue_type() {
     static llvm::StructType* tv = nullptr;
     if (!tv) {
-        tv = llvm::StructType::create(ctx_, "SluaValue");
+        tv = llvm::StructType::create(ctx_, "sarnValue");
         tv->setBody({
             llvm::Type::getInt8Ty(ctx_),
             llvm::ArrayType::get(llvm::Type::getInt8Ty(ctx_), 7),
@@ -156,309 +156,309 @@ void IREmitter::declare_runtime() {
         functions_[name] = fn;
     };
 
-    declare("slua_alloc",                i8p,   {i64});
-    declare("slua_free",                 voidT, {i8p});
-    declare("slua_panic",                voidT, {i8p, i8p, i32});
-    declare("slua_print_str",            voidT, {i8p});
-    declare("slua_print_int",            voidT, {i64});
-    declare("slua_print_float",          voidT, {f64});
-    declare("slua_print_bool",           voidT, {i32});
-    declare("slua_print_null",           voidT, {});
-    declare("slua_time_ns",              i64,   {});
-    declare("slua_exit",                 voidT, {i32});
+    declare("sarn_alloc",                i8p,   {i64});
+    declare("sarn_free",                 voidT, {i8p});
+    declare("sarn_panic",                voidT, {i8p, i8p, i32});
+    declare("sarn_print_str",            voidT, {i8p});
+    declare("sarn_print_int",            voidT, {i64});
+    declare("sarn_print_float",          voidT, {f64});
+    declare("sarn_print_bool",           voidT, {i32});
+    declare("sarn_print_null",           voidT, {});
+    declare("sarn_time_ns",              i64,   {});
+    declare("sarn_exit",                 voidT, {i32});
 
-    declare("slua_read_line",            i8p,   {});
-    declare("slua_read_char",            i32,   {});
-    declare("slua_io_clear",             voidT, {});
-    declare("slua_io_set_color",         voidT, {i8p});
-    declare("slua_io_reset_color",       voidT, {});
-    declare("slua_io_print_color",       voidT, {i8p, i8p});
-    declare("slua_print_str_no_newline", voidT, {i8p});
-    declare("slua_flush",                voidT, {});
+    declare("sarn_read_line",            i8p,   {});
+    declare("sarn_read_char",            i32,   {});
+    declare("sarn_io_clear",             voidT, {});
+    declare("sarn_io_set_color",         voidT, {i8p});
+    declare("sarn_io_reset_color",       voidT, {});
+    declare("sarn_io_print_color",       voidT, {i8p, i8p});
+    declare("sarn_print_str_no_newline", voidT, {i8p});
+    declare("sarn_flush",                voidT, {});
 
-    declare("slua_str_concat", i8p,   {i8p, i8p});
-    declare("slua_int_to_str",  i8p,   {i64});
-    declare("slua_float_to_str",i8p,   {f64});
-    declare("slua_str_len",i32,   {i8p});
-    declare("slua_str_byte",i32,   {i8p, i32});
-    declare("slua_str_char",i8p,   {i32});
-    declare("slua_str_sub", i8p,   {i8p, i32, i32});
-    declare("slua_str_upper",i8p,   {i8p});
-    declare("slua_str_lower", i8p,   {i8p});
-    declare("slua_str_find", i32,   {i8p, i8p, i32});
-    declare("slua_str_trim",i8p,   {i8p});
-    declare("slua_str_to_int",i64,   {i8p});
-    declare("slua_str_split", i8p, {i8p, i8p, i32});
-    declare("slua_str_count", i32, {i8p, i8p});
-    declare("slua_str_to_float",f64,   {i8p});
+    declare("sarn_str_concat", i8p,   {i8p, i8p});
+    declare("sarn_int_to_str",  i8p,   {i64});
+    declare("sarn_float_to_str",i8p,   {f64});
+    declare("sarn_str_len",i32,   {i8p});
+    declare("sarn_str_byte",i32,   {i8p, i32});
+    declare("sarn_str_char",i8p,   {i32});
+    declare("sarn_str_sub", i8p,   {i8p, i32, i32});
+    declare("sarn_str_upper",i8p,   {i8p});
+    declare("sarn_str_lower", i8p,   {i8p});
+    declare("sarn_str_find", i32,   {i8p, i8p, i32});
+    declare("sarn_str_trim",i8p,   {i8p});
+    declare("sarn_str_to_int",i64,   {i8p});
+    declare("sarn_str_split", i8p, {i8p, i8p, i32});
+    declare("sarn_str_count", i32, {i8p, i8p});
+    declare("sarn_str_to_float",f64,   {i8p});
 
-    declare("slua_os_time",i64,   {});
-    declare("slua_os_sleep",voidT, {i64});
-    declare("slua_os_getenv", i8p,   {i8p});
-    declare("slua_os_system", voidT, {i8p});
-    declare("slua_os_cwd",i8p,   {});
-    declare("slua_os_sleepS", voidT, {i64});
-    declare("slua_os_is_admin",    i32,   {});
-    declare("slua_os_add_to_path", i32,   {i8p});
-    declare("slua_os_get_temp_dir",i8p,   {});
+    declare("sarn_os_time",i64,   {});
+    declare("sarn_os_sleep",voidT, {i64});
+    declare("sarn_os_getenv", i8p,   {i8p});
+    declare("sarn_os_system", voidT, {i8p});
+    declare("sarn_os_cwd",i8p,   {});
+    declare("sarn_os_sleepS", voidT, {i64});
+    declare("sarn_os_is_admin",    i32,   {});
+    declare("sarn_os_add_to_path", i32,   {i8p});
+    declare("sarn_os_get_temp_dir",i8p,   {});
 
-    declare("slua_sqrt",  f64, {f64});
-    declare("slua_pow",   f64, {f64, f64});
-    declare("slua_sin",   f64, {f64});
-    declare("slua_cos",   f64, {f64});
-    declare("slua_tan",   f64, {f64});
-    declare("slua_log",   f64, {f64});
-    declare("slua_log2",  f64, {f64});
-    declare("slua_exp",   f64, {f64});
-    declare("slua_inf",   f64, {});
-    declare("slua_nan",   f64, {});
-    declare("slua_pi",    f64, {});
-    declare("slua_e",     f64, {});
+    declare("sarn_sqrt",  f64, {f64});
+    declare("sarn_pow",   f64, {f64, f64});
+    declare("sarn_sin",   f64, {f64});
+    declare("sarn_cos",   f64, {f64});
+    declare("sarn_tan",   f64, {f64});
+    declare("sarn_log",   f64, {f64});
+    declare("sarn_log2",  f64, {f64});
+    declare("sarn_exp",   f64, {f64});
+    declare("sarn_inf",   f64, {});
+    declare("sarn_nan",   f64, {});
+    declare("sarn_pi",    f64, {});
+    declare("sarn_e",     f64, {});
 
-    declare("slua_tbl_new",       i8p,   {});
-    declare("slua_tbl_iset_i64",  voidT, {i8p, i64, i64});
-    declare("slua_tbl_iset_f64",  voidT, {i8p, i64, f64});
-    declare("slua_tbl_iset_str",  voidT, {i8p, i64, i8p});
-    declare("slua_tbl_iset_bool", voidT, {i8p, i64, i32});
-    declare("slua_tbl_sset_i64",  voidT, {i8p, i8p, i64});
-    declare("slua_tbl_sset_f64",  voidT, {i8p, i8p, f64});
-    declare("slua_tbl_sset_str",  voidT, {i8p, i8p, i8p});
-    declare("slua_tbl_sset_bool", voidT, {i8p, i8p, i32});
-    declare("slua_tbl_iget_i64",  i64,   {i8p, i64});
-    declare("slua_tbl_iget_f64",  f64,   {i8p, i64});
-    declare("slua_tbl_iget_str",  i8p,   {i8p, i64});
-    declare("slua_tbl_iget_bool", i32,   {i8p, i64});
-    declare("slua_tbl_sget_i64",  i64,   {i8p, i8p});
-    declare("slua_tbl_sget_f64",  f64,   {i8p, i8p});
-    declare("slua_tbl_sget_str",  i8p,   {i8p, i8p});
-    declare("slua_tbl_sget_bool", i32,   {i8p, i8p});
+    declare("sarn_tbl_new",       i8p,   {});
+    declare("sarn_tbl_iset_i64",  voidT, {i8p, i64, i64});
+    declare("sarn_tbl_iset_f64",  voidT, {i8p, i64, f64});
+    declare("sarn_tbl_iset_str",  voidT, {i8p, i64, i8p});
+    declare("sarn_tbl_iset_bool", voidT, {i8p, i64, i32});
+    declare("sarn_tbl_sset_i64",  voidT, {i8p, i8p, i64});
+    declare("sarn_tbl_sset_f64",  voidT, {i8p, i8p, f64});
+    declare("sarn_tbl_sset_str",  voidT, {i8p, i8p, i8p});
+    declare("sarn_tbl_sset_bool", voidT, {i8p, i8p, i32});
+    declare("sarn_tbl_iget_i64",  i64,   {i8p, i64});
+    declare("sarn_tbl_iget_f64",  f64,   {i8p, i64});
+    declare("sarn_tbl_iget_str",  i8p,   {i8p, i64});
+    declare("sarn_tbl_iget_bool", i32,   {i8p, i64});
+    declare("sarn_tbl_sget_i64",  i64,   {i8p, i8p});
+    declare("sarn_tbl_sget_f64",  f64,   {i8p, i8p});
+    declare("sarn_tbl_sget_str",  i8p,   {i8p, i8p});
+    declare("sarn_tbl_sget_bool", i32,   {i8p, i8p});
     auto* f32 = llvm::Type::getFloatTy(ctx_);
-    declare("slua_window_init",          voidT, {i32, i32, i8p});
-    declare("slua_window_close",         voidT, {});
-    declare("slua_window_should_close",  i32,   {});
-    declare("slua_begin_drawing",        voidT, {});
-    declare("slua_end_drawing",          voidT, {});
-    declare("slua_clear_bg",             voidT, {i32, i32, i32, i32});
-    declare("slua_set_target_fps",       voidT, {i32});
-    declare("slua_get_fps",              i32,   {});
-    declare("slua_get_frame_time",       f64,   {});
-    declare("slua_screen_width",         i32,   {});
-    declare("slua_screen_height",        i32,   {});
-    declare("slua_draw_rect",            voidT, {i32, i32, i32, i32, i32, i32, i32, i32});
-    declare("slua_draw_rect_outline",    voidT, {i32, i32, i32, i32, i32, i32, i32, i32, i32});
-    declare("slua_draw_circle",          voidT, {i32, i32, f32, i32, i32, i32, i32});
-    declare("slua_draw_circle_outline",  voidT, {i32, i32, f32, i32, i32, i32, i32});
-    declare("slua_draw_line",            voidT, {i32, i32, i32, i32, i32, i32, i32, i32, i32});
-    declare("slua_draw_triangle",        voidT, {i32, i32, i32, i32, i32, i32, i32, i32, i32, i32});
-    declare("slua_draw_text",            voidT, {i8p, i32, i32, i32, i32, i32, i32, i32});
-    declare("slua_measure_text",         i32,   {i8p, i32});
-    declare("slua_is_key_down",          i32,   {i32});
-    declare("slua_is_key_pressed",       i32,   {i32});
-    declare("slua_is_key_released",      i32,   {i32});
-    declare("slua_get_mouse_x",          i32,   {});
-    declare("slua_get_mouse_y",          i32,   {});
-    declare("slua_is_mouse_btn_pressed", i32,   {i32});
-    declare("slua_is_mouse_btn_down",    i32,   {i32});
-    declare("slua_get_mouse_wheel",      f64,   {});
-    declare("slua_ui_button",            i32,   {i32, i32, i32, i32, i8p});
-    declare("slua_ui_label",             voidT, {i32, i32, i32, i32, i8p});
-    declare("slua_ui_checkbox",          i32,   {i32, i32, i32, i8p, i32});
-    declare("slua_ui_slider",            f64,   {i32, i32, i32, i32, f64, f64, f64});
-    declare("slua_ui_progress_bar",      voidT, {i32, i32, i32, i32, f64, f64});
-    declare("slua_ui_panel",             voidT, {i32, i32, i32, i32, i8p});
-    declare("slua_ui_text_input",        i32,   {i32, i32, i32, i32, i8p, i32, i32});
-    declare("slua_ui_set_font_size",     voidT, {i32});
-    declare("slua_ui_set_accent",        voidT, {i32, i32, i32});
-    declare("slua_font_load",            i32,   {i8p, i32});
-    declare("slua_font_unload",          voidT, {i32});
-    declare("slua_draw_text_font",       voidT, {i32, i8p, i32, i32, i32, f32, i32, i32, i32, i32});
-    declare("slua_fs_read_all",    i8p,   {i8p});
-    declare("slua_fs_write",       i32,   {i8p, i8p});
-    declare("slua_fs_append",      i32,   {i8p, i8p});
-    declare("slua_fs_exists",      i32,   {i8p});
-    declare("slua_fs_delete",      i32,   {i8p});
-    declare("slua_fs_mkdir",       i32,   {i8p});
-    declare("slua_fs_rename",      i32,   {i8p, i8p});
-    declare("slua_fs_size",        i64,   {i8p});
-    declare("slua_fs_listdir",     i8p,   {i8p});
-    declare("slua_fs_open",        i64,   {i8p, i8p});
-    declare("slua_fs_close",       i32,   {i64});
-    declare("slua_fs_readline",    i8p,   {i64});
-    declare("slua_fs_writeh",      i32,   {i64, i8p});
-    declare("slua_fs_flush",       i32,   {i64});
-    declare("slua_fs_copy",        i32,   {i8p, i8p});
-    declare("slua_random_seed",    voidT, {i64});
-    declare("slua_random_int",     i64,   {i64, i64});
-    declare("slua_random_float",   f64,   {});
-    declare("slua_random_range",   i64,   {i64, i64});
-    declare("slua_random_gauss",   f64,   {f64, f64});
-    declare("slua_datetime_now",        i64, {});
-    declare("slua_datetime_format",     i8p, {i64, i8p});
-    declare("slua_datetime_parse",      i64, {i8p, i8p});
-    declare("slua_datetime_diff",       i64, {i64, i64});
-    declare("slua_datetime_add",        i64, {i64, i64});
-    declare("slua_datetime_now_str",    i8p, {i8p});
-    declare("slua_datetime_year",       i32, {i64});
-    declare("slua_datetime_month",      i32, {i64});
-    declare("slua_datetime_day",        i32, {i64});
-    declare("slua_datetime_hour",       i32, {i64});
-    declare("slua_datetime_minute",     i32, {i64});
-    declare("slua_datetime_second",     i32, {i64});
-    declare("slua_path_join",      i8p,   {i8p, i8p});
-    declare("slua_path_basename",  i8p,   {i8p});
-    declare("slua_path_dirname",   i8p,   {i8p});
-    declare("slua_path_extension", i8p,   {i8p});
-    declare("slua_path_stem",      i8p,   {i8p});
-    declare("slua_path_absolute",  i8p,   {i8p});
-    declare("slua_path_normalize", i8p,   {i8p});
-    declare("slua_path_exists",    i32,   {i8p});
-    declare("slua_path_is_file",   i32,   {i8p});
-    declare("slua_path_is_dir",    i32,   {i8p});
-    declare("slua_process_run",    i64,   {i8p});
-    declare("slua_process_output", i8p,   {i8p});
-    declare("slua_process_spawn",  i64,   {i8p});
-    declare("slua_process_wait",   i32,   {i64});
-    declare("slua_process_kill",   i32,   {i64});
-    declare("slua_process_alive",  i32,   {i64});
-    declare("slua_json_encode_str",    i8p, {i8p});
-    declare("slua_json_encode_int",    i8p, {i64});
-    declare("slua_json_encode_float",  i8p, {f64});
-    declare("slua_json_encode_bool",   i8p, {i32});
-    declare("slua_json_encode_null",   i8p, {});
-    declare("slua_json_get_str",       i8p, {i8p, i8p});
-    declare("slua_json_get_int",       i64, {i8p, i8p});
-    declare("slua_json_get_float",     f64, {i8p, i8p});
-    declare("slua_json_get_bool",      i32, {i8p, i8p});
-    declare("slua_json_has_key",       i32, {i8p, i8p});
-    declare("slua_json_minify",        i8p, {i8p});
-    declare("slua_json_get_array_item",i8p, {i8p, i8p, i32});
-    declare("slua_json_get_nested_float", f64, {i8p, i8p, i8p});
-    declare("slua_json_get_nested_int",   i64, {i8p, i8p, i8p});
-    declare("slua_json_get_nested_str",   i8p, {i8p, i8p, i8p});
-    declare("slua_net_init",        i32, {});
-    declare("slua_net_connect",     i64, {i8p, i32});
-    declare("slua_net_listen",      i64, {i32});
-    declare("slua_net_accept",      i64, {i64});
-    declare("slua_net_send",        i32, {i64, i8p});
-    declare("slua_net_send_bytes",  i32, {i64, i8p, i32});
-    declare("slua_net_recv",        i8p, {i64, i32});
-    declare("slua_net_close",       i32, {i64});
-    declare("slua_net_local_ip",    i8p, {});
-    declare("slua_sync_mutex_new",     i64, {});
-    declare("slua_sync_mutex_lock",    i32, {i64});
-    declare("slua_sync_mutex_unlock",  i32, {i64});
-    declare("slua_sync_mutex_trylock", i32, {i64});
-    declare("slua_sync_mutex_free",    i32, {i64});
-    declare("slua_regex_match",    i32, {i8p, i8p});
-    declare("slua_regex_find",     i32, {i8p, i8p, i32});
-    declare("slua_regex_replace",  i8p, {i8p, i8p, i8p});
-    declare("slua_regex_groups",   i8p, {i8p, i8p});
-    declare("slua_regex_count",    i32, {i8p, i8p});
-    declare("slua_regex_find_all", i8p, {i8p, i8p});
-    declare("slua_crypto_sha256",         i8p,   {i8p});
-    declare("slua_crypto_md5",            i8p,   {i8p});
-    declare("slua_crypto_base64_encode",  i8p,   {i8p, i32});
-    declare("slua_crypto_base64_decode",  i8p,   {i8p});
-    declare("slua_crypto_hex_encode",     i8p,   {i8p, i32});
-    declare("slua_crypto_hex_decode",     i8p,   {i8p});
-    declare("slua_crypto_hex_decode_len", i32,   {i8p});
-    declare("slua_crypto_crc32",          i32,   {i8p, i32});
-    declare("slua_crypto_hmac_sha256",    i8p,   {i8p, i8p});
-    declare("slua_crypto_xor",            i8p,   {i8p, i32, i8p, i32});
-    declare("slua_buf_new",          i64,   {i32});
-    declare("slua_buf_from_str",     i64,   {i8p, i32});
-    declare("slua_buf_free",         i32,   {i64});
-    declare("slua_buf_size",         i32,   {i64});
-    declare("slua_buf_write_u8",     i32,   {i64, i32, i32});
-    declare("slua_buf_write_u16",    i32,   {i64, i32, i32});
-    declare("slua_buf_write_u32",    i32,   {i64, i32, i32});
-    declare("slua_buf_write_i64",    i32,   {i64, i32, i64});
-    declare("slua_buf_write_f32",    i32,   {i64, i32, f64});
-    declare("slua_buf_write_f64",    i32,   {i64, i32, f64});
-    declare("slua_buf_read_u8",      i32,   {i64, i32});
-    declare("slua_buf_read_u16",     i32,   {i64, i32});
-    declare("slua_buf_read_u32_i",   i32,   {i64, i32});
-    declare("slua_buf_read_i64",     i64,   {i64, i32});
-    declare("slua_buf_read_f32",     f64,   {i64, i32});
-    declare("slua_buf_read_f64",     f64,   {i64, i32});
-    declare("slua_buf_to_str",       i8p,   {i64});
-    declare("slua_buf_to_hex",       i8p,   {i64});
-    declare("slua_buf_copy",         i32,   {i64, i32, i64, i32, i32});
-    declare("slua_buf_fill",         i32,   {i64, i32, i32, i32});
-    declare("slua_buf_write_str",    i32,   {i64, i32, i8p});
-    declare("slua_thread_join",      i32,   {i64});
-    declare("slua_thread_detach",    i32,   {i64});
-    declare("slua_thread_alive",     i32,   {i64});
-    declare("slua_thread_sleep_ms",  voidT, {i64});
-    declare("slua_thread_self_id",   i64,   {});
-    declare("slua_vec2_dot",     f64, {f64, f64, f64, f64});
-    declare("slua_vec2_len",     f64, {f64, f64});
-    declare("slua_vec2_dist",    f64, {f64, f64, f64, f64});
-    declare("slua_vec2_norm_x",  f64, {f64, f64});
-    declare("slua_vec2_norm_y",  f64, {f64, f64});
-    declare("slua_vec3_dot",     f64, {f64, f64, f64, f64, f64, f64});
-    declare("slua_vec3_len",     f64, {f64, f64, f64});
-    declare("slua_vec3_dist",    f64, {f64, f64, f64, f64, f64, f64});
-    declare("slua_vec3_norm_x",  f64, {f64, f64, f64});
-    declare("slua_vec3_norm_y",  f64, {f64, f64, f64});
-    declare("slua_vec3_norm_z",  f64, {f64, f64, f64});
-    declare("slua_vec3_cross_x", f64, {f64, f64, f64, f64, f64, f64});
-    declare("slua_vec3_cross_y", f64, {f64, f64, f64, f64, f64, f64});
-    declare("slua_vec3_cross_z", f64, {f64, f64, f64, f64, f64, f64});
-    declare("slua_math_clamp",   f64, {f64, f64, f64});
-    declare("slua_math_lerp",    f64, {f64, f64, f64});
-    declare("slua_math_abs",     f64, {f64});
-    declare("slua_math_floor",   f64, {f64});
-    declare("slua_math_ceil",    f64, {f64});
-    declare("slua_math_round",   f64, {f64});
-    declare("slua_math_min2",    f64, {f64, f64});
-    declare("slua_math_max2",    f64, {f64, f64});
-    declare("slua_math_sign",    f64, {f64});
-    declare("slua_math_fract",   f64, {f64});
-    declare("slua_math_mod",     f64, {f64, f64});
-    declare("slua_camera3d_set",     voidT, {f64,f64,f64,f64,f64,f64,f64,f64,f64,f64,i32});
-    declare("slua_camera3d_update",  voidT, {});
-    declare("slua_begin_mode3d",     voidT, {});
-    declare("slua_end_mode3d",       voidT, {});
-    declare("slua_draw_cube",        voidT, {f32,f32,f32,f32,f32,f32,i32,i32,i32,i32});
-    declare("slua_draw_cube_wires",  voidT, {f32,f32,f32,f32,f32,f32,i32,i32,i32,i32});
-    declare("slua_draw_sphere",      voidT, {f32,f32,f32,f32,i32,i32,i32,i32});
-    declare("slua_draw_sphere_wires",voidT, {f32,f32,f32,f32,i32,i32,i32,i32,i32,i32});
-    declare("slua_draw_plane",       voidT, {f32,f32,f32,f32,f32,i32,i32,i32,i32});
-    declare("slua_draw_cylinder",    voidT, {f32,f32,f32,f32,f32,f32,i32,i32,i32,i32,i32});
-    declare("slua_draw_grid",        voidT, {i32, f32});
-    declare("slua_draw_ray",         voidT, {f32,f32,f32,f32,f32,f32,i32,i32,i32,i32});
-    declare("slua_draw_line3d",      voidT, {f32,f32,f32,f32,f32,f32,i32,i32,i32,i32});
-    declare("slua_model_load",       i32,   {i8p});
-    declare("slua_model_draw",       voidT, {i32,f32,f32,f32,f32,i32,i32,i32,i32});
-    declare("slua_model_draw_ex",    voidT, {i32,f32,f32,f32,f32,f32,f32,f32,f32,f32,f32,i32,i32,i32,i32});
-    declare("slua_model_unload",     voidT, {i32});
-    declare("slua_texture_load",     i32,   {i8p});
-    declare("slua_texture_draw",     voidT, {i32,i32,i32,i32,i32,i32,i32});
-    declare("slua_texture_draw_ex",  voidT, {i32,f32,f32,f32,f32,i32,i32,i32,i32});
-    declare("slua_texture_unload",   voidT, {i32});
-    declare("slua_texture_width",    i32,   {i32});
-    declare("slua_texture_height",   i32,   {i32});
-    declare("slua_window_init_3d",   voidT, {i32,i32,i8p});
-    declare("slua_get_time",         f64,   {});
-    declare("slua_draw_fps_counter", voidT, {i32,i32});
-    declare("slua_http_get",         i8p,   {i8p});
-    declare("slua_http_post",        i8p,   {i8p, i8p, i8p});
-    declare("slua_http_post_json",   i8p,   {i8p, i8p});
-    declare("slua_http_status",      i32,   {i8p});
-    declare("slua_tbl_len_rt",       i32,   {i8p});
-    declare("slua_tbl_push",         voidT, {i8p, i64});
-    declare("slua_tbl_push_f",       voidT, {i8p, f64});
-    declare("slua_tbl_push_s",       voidT, {i8p, i8p});
-    declare("slua_tbl_pop",          voidT, {i8p});
-    declare("slua_tbl_contains_s",   i32,   {i8p, i8p});
-    declare("slua_tbl_contains_i",   i32,   {i8p, i64});
-    declare("slua_tbl_keys",         i8p,   {i8p});
-    declare("slua_tbl_remove_at",    voidT, {i8p, i32});
-    declare("slua_tbl_clear",        voidT, {i8p});
-    declare("slua_tbl_merge",        i8p,   {i8p, i8p});
-    declare("slua_tbl_slice",        i8p,   {i8p, i32, i32});
-    declare("slua_tbl_reverse",      voidT, {i8p});
+    declare("sarn_window_init",          voidT, {i32, i32, i8p});
+    declare("sarn_window_close",         voidT, {});
+    declare("sarn_window_should_close",  i32,   {});
+    declare("sarn_begin_drawing",        voidT, {});
+    declare("sarn_end_drawing",          voidT, {});
+    declare("sarn_clear_bg",             voidT, {i32, i32, i32, i32});
+    declare("sarn_set_target_fps",       voidT, {i32});
+    declare("sarn_get_fps",              i32,   {});
+    declare("sarn_get_frame_time",       f64,   {});
+    declare("sarn_screen_width",         i32,   {});
+    declare("sarn_screen_height",        i32,   {});
+    declare("sarn_draw_rect",            voidT, {i32, i32, i32, i32, i32, i32, i32, i32});
+    declare("sarn_draw_rect_outline",    voidT, {i32, i32, i32, i32, i32, i32, i32, i32, i32});
+    declare("sarn_draw_circle",          voidT, {i32, i32, f32, i32, i32, i32, i32});
+    declare("sarn_draw_circle_outline",  voidT, {i32, i32, f32, i32, i32, i32, i32});
+    declare("sarn_draw_line",            voidT, {i32, i32, i32, i32, i32, i32, i32, i32, i32});
+    declare("sarn_draw_triangle",        voidT, {i32, i32, i32, i32, i32, i32, i32, i32, i32, i32});
+    declare("sarn_draw_text",            voidT, {i8p, i32, i32, i32, i32, i32, i32, i32});
+    declare("sarn_measure_text",         i32,   {i8p, i32});
+    declare("sarn_is_key_down",          i32,   {i32});
+    declare("sarn_is_key_pressed",       i32,   {i32});
+    declare("sarn_is_key_released",      i32,   {i32});
+    declare("sarn_get_mouse_x",          i32,   {});
+    declare("sarn_get_mouse_y",          i32,   {});
+    declare("sarn_is_mouse_btn_pressed", i32,   {i32});
+    declare("sarn_is_mouse_btn_down",    i32,   {i32});
+    declare("sarn_get_mouse_wheel",      f64,   {});
+    declare("sarn_ui_button",            i32,   {i32, i32, i32, i32, i8p});
+    declare("sarn_ui_label",             voidT, {i32, i32, i32, i32, i8p});
+    declare("sarn_ui_checkbox",          i32,   {i32, i32, i32, i8p, i32});
+    declare("sarn_ui_slider",            f64,   {i32, i32, i32, i32, f64, f64, f64});
+    declare("sarn_ui_progress_bar",      voidT, {i32, i32, i32, i32, f64, f64});
+    declare("sarn_ui_panel",             voidT, {i32, i32, i32, i32, i8p});
+    declare("sarn_ui_text_input",        i32,   {i32, i32, i32, i32, i8p, i32, i32});
+    declare("sarn_ui_set_font_size",     voidT, {i32});
+    declare("sarn_ui_set_accent",        voidT, {i32, i32, i32});
+    declare("sarn_font_load",            i32,   {i8p, i32});
+    declare("sarn_font_unload",          voidT, {i32});
+    declare("sarn_draw_text_font",       voidT, {i32, i8p, i32, i32, i32, f32, i32, i32, i32, i32});
+    declare("sarn_fs_read_all",    i8p,   {i8p});
+    declare("sarn_fs_write",       i32,   {i8p, i8p});
+    declare("sarn_fs_append",      i32,   {i8p, i8p});
+    declare("sarn_fs_exists",      i32,   {i8p});
+    declare("sarn_fs_delete",      i32,   {i8p});
+    declare("sarn_fs_mkdir",       i32,   {i8p});
+    declare("sarn_fs_rename",      i32,   {i8p, i8p});
+    declare("sarn_fs_size",        i64,   {i8p});
+    declare("sarn_fs_listdir",     i8p,   {i8p});
+    declare("sarn_fs_open",        i64,   {i8p, i8p});
+    declare("sarn_fs_close",       i32,   {i64});
+    declare("sarn_fs_readline",    i8p,   {i64});
+    declare("sarn_fs_writeh",      i32,   {i64, i8p});
+    declare("sarn_fs_flush",       i32,   {i64});
+    declare("sarn_fs_copy",        i32,   {i8p, i8p});
+    declare("sarn_random_seed",    voidT, {i64});
+    declare("sarn_random_int",     i64,   {i64, i64});
+    declare("sarn_random_float",   f64,   {});
+    declare("sarn_random_range",   i64,   {i64, i64});
+    declare("sarn_random_gauss",   f64,   {f64, f64});
+    declare("sarn_datetime_now",        i64, {});
+    declare("sarn_datetime_format",     i8p, {i64, i8p});
+    declare("sarn_datetime_parse",      i64, {i8p, i8p});
+    declare("sarn_datetime_diff",       i64, {i64, i64});
+    declare("sarn_datetime_add",        i64, {i64, i64});
+    declare("sarn_datetime_now_str",    i8p, {i8p});
+    declare("sarn_datetime_year",       i32, {i64});
+    declare("sarn_datetime_month",      i32, {i64});
+    declare("sarn_datetime_day",        i32, {i64});
+    declare("sarn_datetime_hour",       i32, {i64});
+    declare("sarn_datetime_minute",     i32, {i64});
+    declare("sarn_datetime_second",     i32, {i64});
+    declare("sarn_path_join",      i8p,   {i8p, i8p});
+    declare("sarn_path_basename",  i8p,   {i8p});
+    declare("sarn_path_dirname",   i8p,   {i8p});
+    declare("sarn_path_extension", i8p,   {i8p});
+    declare("sarn_path_stem",      i8p,   {i8p});
+    declare("sarn_path_absolute",  i8p,   {i8p});
+    declare("sarn_path_normalize", i8p,   {i8p});
+    declare("sarn_path_exists",    i32,   {i8p});
+    declare("sarn_path_is_file",   i32,   {i8p});
+    declare("sarn_path_is_dir",    i32,   {i8p});
+    declare("sarn_process_run",    i64,   {i8p});
+    declare("sarn_process_output", i8p,   {i8p});
+    declare("sarn_process_spawn",  i64,   {i8p});
+    declare("sarn_process_wait",   i32,   {i64});
+    declare("sarn_process_kill",   i32,   {i64});
+    declare("sarn_process_alive",  i32,   {i64});
+    declare("sarn_json_encode_str",    i8p, {i8p});
+    declare("sarn_json_encode_int",    i8p, {i64});
+    declare("sarn_json_encode_float",  i8p, {f64});
+    declare("sarn_json_encode_bool",   i8p, {i32});
+    declare("sarn_json_encode_null",   i8p, {});
+    declare("sarn_json_get_str",       i8p, {i8p, i8p});
+    declare("sarn_json_get_int",       i64, {i8p, i8p});
+    declare("sarn_json_get_float",     f64, {i8p, i8p});
+    declare("sarn_json_get_bool",      i32, {i8p, i8p});
+    declare("sarn_json_has_key",       i32, {i8p, i8p});
+    declare("sarn_json_minify",        i8p, {i8p});
+    declare("sarn_json_get_array_item",i8p, {i8p, i8p, i32});
+    declare("sarn_json_get_nested_float", f64, {i8p, i8p, i8p});
+    declare("sarn_json_get_nested_int",   i64, {i8p, i8p, i8p});
+    declare("sarn_json_get_nested_str",   i8p, {i8p, i8p, i8p});
+    declare("sarn_net_init",        i32, {});
+    declare("sarn_net_connect",     i64, {i8p, i32});
+    declare("sarn_net_listen",      i64, {i32});
+    declare("sarn_net_accept",      i64, {i64});
+    declare("sarn_net_send",        i32, {i64, i8p});
+    declare("sarn_net_send_bytes",  i32, {i64, i8p, i32});
+    declare("sarn_net_recv",        i8p, {i64, i32});
+    declare("sarn_net_close",       i32, {i64});
+    declare("sarn_net_local_ip",    i8p, {});
+    declare("sarn_sync_mutex_new",     i64, {});
+    declare("sarn_sync_mutex_lock",    i32, {i64});
+    declare("sarn_sync_mutex_unlock",  i32, {i64});
+    declare("sarn_sync_mutex_trylock", i32, {i64});
+    declare("sarn_sync_mutex_free",    i32, {i64});
+    declare("sarn_regex_match",    i32, {i8p, i8p});
+    declare("sarn_regex_find",     i32, {i8p, i8p, i32});
+    declare("sarn_regex_replace",  i8p, {i8p, i8p, i8p});
+    declare("sarn_regex_groups",   i8p, {i8p, i8p});
+    declare("sarn_regex_count",    i32, {i8p, i8p});
+    declare("sarn_regex_find_all", i8p, {i8p, i8p});
+    declare("sarn_crypto_sha256",         i8p,   {i8p});
+    declare("sarn_crypto_md5",            i8p,   {i8p});
+    declare("sarn_crypto_base64_encode",  i8p,   {i8p, i32});
+    declare("sarn_crypto_base64_decode",  i8p,   {i8p});
+    declare("sarn_crypto_hex_encode",     i8p,   {i8p, i32});
+    declare("sarn_crypto_hex_decode",     i8p,   {i8p});
+    declare("sarn_crypto_hex_decode_len", i32,   {i8p});
+    declare("sarn_crypto_crc32",          i32,   {i8p, i32});
+    declare("sarn_crypto_hmac_sha256",    i8p,   {i8p, i8p});
+    declare("sarn_crypto_xor",            i8p,   {i8p, i32, i8p, i32});
+    declare("sarn_buf_new",          i64,   {i32});
+    declare("sarn_buf_from_str",     i64,   {i8p, i32});
+    declare("sarn_buf_free",         i32,   {i64});
+    declare("sarn_buf_size",         i32,   {i64});
+    declare("sarn_buf_write_u8",     i32,   {i64, i32, i32});
+    declare("sarn_buf_write_u16",    i32,   {i64, i32, i32});
+    declare("sarn_buf_write_u32",    i32,   {i64, i32, i32});
+    declare("sarn_buf_write_i64",    i32,   {i64, i32, i64});
+    declare("sarn_buf_write_f32",    i32,   {i64, i32, f64});
+    declare("sarn_buf_write_f64",    i32,   {i64, i32, f64});
+    declare("sarn_buf_read_u8",      i32,   {i64, i32});
+    declare("sarn_buf_read_u16",     i32,   {i64, i32});
+    declare("sarn_buf_read_u32_i",   i32,   {i64, i32});
+    declare("sarn_buf_read_i64",     i64,   {i64, i32});
+    declare("sarn_buf_read_f32",     f64,   {i64, i32});
+    declare("sarn_buf_read_f64",     f64,   {i64, i32});
+    declare("sarn_buf_to_str",       i8p,   {i64});
+    declare("sarn_buf_to_hex",       i8p,   {i64});
+    declare("sarn_buf_copy",         i32,   {i64, i32, i64, i32, i32});
+    declare("sarn_buf_fill",         i32,   {i64, i32, i32, i32});
+    declare("sarn_buf_write_str",    i32,   {i64, i32, i8p});
+    declare("sarn_thread_join",      i32,   {i64});
+    declare("sarn_thread_detach",    i32,   {i64});
+    declare("sarn_thread_alive",     i32,   {i64});
+    declare("sarn_thread_sleep_ms",  voidT, {i64});
+    declare("sarn_thread_self_id",   i64,   {});
+    declare("sarn_vec2_dot",     f64, {f64, f64, f64, f64});
+    declare("sarn_vec2_len",     f64, {f64, f64});
+    declare("sarn_vec2_dist",    f64, {f64, f64, f64, f64});
+    declare("sarn_vec2_norm_x",  f64, {f64, f64});
+    declare("sarn_vec2_norm_y",  f64, {f64, f64});
+    declare("sarn_vec3_dot",     f64, {f64, f64, f64, f64, f64, f64});
+    declare("sarn_vec3_len",     f64, {f64, f64, f64});
+    declare("sarn_vec3_dist",    f64, {f64, f64, f64, f64, f64, f64});
+    declare("sarn_vec3_norm_x",  f64, {f64, f64, f64});
+    declare("sarn_vec3_norm_y",  f64, {f64, f64, f64});
+    declare("sarn_vec3_norm_z",  f64, {f64, f64, f64});
+    declare("sarn_vec3_cross_x", f64, {f64, f64, f64, f64, f64, f64});
+    declare("sarn_vec3_cross_y", f64, {f64, f64, f64, f64, f64, f64});
+    declare("sarn_vec3_cross_z", f64, {f64, f64, f64, f64, f64, f64});
+    declare("sarn_math_clamp",   f64, {f64, f64, f64});
+    declare("sarn_math_lerp",    f64, {f64, f64, f64});
+    declare("sarn_math_abs",     f64, {f64});
+    declare("sarn_math_floor",   f64, {f64});
+    declare("sarn_math_ceil",    f64, {f64});
+    declare("sarn_math_round",   f64, {f64});
+    declare("sarn_math_min2",    f64, {f64, f64});
+    declare("sarn_math_max2",    f64, {f64, f64});
+    declare("sarn_math_sign",    f64, {f64});
+    declare("sarn_math_fract",   f64, {f64});
+    declare("sarn_math_mod",     f64, {f64, f64});
+    declare("sarn_camera3d_set",     voidT, {f64,f64,f64,f64,f64,f64,f64,f64,f64,f64,i32});
+    declare("sarn_camera3d_update",  voidT, {});
+    declare("sarn_begin_mode3d",     voidT, {});
+    declare("sarn_end_mode3d",       voidT, {});
+    declare("sarn_draw_cube",        voidT, {f32,f32,f32,f32,f32,f32,i32,i32,i32,i32});
+    declare("sarn_draw_cube_wires",  voidT, {f32,f32,f32,f32,f32,f32,i32,i32,i32,i32});
+    declare("sarn_draw_sphere",      voidT, {f32,f32,f32,f32,i32,i32,i32,i32});
+    declare("sarn_draw_sphere_wires",voidT, {f32,f32,f32,f32,i32,i32,i32,i32,i32,i32});
+    declare("sarn_draw_plane",       voidT, {f32,f32,f32,f32,f32,i32,i32,i32,i32});
+    declare("sarn_draw_cylinder",    voidT, {f32,f32,f32,f32,f32,f32,i32,i32,i32,i32,i32});
+    declare("sarn_draw_grid",        voidT, {i32, f32});
+    declare("sarn_draw_ray",         voidT, {f32,f32,f32,f32,f32,f32,i32,i32,i32,i32});
+    declare("sarn_draw_line3d",      voidT, {f32,f32,f32,f32,f32,f32,i32,i32,i32,i32});
+    declare("sarn_model_load",       i32,   {i8p});
+    declare("sarn_model_draw",       voidT, {i32,f32,f32,f32,f32,i32,i32,i32,i32});
+    declare("sarn_model_draw_ex",    voidT, {i32,f32,f32,f32,f32,f32,f32,f32,f32,f32,f32,i32,i32,i32,i32});
+    declare("sarn_model_unload",     voidT, {i32});
+    declare("sarn_texture_load",     i32,   {i8p});
+    declare("sarn_texture_draw",     voidT, {i32,i32,i32,i32,i32,i32,i32});
+    declare("sarn_texture_draw_ex",  voidT, {i32,f32,f32,f32,f32,i32,i32,i32,i32});
+    declare("sarn_texture_unload",   voidT, {i32});
+    declare("sarn_texture_width",    i32,   {i32});
+    declare("sarn_texture_height",   i32,   {i32});
+    declare("sarn_window_init_3d",   voidT, {i32,i32,i8p});
+    declare("sarn_get_time",         f64,   {});
+    declare("sarn_draw_fps_counter", voidT, {i32,i32});
+    declare("sarn_http_get",         i8p,   {i8p});
+    declare("sarn_http_post",        i8p,   {i8p, i8p, i8p});
+    declare("sarn_http_post_json",   i8p,   {i8p, i8p});
+    declare("sarn_http_status",      i32,   {i8p});
+    declare("sarn_tbl_len_rt",       i32,   {i8p});
+    declare("sarn_tbl_push",         voidT, {i8p, i64});
+    declare("sarn_tbl_push_f",       voidT, {i8p, f64});
+    declare("sarn_tbl_push_s",       voidT, {i8p, i8p});
+    declare("sarn_tbl_pop",          voidT, {i8p});
+    declare("sarn_tbl_contains_s",   i32,   {i8p, i8p});
+    declare("sarn_tbl_contains_i",   i32,   {i8p, i64});
+    declare("sarn_tbl_keys",         i8p,   {i8p});
+    declare("sarn_tbl_remove_at",    voidT, {i8p, i32});
+    declare("sarn_tbl_clear",        voidT, {i8p});
+    declare("sarn_tbl_merge",        i8p,   {i8p, i8p});
+    declare("sarn_tbl_slice",        i8p,   {i8p, i32, i32});
+    declare("sarn_tbl_reverse",      voidT, {i8p});
 }
 
 llvm::Function* IREmitter::get_runtime_fn(const std::string& name) {
@@ -467,7 +467,7 @@ llvm::Function* IREmitter::get_runtime_fn(const std::string& name) {
     return nullptr;
 }
 
-bool IREmitter::emit(slua::Module& mod) {
+bool IREmitter::emit(sarn::Module& mod) {
     cur_mode_ = mod.mode;
     push_env();
 
@@ -560,7 +560,7 @@ void IREmitter::dump() {
 }
 
 void IREmitter::emit_panic(const std::string& msg, SourceLoc loc) {
-    auto* fn = get_runtime_fn("slua_panic");
+    auto* fn = get_runtime_fn("sarn_panic");
     if (!fn) return;
     auto* msg_val  = builder_.CreateGlobalStringPtr(msg);
     auto* file_val = builder_.CreateGlobalStringPtr(loc.filename);
@@ -1026,7 +1026,7 @@ void IREmitter::emit_assign(Assign& s, SourceLoc loc) {
 
         bool key_is_str = key->getType()->isPointerTy();
         if (!key_is_str) key = builder_.CreateSExt(key, i64);
-        std::string pfx = key_is_str ? "slua_tbl_sset" : "slua_tbl_iset";
+        std::string pfx = key_is_str ? "sarn_tbl_sset" : "sarn_tbl_iset";
 
         llvm::Type* vty = val->getType();
         if (vty->isDoubleTy()) {
@@ -1095,13 +1095,13 @@ void IREmitter::emit_free_stmt(FreeStmt& s) {
     else
         ptr = builder_.CreateBitCast(ptr, i8p);
 
-    auto* fn = get_runtime_fn("slua_free");
+    auto* fn = get_runtime_fn("sarn_free");
     if (fn) builder_.CreateCall(fn, {ptr});
 }
 
 void IREmitter::emit_panic_stmt(PanicStmt& s) {
     llvm::Value* msg = emit_expr(*s.msg);
-    auto* fn = get_runtime_fn("slua_panic");
+    auto* fn = get_runtime_fn("sarn_panic");
     if (!fn || !msg) return;
 
     if (!msg->getType()->isPointerTy())
@@ -1363,19 +1363,19 @@ llvm::Value* IREmitter::emit_binop(Binop& e, SourceLoc loc) {
     if (e.op == ">>") return builder_.CreateAShr(lhs, rhs);
 
     if (e.op == "..") {
-        auto* fn = get_runtime_fn("slua_str_concat");
+        auto* fn = get_runtime_fn("sarn_str_concat");
         if (!fn) return lhs;
         auto to_str = [&](llvm::Value* v) -> llvm::Value* {
             if (!v) return llvm::ConstantPointerNull::get(
                 llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(ctx_)));
             if (v->getType()->isPointerTy()) return v;
             if (v->getType()->isDoubleTy()) {
-                auto* cvt = get_runtime_fn("slua_float_to_str");
+                auto* cvt = get_runtime_fn("sarn_float_to_str");
                 if (cvt) return builder_.CreateCall(cvt, {v}, "fstr");
             }
             if (v->getType()->isIntegerTy()) {
                 auto* ext = builder_.CreateSExt(v, llvm::Type::getInt64Ty(ctx_));
-                auto* cvt = get_runtime_fn("slua_int_to_str");
+                auto* cvt = get_runtime_fn("sarn_int_to_str");
                 if (cvt) return builder_.CreateCall(cvt, {ext}, "istr");
             }
             return v;
@@ -1402,14 +1402,14 @@ llvm::Value* IREmitter::emit_unop(Unop& e, SourceLoc loc) {
     if (e.op == "#") {
         auto* i64 = llvm::Type::getInt64Ty(ctx_);
         if (val->getType()->isPointerTy()) {
-            auto* fn = get_runtime_fn("slua_tbl_len_rt");
+            auto* fn = get_runtime_fn("sarn_tbl_len_rt");
             if (fn) {
                 auto* r = builder_.CreateCall(fn, {val}, "tlen");
                 return builder_.CreateSExt(r, i64);
             }
         }
         if (val->getType()->isIntegerTy()) {
-            auto* fn = get_runtime_fn("slua_str_len");
+            auto* fn = get_runtime_fn("sarn_str_len");
             if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {val}, "slen"), i64);
         }
         return llvm::ConstantInt::get(i64, 0);
@@ -1459,34 +1459,34 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
 
             if (mod == "io") {
                 if (meth == "read_line") {
-                    auto* fn = get_runtime_fn("slua_read_line");
+                    auto* fn = get_runtime_fn("sarn_read_line");
                     if (fn) return builder_.CreateCall(fn, {}, "rl");
                     return llvm::ConstantPointerNull::get(
                         llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(ctx_)));
                 }
                 if (meth == "read_char") {
-                    auto* fn = get_runtime_fn("slua_read_char");
+                    auto* fn = get_runtime_fn("sarn_read_char");
                     if (fn) return builder_.CreateCall(fn, {}, "rc");
                     return llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx_), 0);
                 }
                 if (meth == "clear") {
-                    auto* fn = get_runtime_fn("slua_io_clear");
+                    auto* fn = get_runtime_fn("sarn_io_clear");
                     if (fn) builder_.CreateCall(fn, {});
                     return llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx_), 0);
                 }
                 if (meth == "set_color" && !e.args.empty()) {
-                    auto* fn  = get_runtime_fn("slua_io_set_color");
+                    auto* fn  = get_runtime_fn("sarn_io_set_color");
                     auto* arg = emit_expr(*e.args[0]);
                     if (fn && arg) builder_.CreateCall(fn, {arg});
                     return llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx_), 0);
                 }
                 if (meth == "reset_color") {
-                    auto* fn = get_runtime_fn("slua_io_reset_color");
+                    auto* fn = get_runtime_fn("sarn_io_reset_color");
                     if (fn) builder_.CreateCall(fn, {});
                     return llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx_), 0);
                 }
                 if (meth == "print_color" && e.args.size() >= 2) {
-                    auto* fn  = get_runtime_fn("slua_io_print_color");
+                    auto* fn  = get_runtime_fn("sarn_io_print_color");
                     auto* msg = emit_expr(*e.args[0]);
                     auto* col = emit_expr(*e.args[1]);
                     if (fn && msg && col) builder_.CreateCall(fn, {msg, col});
@@ -1496,25 +1496,25 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     auto* arg = emit_expr(*e.args[0]);
                     if (arg) {
                         if (arg->getType()->isPointerTy()) {
-                            auto* fn = get_runtime_fn("slua_print_str");
+                            auto* fn = get_runtime_fn("sarn_print_str");
                             if (fn) builder_.CreateCall(fn, {arg});
                         } else if (arg->getType()->isIntegerTy(64) || arg->getType()->isIntegerTy()) {
-                            auto* fn = get_runtime_fn("slua_print_int");
+                            auto* fn = get_runtime_fn("sarn_print_int");
                             if (fn) builder_.CreateCall(fn, {arg});
                         } else if (arg->getType()->isDoubleTy()) {
-                            auto* fn = get_runtime_fn("slua_print_float");
+                            auto* fn = get_runtime_fn("sarn_print_float");
                             if (fn) builder_.CreateCall(fn, {arg});
                         }
                     }
                     return llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx_), 0);
                 }
                 if (meth == "flush") {
-                    auto* fn = get_runtime_fn("slua_flush");
+                    auto* fn = get_runtime_fn("sarn_flush");
                     if (fn) builder_.CreateCall(fn, {});
                     return llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx_), 0);
                 }
                 if (meth == "write" && !e.args.empty()) {
-                    auto* fn = get_runtime_fn("slua_print_str_no_newline");
+                    auto* fn = get_runtime_fn("sarn_print_str_no_newline");
                     auto* arg = emit_expr(*e.args[0]);
                     if (fn && arg) builder_.CreateCall(fn, {arg});
                     return llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx_), 0);
@@ -1536,35 +1536,35 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     if (!fn) return llvm::ConstantFP::get(f64, 0.0);
                     return builder_.CreateCall(fn, {coerce_f64(emit_expr(*e.args[0]))}, name);
                 };
-                if (meth == "sqrt")  return call1("slua_sqrt");
-                if (meth == "sin")   return call1("slua_sin");
-                if (meth == "cos")   return call1("slua_cos");
-                if (meth == "tan")   return call1("slua_tan");
-                if (meth == "log")   return call1("slua_log");
-                if (meth == "log2")  return call1("slua_log2");
-                if (meth == "exp")   return call1("slua_exp");
+                if (meth == "sqrt")  return call1("sarn_sqrt");
+                if (meth == "sin")   return call1("sarn_sin");
+                if (meth == "cos")   return call1("sarn_cos");
+                if (meth == "tan")   return call1("sarn_tan");
+                if (meth == "log")   return call1("sarn_log");
+                if (meth == "log2")  return call1("sarn_log2");
+                if (meth == "exp")   return call1("sarn_exp");
                 if (meth == "pow" && e.args.size() >= 2) {
-                    auto* fn = get_runtime_fn("slua_pow");
+                    auto* fn = get_runtime_fn("sarn_pow");
                     if (!fn) return llvm::ConstantFP::get(f64, 0.0);
                     auto* a = coerce_f64(emit_expr(*e.args[0]));
                     auto* b = coerce_f64(emit_expr(*e.args[1]));
                     return builder_.CreateCall(fn, {a, b}, "pow");
                 }
                 if (meth == "inf") {
-                    auto* fn = get_runtime_fn("slua_inf");
+                    auto* fn = get_runtime_fn("sarn_inf");
                     if (fn) return builder_.CreateCall(fn, {}, "inf");
                 }
                 if (meth == "nan") {
-                    auto* fn = get_runtime_fn("slua_nan");
+                    auto* fn = get_runtime_fn("sarn_nan");
                     if (fn) return builder_.CreateCall(fn, {}, "nan");
                 }
                 if (meth == "pi") {
-                    auto* fn = get_runtime_fn("slua_pi");
+                    auto* fn = get_runtime_fn("sarn_pi");
                     if (fn) return builder_.CreateCall(fn, {}, "pi");
                     return llvm::ConstantFP::get(f64, 3.14159265358979323846);
                 }
                 if (meth == "e") {
-                    auto* fn = get_runtime_fn("slua_e");
+                    auto* fn = get_runtime_fn("sarn_e");
                     if (fn) return builder_.CreateCall(fn, {}, "e");
                     return llvm::ConstantFP::get(f64, 2.71828182845904523536);
                 }
@@ -1583,68 +1583,68 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     return builder_.CreateTrunc(v, i32);
                 };
                 if (meth == "len" && e.args.size() >= 1) {
-                    auto* fn = get_runtime_fn("slua_str_len");
+                    auto* fn = get_runtime_fn("sarn_str_len");
                     auto* a  = arg0();
                     if (fn && a) return builder_.CreateSExt(builder_.CreateCall(fn, {a}, "slen"), i64);
                 }
                 if (meth == "byte" && e.args.size() >= 2) {
-                    auto* fn = get_runtime_fn("slua_str_byte");
+                    auto* fn = get_runtime_fn("sarn_str_byte");
                     auto* a  = arg0(); auto* b = ci32(arg1());
                     if (fn && a) return builder_.CreateSExt(builder_.CreateCall(fn, {a, b}, "sbyte"), i64);
                 }
                 if (meth == "char" && e.args.size() >= 1) {
-                    auto* fn = get_runtime_fn("slua_str_char");
+                    auto* fn = get_runtime_fn("sarn_str_char");
                     auto* a  = ci32(arg0());
                     if (fn) return builder_.CreateCall(fn, {a}, "schar");
                 }
                 if (meth == "sub" && e.args.size() >= 3) {
-                    auto* fn = get_runtime_fn("slua_str_sub");
+                    auto* fn = get_runtime_fn("sarn_str_sub");
                     auto* a  = arg0(); auto* b = ci32(arg1()); auto* c = ci32(arg2());
                     if (fn && a) return builder_.CreateCall(fn, {a, b, c}, "ssub");
                 }
                 if (meth == "upper" && e.args.size() >= 1) {
-                    auto* fn = get_runtime_fn("slua_str_upper");
+                    auto* fn = get_runtime_fn("sarn_str_upper");
                     auto* a  = arg0();
                     if (fn && a) return builder_.CreateCall(fn, {a}, "supper");
                 }
                 if (meth == "lower" && e.args.size() >= 1) {
-                    auto* fn = get_runtime_fn("slua_str_lower");
+                    auto* fn = get_runtime_fn("sarn_str_lower");
                     auto* a  = arg0();
                     if (fn && a) return builder_.CreateCall(fn, {a}, "slower");
                 }
                 if (meth == "find" && e.args.size() >= 2) {
-                    auto* fn   = get_runtime_fn("slua_str_find");
+                    auto* fn   = get_runtime_fn("sarn_str_find");
                     auto* a    = arg0(); auto* b = arg1();
                     auto* from = e.args.size() >= 3 ? ci32(arg2()) : llvm::ConstantInt::get(i32, 0);
                     if (fn && a && b) return builder_.CreateSExt(builder_.CreateCall(fn, {a, b, from}, "sfind"), i64);
                 }
                 if (meth == "trim" && e.args.size() >= 1) {
-                    auto* fn = get_runtime_fn("slua_str_trim");
+                    auto* fn = get_runtime_fn("sarn_str_trim");
                     auto* a  = arg0();
                     if (fn && a) return builder_.CreateCall(fn, {a}, "strim");
                 }
                 if (meth == "to_int" && e.args.size() >= 1) {
-                    auto* fn = get_runtime_fn("slua_str_to_int");
+                    auto* fn = get_runtime_fn("sarn_str_to_int");
                     auto* a  = arg0();
                     if (fn && a) return builder_.CreateCall(fn, {a}, "stoi");
                 }
                 if (meth == "to_float" && e.args.size() >= 1) {
-                    auto* fn = get_runtime_fn("slua_str_to_float");
+                    auto* fn = get_runtime_fn("sarn_str_to_float");
                     auto* a  = arg0();
                     if (fn && a) return builder_.CreateCall(fn, {a}, "stof");
                 }
                 if (meth == "concat" && e.args.size() >= 2) {
-                    auto* fn = get_runtime_fn("slua_str_concat");
+                    auto* fn = get_runtime_fn("sarn_str_concat");
                     auto* a  = arg0(); auto* b = arg1();
                     if (fn && a && b) return builder_.CreateCall(fn, {a, b}, "scat");
                 }
                 if (meth == "split" && e.args.size() >= 3) {
-                    auto* fn = get_runtime_fn("slua_str_split");
+                    auto* fn = get_runtime_fn("sarn_str_split");
                     auto* a = arg0(); auto* b = arg1(); auto* c = ci32(arg2());
                     if (fn && a && b) return builder_.CreateCall(fn, {a, b, c}, "ssplit");
                 }
                 if (meth == "count" && e.args.size() >= 2) {
-                    auto* fn = get_runtime_fn("slua_str_count");
+                    auto* fn = get_runtime_fn("sarn_str_count");
                     auto* a = arg0(); auto* b = arg1();
                     if (fn && a && b) return builder_.CreateSExt(builder_.CreateCall(fn, {a, b}, "scnt"), i64);
                 }
@@ -1672,10 +1672,10 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     if (!v) return builder_.CreateGlobalStringPtr("null");
                     if (v->getType()->isPointerTy()) return v;
                     if (v->getType()->isDoubleTy()) {
-                        auto* fn = get_runtime_fn("slua_float_to_str");
+                        auto* fn = get_runtime_fn("sarn_float_to_str");
                         if (fn) return builder_.CreateCall(fn, {v}, "fts");
                     }
-                    auto* fn = get_runtime_fn("slua_int_to_str");
+                    auto* fn = get_runtime_fn("sarn_int_to_str");
                     if (fn) return builder_.CreateCall(fn, {builder_.CreateSExt(v, i64)}, "its");
                     return builder_.CreateGlobalStringPtr("?");
                 }
@@ -1712,7 +1712,7 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     auto* fail_bb = llvm::BasicBlock::Create(ctx_, "assert.fail", cur_func_);
                     builder_.CreateCondBr(cond, pass_bb, fail_bb);
                     builder_.SetInsertPoint(fail_bb);
-                    auto* pfn = get_runtime_fn("slua_panic");
+                    auto* pfn = get_runtime_fn("sarn_panic");
                     if (pfn) {
                         if (!msg || !msg->getType()->isPointerTy())
                             msg = builder_.CreateGlobalStringPtr("assertion failed");
@@ -1730,34 +1730,34 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
             if (mod == "os") {
                 auto* i64 = llvm::Type::getInt64Ty(ctx_);
                 if (meth == "time") {
-                    auto* fn = get_runtime_fn("slua_os_time");
+                    auto* fn = get_runtime_fn("sarn_os_time");
                     if (fn) return builder_.CreateCall(fn, {}, "ostime");
                 }
                 if (meth == "sleep" && e.args.size() >= 1) {
-                    auto* fn = get_runtime_fn("slua_os_sleep");
+                    auto* fn = get_runtime_fn("sarn_os_sleep");
                     auto* a  = coerce(emit_expr(*e.args[0]), i64, loc);
                     if (fn) builder_.CreateCall(fn, {a});
                     return llvm::ConstantInt::get(i64, 0);
                 }
                 if (meth == "sleepS" && e.args.size() >= 1) {
-                    auto* fn = get_runtime_fn("slua_os_sleepS");
+                    auto* fn = get_runtime_fn("sarn_os_sleepS");
                     auto* a  = coerce(emit_expr(*e.args[0]), i64, loc);
                     if (fn) builder_.CreateCall(fn, {a});
                     return llvm::ConstantInt::get(i64, 0);
                 }
                 if (meth == "getenv" && e.args.size() >= 1) {
-                    auto* fn = get_runtime_fn("slua_os_getenv");
+                    auto* fn = get_runtime_fn("sarn_os_getenv");
                     auto* a  = emit_expr(*e.args[0]);
                     if (fn && a) return builder_.CreateCall(fn, {a}, "osenv");
                 }
                 if (meth == "system" && e.args.size() >= 1) {
-                    auto* fn = get_runtime_fn("slua_os_system");
+                    auto* fn = get_runtime_fn("sarn_os_system");
                     auto* a  = emit_expr(*e.args[0]);
                     if (fn && a) builder_.CreateCall(fn, {a});
                     return llvm::ConstantInt::get(i64, 0);
                 }
                 if (meth == "cwd") {
-                    auto* fn = get_runtime_fn("slua_os_cwd");
+                    auto* fn = get_runtime_fn("sarn_os_cwd");
                     if (fn) return builder_.CreateCall(fn, {}, "oscwd");
                 }
                 return llvm::ConstantInt::get(i64, 0);
@@ -1775,20 +1775,20 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                 };
                 auto ga = [&](size_t n) -> llvm::Value* { return e.args.size() > n ? emit_expr(*e.args[n]) : nullptr; };
                 if (meth == "init" && e.args.size() >= 3) {
-                    auto* fn = get_runtime_fn("slua_window_init");
+                    auto* fn = get_runtime_fn("sarn_window_init");
                     if (fn) builder_.CreateCall(fn, {ci32(ga(0)), ci32(ga(1)), ga(2)});
                     return llvm::ConstantInt::get(i64, 0);
                 }
-                if (meth == "close") { auto* fn = get_runtime_fn("slua_window_close"); if (fn) builder_.CreateCall(fn, {}); return llvm::ConstantInt::get(i64, 0); }
-                if (meth == "should_close") { auto* fn = get_runtime_fn("slua_window_should_close"); if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {}, "wsc"), i64); }
-                if (meth == "begin_drawing") { auto* fn = get_runtime_fn("slua_begin_drawing"); if (fn) builder_.CreateCall(fn, {}); return llvm::ConstantInt::get(i64, 0); }
-                if (meth == "end_drawing")   { auto* fn = get_runtime_fn("slua_end_drawing");   if (fn) builder_.CreateCall(fn, {}); return llvm::ConstantInt::get(i64, 0); }
-                if (meth == "clear" && e.args.size() >= 4) { auto* fn = get_runtime_fn("slua_clear_bg"); if (fn) builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2)),ci32(ga(3))}); return llvm::ConstantInt::get(i64, 0); }
-                if (meth == "set_fps" && e.args.size() >= 1) { auto* fn = get_runtime_fn("slua_set_target_fps"); if (fn) builder_.CreateCall(fn, {ci32(ga(0))}); return llvm::ConstantInt::get(i64, 0); }
-                if (meth == "get_fps") { auto* fn = get_runtime_fn("slua_get_fps"); if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {}, "fps"), i64); }
-                if (meth == "frame_time") { auto* fn = get_runtime_fn("slua_get_frame_time"); if (fn) return builder_.CreateCall(fn, {}, "ft"); }
-                if (meth == "width")  { auto* fn = get_runtime_fn("slua_screen_width");  if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {}, "sw"), i64); }
-                if (meth == "height") { auto* fn = get_runtime_fn("slua_screen_height"); if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {}, "sh"), i64); }
+                if (meth == "close") { auto* fn = get_runtime_fn("sarn_window_close"); if (fn) builder_.CreateCall(fn, {}); return llvm::ConstantInt::get(i64, 0); }
+                if (meth == "should_close") { auto* fn = get_runtime_fn("sarn_window_should_close"); if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {}, "wsc"), i64); }
+                if (meth == "begin_drawing") { auto* fn = get_runtime_fn("sarn_begin_drawing"); if (fn) builder_.CreateCall(fn, {}); return llvm::ConstantInt::get(i64, 0); }
+                if (meth == "end_drawing")   { auto* fn = get_runtime_fn("sarn_end_drawing");   if (fn) builder_.CreateCall(fn, {}); return llvm::ConstantInt::get(i64, 0); }
+                if (meth == "clear" && e.args.size() >= 4) { auto* fn = get_runtime_fn("sarn_clear_bg"); if (fn) builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2)),ci32(ga(3))}); return llvm::ConstantInt::get(i64, 0); }
+                if (meth == "set_fps" && e.args.size() >= 1) { auto* fn = get_runtime_fn("sarn_set_target_fps"); if (fn) builder_.CreateCall(fn, {ci32(ga(0))}); return llvm::ConstantInt::get(i64, 0); }
+                if (meth == "get_fps") { auto* fn = get_runtime_fn("sarn_get_fps"); if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {}, "fps"), i64); }
+                if (meth == "frame_time") { auto* fn = get_runtime_fn("sarn_get_frame_time"); if (fn) return builder_.CreateCall(fn, {}, "ft"); }
+                if (meth == "width")  { auto* fn = get_runtime_fn("sarn_screen_width");  if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {}, "sw"), i64); }
+                if (meth == "height") { auto* fn = get_runtime_fn("sarn_screen_height"); if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {}, "sh"), i64); }
                 return llvm::ConstantInt::get(i64, 0);
             }
 
@@ -1811,15 +1811,15 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     return v;
                 };
                 auto ga = [&](size_t n) -> llvm::Value* { return e.args.size() > n ? emit_expr(*e.args[n]) : nullptr; };
-                if (meth == "rect" && e.args.size() >= 8) { auto* fn = get_runtime_fn("slua_draw_rect"); if (fn) builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2)),ci32(ga(3)),ci32(ga(4)),ci32(ga(5)),ci32(ga(6)),ci32(ga(7))}); return llvm::ConstantInt::get(i64, 0); }
-                if (meth == "rect_outline" && e.args.size() >= 9) { auto* fn = get_runtime_fn("slua_draw_rect_outline"); if (fn) builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2)),ci32(ga(3)),ci32(ga(4)),ci32(ga(5)),ci32(ga(6)),ci32(ga(7)),ci32(ga(8))}); return llvm::ConstantInt::get(i64, 0); }
-                if (meth == "circle" && e.args.size() >= 7) { auto* fn = get_runtime_fn("slua_draw_circle"); if (fn) builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),cf32(ga(2)),ci32(ga(3)),ci32(ga(4)),ci32(ga(5)),ci32(ga(6))}); return llvm::ConstantInt::get(i64, 0); }
-                if (meth == "circle_outline" && e.args.size() >= 7) { auto* fn = get_runtime_fn("slua_draw_circle_outline"); if (fn) builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),cf32(ga(2)),ci32(ga(3)),ci32(ga(4)),ci32(ga(5)),ci32(ga(6))}); return llvm::ConstantInt::get(i64, 0); }
-                if (meth == "line" && e.args.size() >= 9) { auto* fn = get_runtime_fn("slua_draw_line"); if (fn) builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2)),ci32(ga(3)),ci32(ga(4)),ci32(ga(5)),ci32(ga(6)),ci32(ga(7)),ci32(ga(8))}); return llvm::ConstantInt::get(i64, 0); }
-                if (meth == "triangle" && e.args.size() >= 10) { auto* fn = get_runtime_fn("slua_draw_triangle"); if (fn) builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2)),ci32(ga(3)),ci32(ga(4)),ci32(ga(5)),ci32(ga(6)),ci32(ga(7)),ci32(ga(8)),ci32(ga(9))}); return llvm::ConstantInt::get(i64, 0); }
-                if (meth == "text" && e.args.size() >= 8) { auto* fn = get_runtime_fn("slua_draw_text"); if (fn) builder_.CreateCall(fn, {ga(0),ci32(ga(1)),ci32(ga(2)),ci32(ga(3)),ci32(ga(4)),ci32(ga(5)),ci32(ga(6)),ci32(ga(7))}); return llvm::ConstantInt::get(i64, 0); }
-                if (meth == "measure_text" && e.args.size() >= 2) { auto* fn = get_runtime_fn("slua_measure_text"); if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ga(0), ci32(ga(1))}, "mtw"), i64); }
-                if (meth == "text_font" && e.args.size() >= 10) { auto* fn = get_runtime_fn("slua_draw_text_font"); if (fn) builder_.CreateCall(fn, {ci32(ga(0)),ga(1),ci32(ga(2)),ci32(ga(3)),ci32(ga(4)),cf32(ga(5)),ci32(ga(6)),ci32(ga(7)),ci32(ga(8)),ci32(ga(9))}); return llvm::ConstantInt::get(i64, 0); }
+                if (meth == "rect" && e.args.size() >= 8) { auto* fn = get_runtime_fn("sarn_draw_rect"); if (fn) builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2)),ci32(ga(3)),ci32(ga(4)),ci32(ga(5)),ci32(ga(6)),ci32(ga(7))}); return llvm::ConstantInt::get(i64, 0); }
+                if (meth == "rect_outline" && e.args.size() >= 9) { auto* fn = get_runtime_fn("sarn_draw_rect_outline"); if (fn) builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2)),ci32(ga(3)),ci32(ga(4)),ci32(ga(5)),ci32(ga(6)),ci32(ga(7)),ci32(ga(8))}); return llvm::ConstantInt::get(i64, 0); }
+                if (meth == "circle" && e.args.size() >= 7) { auto* fn = get_runtime_fn("sarn_draw_circle"); if (fn) builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),cf32(ga(2)),ci32(ga(3)),ci32(ga(4)),ci32(ga(5)),ci32(ga(6))}); return llvm::ConstantInt::get(i64, 0); }
+                if (meth == "circle_outline" && e.args.size() >= 7) { auto* fn = get_runtime_fn("sarn_draw_circle_outline"); if (fn) builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),cf32(ga(2)),ci32(ga(3)),ci32(ga(4)),ci32(ga(5)),ci32(ga(6))}); return llvm::ConstantInt::get(i64, 0); }
+                if (meth == "line" && e.args.size() >= 9) { auto* fn = get_runtime_fn("sarn_draw_line"); if (fn) builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2)),ci32(ga(3)),ci32(ga(4)),ci32(ga(5)),ci32(ga(6)),ci32(ga(7)),ci32(ga(8))}); return llvm::ConstantInt::get(i64, 0); }
+                if (meth == "triangle" && e.args.size() >= 10) { auto* fn = get_runtime_fn("sarn_draw_triangle"); if (fn) builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2)),ci32(ga(3)),ci32(ga(4)),ci32(ga(5)),ci32(ga(6)),ci32(ga(7)),ci32(ga(8)),ci32(ga(9))}); return llvm::ConstantInt::get(i64, 0); }
+                if (meth == "text" && e.args.size() >= 8) { auto* fn = get_runtime_fn("sarn_draw_text"); if (fn) builder_.CreateCall(fn, {ga(0),ci32(ga(1)),ci32(ga(2)),ci32(ga(3)),ci32(ga(4)),ci32(ga(5)),ci32(ga(6)),ci32(ga(7))}); return llvm::ConstantInt::get(i64, 0); }
+                if (meth == "measure_text" && e.args.size() >= 2) { auto* fn = get_runtime_fn("sarn_measure_text"); if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ga(0), ci32(ga(1))}, "mtw"), i64); }
+                if (meth == "text_font" && e.args.size() >= 10) { auto* fn = get_runtime_fn("sarn_draw_text_font"); if (fn) builder_.CreateCall(fn, {ci32(ga(0)),ga(1),ci32(ga(2)),ci32(ga(3)),ci32(ga(4)),cf32(ga(5)),ci32(ga(6)),ci32(ga(7)),ci32(ga(8)),ci32(ga(9))}); return llvm::ConstantInt::get(i64, 0); }
                 
                 return llvm::ConstantInt::get(i64, 0);
             }
@@ -1834,14 +1834,14 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     return v;
                 };
                 auto ga = [&](size_t n) -> llvm::Value* { return e.args.size() > n ? emit_expr(*e.args[n]) : nullptr; };
-                if (meth == "key_down"     && e.args.size() >= 1) { auto* fn = get_runtime_fn("slua_is_key_down");if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ci32(ga(0))}, "kd"), i64); }
-                if (meth == "key_pressed"  && e.args.size() >= 1) { auto* fn = get_runtime_fn("slua_is_key_pressed"); if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ci32(ga(0))}, "kp"), i64); }
-                if (meth == "key_released" && e.args.size() >= 1) { auto* fn = get_runtime_fn("slua_is_key_released");       if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ci32(ga(0))}, "kr"), i64); }
-                if (meth == "mouse_x")     { auto* fn = get_runtime_fn("slua_get_mouse_x");  if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {}, "mx"), i64); }
-                if (meth == "mouse_y")     { auto* fn = get_runtime_fn("slua_get_mouse_y"); if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {}, "my"), i64); }
-                if (meth == "mouse_pressed" && e.args.size() >= 1) { auto* fn = get_runtime_fn("slua_is_mouse_btn_pressed"); if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ci32(ga(0))}, "mbp"), i64); }
-                if (meth == "mouse_down"    && e.args.size() >= 1) { auto* fn = get_runtime_fn("slua_is_mouse_btn_down");    if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ci32(ga(0))}, "mbd"), i64); }
-                if (meth == "mouse_wheel")  { auto* fn = get_runtime_fn("slua_get_mouse_wheel"); if (fn) return builder_.CreateCall(fn, {}, "mw"); }
+                if (meth == "key_down"     && e.args.size() >= 1) { auto* fn = get_runtime_fn("sarn_is_key_down");if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ci32(ga(0))}, "kd"), i64); }
+                if (meth == "key_pressed"  && e.args.size() >= 1) { auto* fn = get_runtime_fn("sarn_is_key_pressed"); if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ci32(ga(0))}, "kp"), i64); }
+                if (meth == "key_released" && e.args.size() >= 1) { auto* fn = get_runtime_fn("sarn_is_key_released");       if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ci32(ga(0))}, "kr"), i64); }
+                if (meth == "mouse_x")     { auto* fn = get_runtime_fn("sarn_get_mouse_x");  if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {}, "mx"), i64); }
+                if (meth == "mouse_y")     { auto* fn = get_runtime_fn("sarn_get_mouse_y"); if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {}, "my"), i64); }
+                if (meth == "mouse_pressed" && e.args.size() >= 1) { auto* fn = get_runtime_fn("sarn_is_mouse_btn_pressed"); if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ci32(ga(0))}, "mbp"), i64); }
+                if (meth == "mouse_down"    && e.args.size() >= 1) { auto* fn = get_runtime_fn("sarn_is_mouse_btn_down");    if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ci32(ga(0))}, "mbd"), i64); }
+                if (meth == "mouse_wheel")  { auto* fn = get_runtime_fn("sarn_get_mouse_wheel"); if (fn) return builder_.CreateCall(fn, {}, "mw"); }
                 return llvm::ConstantInt::get(i64, 0);
             }
             
@@ -1859,11 +1859,11 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     return e.args.size() > n ? emit_expr(*e.args[n]) : nullptr;
                 };
                 if (meth == "load" && e.args.size() >= 2) {
-                    auto* fn = get_runtime_fn("slua_font_load");
+                    auto* fn = get_runtime_fn("sarn_font_load");
                     if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ga(0), ci32(ga(1))}, "fload"), i64);
                 }
                 if (meth == "unload" && e.args.size() >= 1) {
-                    auto* fn = get_runtime_fn("slua_font_unload");
+                    auto* fn = get_runtime_fn("sarn_font_unload");
                     if (fn) builder_.CreateCall(fn, {ci32(ga(0))});
                     return llvm::ConstantInt::get(i64, 0);
                 }
@@ -1887,15 +1887,15 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     return v;
                 };
                 auto ga = [&](size_t n) -> llvm::Value* { return e.args.size() > n ? emit_expr(*e.args[n]) : nullptr; };
-                if (meth == "button"   && e.args.size() >= 5) { auto* fn = get_runtime_fn("slua_ui_button");   if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2)),ci32(ga(3)),ga(4)}, "ubtn"), i64); }
-                if (meth == "label"    && e.args.size() >= 5) { auto* fn = get_runtime_fn("slua_ui_label");    if (fn) builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2)),ci32(ga(3)),ga(4)}); return llvm::ConstantInt::get(i64, 0); }
-                if (meth == "checkbox" && e.args.size() >= 5) { auto* fn = get_runtime_fn("slua_ui_checkbox"); if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2)),ga(3),ci32(ga(4))}, "uchk"), i64); }
-                if (meth == "slider"   && e.args.size() >= 7) { auto* fn = get_runtime_fn("slua_ui_slider");   if (fn) return builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2)),ci32(ga(3)),cf64(ga(4)),cf64(ga(5)),cf64(ga(6))}, "usldr"); }
-                if (meth == "progress_bar" && e.args.size() >= 6) { auto* fn = get_runtime_fn("slua_ui_progress_bar"); if (fn) builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2)),ci32(ga(3)),cf64(ga(4)),cf64(ga(5))}); return llvm::ConstantInt::get(i64, 0); }
-                if (meth == "panel"    && e.args.size() >= 5) { auto* fn = get_runtime_fn("slua_ui_panel");    if (fn) builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2)),ci32(ga(3)),ga(4)}); return llvm::ConstantInt::get(i64, 0); }
-                if (meth == "text_input" && e.args.size() >= 7) { auto* fn = get_runtime_fn("slua_ui_text_input"); if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2)),ci32(ga(3)),ga(4),ci32(ga(5)),ci32(ga(6))}, "uti"), i64); }
-                if (meth == "set_font_size" && e.args.size() >= 1) { auto* fn = get_runtime_fn("slua_ui_set_font_size"); if (fn) builder_.CreateCall(fn, {ci32(ga(0))}); return llvm::ConstantInt::get(i64, 0); }
-                if (meth == "set_accent" && e.args.size() >= 3) { auto* fn = get_runtime_fn("slua_ui_set_accent"); if (fn) builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2))}); return llvm::ConstantInt::get(i64, 0); }
+                if (meth == "button"   && e.args.size() >= 5) { auto* fn = get_runtime_fn("sarn_ui_button");   if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2)),ci32(ga(3)),ga(4)}, "ubtn"), i64); }
+                if (meth == "label"    && e.args.size() >= 5) { auto* fn = get_runtime_fn("sarn_ui_label");    if (fn) builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2)),ci32(ga(3)),ga(4)}); return llvm::ConstantInt::get(i64, 0); }
+                if (meth == "checkbox" && e.args.size() >= 5) { auto* fn = get_runtime_fn("sarn_ui_checkbox"); if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2)),ga(3),ci32(ga(4))}, "uchk"), i64); }
+                if (meth == "slider"   && e.args.size() >= 7) { auto* fn = get_runtime_fn("sarn_ui_slider");   if (fn) return builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2)),ci32(ga(3)),cf64(ga(4)),cf64(ga(5)),cf64(ga(6))}, "usldr"); }
+                if (meth == "progress_bar" && e.args.size() >= 6) { auto* fn = get_runtime_fn("sarn_ui_progress_bar"); if (fn) builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2)),ci32(ga(3)),cf64(ga(4)),cf64(ga(5))}); return llvm::ConstantInt::get(i64, 0); }
+                if (meth == "panel"    && e.args.size() >= 5) { auto* fn = get_runtime_fn("sarn_ui_panel");    if (fn) builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2)),ci32(ga(3)),ga(4)}); return llvm::ConstantInt::get(i64, 0); }
+                if (meth == "text_input" && e.args.size() >= 7) { auto* fn = get_runtime_fn("sarn_ui_text_input"); if (fn) return builder_.CreateSExt(builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2)),ci32(ga(3)),ga(4),ci32(ga(5)),ci32(ga(6))}, "uti"), i64); }
+                if (meth == "set_font_size" && e.args.size() >= 1) { auto* fn = get_runtime_fn("sarn_ui_set_font_size"); if (fn) builder_.CreateCall(fn, {ci32(ga(0))}); return llvm::ConstantInt::get(i64, 0); }
+                if (meth == "set_accent" && e.args.size() >= 3) { auto* fn = get_runtime_fn("sarn_ui_set_accent"); if (fn) builder_.CreateCall(fn, {ci32(ga(0)),ci32(ga(1)),ci32(ga(2))}); return llvm::ConstantInt::get(i64, 0); }
                 return llvm::ConstantInt::get(i64, 0);
             }
             if (mod == "fs") {
@@ -1911,21 +1911,21 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     return v;
                 };
                 auto sxi = [&](llvm::Value* v) -> llvm::Value* { return builder_.CreateSExt(v,i64); };
-                if (meth=="read_all" && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_fs_read_all"); if(fn) return builder_.CreateCall(fn,{ga(0)},"fsra"); }
-                if (meth=="listdir"  && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_fs_listdir");  if(fn) return builder_.CreateCall(fn,{ga(0)},"fsld"); }
-                if (meth=="exists"   && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_fs_exists");   if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"fse")); }
-                if (meth=="delete"   && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_fs_delete");   if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"fsd")); }
-                if (meth=="mkdir"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_fs_mkdir");    if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"fsmd")); }
-                if (meth=="size"     && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_fs_size");     if(fn) return builder_.CreateCall(fn,{ga(0)},"fssz"); }
-                if (meth=="write"    && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_fs_write");    if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"fsw")); }
-                if (meth=="append"   && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_fs_append");   if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"fsa")); }
-                if (meth=="rename"   && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_fs_rename");   if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"fsrn")); }
-                if (meth=="copy"     && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_fs_copy");     if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"fscp")); }
-                if (meth=="open"     && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_fs_open");     if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"fsop"); }
-                if (meth=="close"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_fs_close");    if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"fscl")); }
-                if (meth=="readline" && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_fs_readline"); if(fn) return builder_.CreateCall(fn,{c64(ga(0))},"fsrl"); }
-                if (meth=="writeh"   && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_fs_writeh");   if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ga(1)},"fswh")); }
-                if (meth=="flush"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_fs_flush");    if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"fsfl")); }
+                if (meth=="read_all" && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_fs_read_all"); if(fn) return builder_.CreateCall(fn,{ga(0)},"fsra"); }
+                if (meth=="listdir"  && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_fs_listdir");  if(fn) return builder_.CreateCall(fn,{ga(0)},"fsld"); }
+                if (meth=="exists"   && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_fs_exists");   if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"fse")); }
+                if (meth=="delete"   && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_fs_delete");   if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"fsd")); }
+                if (meth=="mkdir"    && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_fs_mkdir");    if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"fsmd")); }
+                if (meth=="size"     && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_fs_size");     if(fn) return builder_.CreateCall(fn,{ga(0)},"fssz"); }
+                if (meth=="write"    && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_fs_write");    if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"fsw")); }
+                if (meth=="append"   && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_fs_append");   if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"fsa")); }
+                if (meth=="rename"   && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_fs_rename");   if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"fsrn")); }
+                if (meth=="copy"     && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_fs_copy");     if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"fscp")); }
+                if (meth=="open"     && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_fs_open");     if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"fsop"); }
+                if (meth=="close"    && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_fs_close");    if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"fscl")); }
+                if (meth=="readline" && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_fs_readline"); if(fn) return builder_.CreateCall(fn,{c64(ga(0))},"fsrl"); }
+                if (meth=="writeh"   && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_fs_writeh");   if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ga(1)},"fswh")); }
+                if (meth=="flush"    && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_fs_flush");    if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"fsfl")); }
                 return llvm::ConstantInt::get(i64,0);
             }
             if (mod == "random") {
@@ -1944,11 +1944,11 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     if(v->getType()->isIntegerTy()) return builder_.CreateSIToFP(v,f64);
                     return v;
                 };
-                if (meth=="seed"  && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_random_seed");  if(fn){ builder_.CreateCall(fn,{c64(ga(0))}); return llvm::ConstantInt::get(i64,0); } }
-                if (meth=="int"   && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_random_int");   if(fn) return builder_.CreateCall(fn,{c64(ga(0)),c64(ga(1))},"rni"); }
-                if (meth=="range" && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_random_range"); if(fn) return builder_.CreateCall(fn,{c64(ga(0)),c64(ga(1))},"rnr"); }
-                if (meth=="float")                     { auto* fn=get_runtime_fn("slua_random_float"); if(fn) return builder_.CreateCall(fn,{},"rnf"); }
-                if (meth=="gauss" && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_random_gauss"); if(fn) return builder_.CreateCall(fn,{cf64(ga(0)),cf64(ga(1))},"rng"); }
+                if (meth=="seed"  && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_random_seed");  if(fn){ builder_.CreateCall(fn,{c64(ga(0))}); return llvm::ConstantInt::get(i64,0); } }
+                if (meth=="int"   && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_random_int");   if(fn) return builder_.CreateCall(fn,{c64(ga(0)),c64(ga(1))},"rni"); }
+                if (meth=="range" && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_random_range"); if(fn) return builder_.CreateCall(fn,{c64(ga(0)),c64(ga(1))},"rnr"); }
+                if (meth=="float")                     { auto* fn=get_runtime_fn("sarn_random_float"); if(fn) return builder_.CreateCall(fn,{},"rnf"); }
+                if (meth=="gauss" && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_random_gauss"); if(fn) return builder_.CreateCall(fn,{cf64(ga(0)),cf64(ga(1))},"rng"); }
                 return llvm::ConstantInt::get(i64,0);
             }
             if (mod == "datetime") {
@@ -1963,34 +1963,34 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     return v;
                 };
                 auto sxi = [&](llvm::Value* v) -> llvm::Value* { return builder_.CreateSExt(v,i64); };
-                if (meth=="now")                         { auto* fn=get_runtime_fn("slua_datetime_now");     if(fn) return builder_.CreateCall(fn,{},"dtnow"); }
-                if (meth=="now_str" && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_datetime_now_str");if(fn) return builder_.CreateCall(fn,{ga(0)},"dtns"); }
-                if (meth=="format"  && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_datetime_format"); if(fn) return builder_.CreateCall(fn,{c64(ga(0)),ga(1)},"dtfmt"); }
-                if (meth=="parse"   && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_datetime_parse");  if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"dtprs"); }
-                if (meth=="diff"    && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_datetime_diff");   if(fn) return builder_.CreateCall(fn,{c64(ga(0)),c64(ga(1))},"dtdif"); }
-                if (meth=="add"     && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_datetime_add");    if(fn) return builder_.CreateCall(fn,{c64(ga(0)),c64(ga(1))},"dtadd"); }
-                if (meth=="year"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_datetime_year");   if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"dty")); }
-                if (meth=="month"   && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_datetime_month");  if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"dtmo")); }
-                if (meth=="day"     && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_datetime_day");    if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"dtd")); }
-                if (meth=="hour"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_datetime_hour");   if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"dth")); }
-                if (meth=="minute"  && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_datetime_minute"); if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"dtmi")); }
-                if (meth=="second"  && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_datetime_second"); if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"dts")); }
+                if (meth=="now")                         { auto* fn=get_runtime_fn("sarn_datetime_now");     if(fn) return builder_.CreateCall(fn,{},"dtnow"); }
+                if (meth=="now_str" && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_datetime_now_str");if(fn) return builder_.CreateCall(fn,{ga(0)},"dtns"); }
+                if (meth=="format"  && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_datetime_format"); if(fn) return builder_.CreateCall(fn,{c64(ga(0)),ga(1)},"dtfmt"); }
+                if (meth=="parse"   && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_datetime_parse");  if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"dtprs"); }
+                if (meth=="diff"    && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_datetime_diff");   if(fn) return builder_.CreateCall(fn,{c64(ga(0)),c64(ga(1))},"dtdif"); }
+                if (meth=="add"     && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_datetime_add");    if(fn) return builder_.CreateCall(fn,{c64(ga(0)),c64(ga(1))},"dtadd"); }
+                if (meth=="year"    && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_datetime_year");   if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"dty")); }
+                if (meth=="month"   && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_datetime_month");  if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"dtmo")); }
+                if (meth=="day"     && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_datetime_day");    if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"dtd")); }
+                if (meth=="hour"    && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_datetime_hour");   if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"dth")); }
+                if (meth=="minute"  && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_datetime_minute"); if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"dtmi")); }
+                if (meth=="second"  && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_datetime_second"); if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"dts")); }
                 return llvm::ConstantInt::get(i64,0);
             }
             if (mod == "path") {
                 auto* i64 = llvm::Type::getInt64Ty(ctx_);
                 auto ga  = [&](size_t n) -> llvm::Value* { return e.args.size()>n ? emit_expr(*e.args[n]) : nullptr; };
                 auto sxi = [&](llvm::Value* v) -> llvm::Value* { return builder_.CreateSExt(v,i64); };
-                if (meth=="join"      && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_path_join");      if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"pjn"); }
-                if (meth=="basename"  && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_path_basename");  if(fn) return builder_.CreateCall(fn,{ga(0)},"pbn"); }
-                if (meth=="dirname"   && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_path_dirname");   if(fn) return builder_.CreateCall(fn,{ga(0)},"pdn"); }
-                if (meth=="extension" && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_path_extension"); if(fn) return builder_.CreateCall(fn,{ga(0)},"pex"); }
-                if (meth=="stem"      && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_path_stem");      if(fn) return builder_.CreateCall(fn,{ga(0)},"pst"); }
-                if (meth=="absolute"  && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_path_absolute");  if(fn) return builder_.CreateCall(fn,{ga(0)},"pab"); }
-                if (meth=="normalize" && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_path_normalize"); if(fn) return builder_.CreateCall(fn,{ga(0)},"pnm"); }
-                if (meth=="exists"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_path_exists");    if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"pe")); }
-                if (meth=="is_file"   && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_path_is_file");   if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"pif")); }
-                if (meth=="is_dir"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_path_is_dir");    if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"pid")); }
+                if (meth=="join"      && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_path_join");      if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"pjn"); }
+                if (meth=="basename"  && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_path_basename");  if(fn) return builder_.CreateCall(fn,{ga(0)},"pbn"); }
+                if (meth=="dirname"   && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_path_dirname");   if(fn) return builder_.CreateCall(fn,{ga(0)},"pdn"); }
+                if (meth=="extension" && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_path_extension"); if(fn) return builder_.CreateCall(fn,{ga(0)},"pex"); }
+                if (meth=="stem"      && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_path_stem");      if(fn) return builder_.CreateCall(fn,{ga(0)},"pst"); }
+                if (meth=="absolute"  && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_path_absolute");  if(fn) return builder_.CreateCall(fn,{ga(0)},"pab"); }
+                if (meth=="normalize" && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_path_normalize"); if(fn) return builder_.CreateCall(fn,{ga(0)},"pnm"); }
+                if (meth=="exists"    && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_path_exists");    if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"pe")); }
+                if (meth=="is_file"   && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_path_is_file");   if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"pif")); }
+                if (meth=="is_dir"    && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_path_is_dir");    if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"pid")); }
                 return llvm::ConstantInt::get(i64,0);
             }
             if (mod == "process") {
@@ -2003,12 +2003,12 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     return v;
                 };
                 auto sxi = [&](llvm::Value* v) -> llvm::Value* { return builder_.CreateSExt(v,i64); };
-                if (meth=="run"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_process_run");    if(fn) return builder_.CreateCall(fn,{ga(0)},"prun"); }
-                if (meth=="output" && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_process_output"); if(fn) return builder_.CreateCall(fn,{ga(0)},"pout"); }
-                if (meth=="spawn"  && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_process_spawn");  if(fn) return builder_.CreateCall(fn,{ga(0)},"pspn"); }
-                if (meth=="wait"   && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_process_wait");   if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"pwt")); }
-                if (meth=="kill"   && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_process_kill");   if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"pkl")); }
-                if (meth=="alive"  && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_process_alive");  if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"pal")); }
+                if (meth=="run"    && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_process_run");    if(fn) return builder_.CreateCall(fn,{ga(0)},"prun"); }
+                if (meth=="output" && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_process_output"); if(fn) return builder_.CreateCall(fn,{ga(0)},"pout"); }
+                if (meth=="spawn"  && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_process_spawn");  if(fn) return builder_.CreateCall(fn,{ga(0)},"pspn"); }
+                if (meth=="wait"   && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_process_wait");   if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"pwt")); }
+                if (meth=="kill"   && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_process_kill");   if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"pkl")); }
+                if (meth=="alive"  && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_process_alive");  if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"pal")); }
                 return llvm::ConstantInt::get(i64,0);
             }
             if (mod == "json") {
@@ -2036,21 +2036,21 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     return v;
                 };
                 auto sxi  = [&](llvm::Value* v) -> llvm::Value* { return builder_.CreateSExt(v,i64); };
-                if (meth=="encode_str"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_json_encode_str");     if(fn) return builder_.CreateCall(fn,{ga(0)},"jes"); }
-                if (meth=="encode_int"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_json_encode_int");     if(fn) return builder_.CreateCall(fn,{c64(ga(0))},"jei"); }
-                if (meth=="encode_float"  && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_json_encode_float");   if(fn) return builder_.CreateCall(fn,{cf64(ga(0))},"jef"); }
-                if (meth=="encode_bool"   && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_json_encode_bool");    if(fn) return builder_.CreateCall(fn,{ci32(ga(0))},"jeb"); }
-                if (meth=="encode_null")                        { auto* fn=get_runtime_fn("slua_json_encode_null");    if(fn) return builder_.CreateCall(fn,{},"jen"); }
-                if (meth=="get_str"       && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_json_get_str");        if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"jgs"); }
-                if (meth=="get_int"       && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_json_get_int");        if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"jgi"); }
-                if (meth=="get_float"     && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_json_get_float");      if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"jgf"); }
-                if (meth=="get_bool"      && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_json_get_bool");       if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"jgb")); }
-                if (meth=="has_key"       && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_json_has_key");        if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"jhk")); }
-                if (meth=="minify"        && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_json_minify");         if(fn) return builder_.CreateCall(fn,{ga(0)},"jmn"); }
-                if (meth=="get_array_item"&& e.args.size()>=3) { auto* fn=get_runtime_fn("slua_json_get_array_item"); if(fn) return builder_.CreateCall(fn,{ga(0),ga(1),ci32(ga(2))},"jai"); }
-                if (meth=="get_nested_float"&& e.args.size()>=3) { auto* fn=get_runtime_fn("slua_json_get_nested_float"); if(fn) return builder_.CreateCall(fn,{ga(0),ga(1),ga(2)},"jgnf"); }
-                if (meth=="get_nested_int"  && e.args.size()>=3) { auto* fn=get_runtime_fn("slua_json_get_nested_int");   if(fn) return builder_.CreateCall(fn,{ga(0),ga(1),ga(2)},"jgni"); }
-                if (meth=="get_nested_str"  && e.args.size()>=3) { auto* fn=get_runtime_fn("slua_json_get_nested_str");   if(fn) return builder_.CreateCall(fn,{ga(0),ga(1),ga(2)},"jgns"); }
+                if (meth=="encode_str"    && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_json_encode_str");     if(fn) return builder_.CreateCall(fn,{ga(0)},"jes"); }
+                if (meth=="encode_int"    && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_json_encode_int");     if(fn) return builder_.CreateCall(fn,{c64(ga(0))},"jei"); }
+                if (meth=="encode_float"  && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_json_encode_float");   if(fn) return builder_.CreateCall(fn,{cf64(ga(0))},"jef"); }
+                if (meth=="encode_bool"   && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_json_encode_bool");    if(fn) return builder_.CreateCall(fn,{ci32(ga(0))},"jeb"); }
+                if (meth=="encode_null")                        { auto* fn=get_runtime_fn("sarn_json_encode_null");    if(fn) return builder_.CreateCall(fn,{},"jen"); }
+                if (meth=="get_str"       && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_json_get_str");        if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"jgs"); }
+                if (meth=="get_int"       && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_json_get_int");        if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"jgi"); }
+                if (meth=="get_float"     && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_json_get_float");      if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"jgf"); }
+                if (meth=="get_bool"      && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_json_get_bool");       if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"jgb")); }
+                if (meth=="has_key"       && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_json_has_key");        if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"jhk")); }
+                if (meth=="minify"        && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_json_minify");         if(fn) return builder_.CreateCall(fn,{ga(0)},"jmn"); }
+                if (meth=="get_array_item"&& e.args.size()>=3) { auto* fn=get_runtime_fn("sarn_json_get_array_item"); if(fn) return builder_.CreateCall(fn,{ga(0),ga(1),ci32(ga(2))},"jai"); }
+                if (meth=="get_nested_float"&& e.args.size()>=3) { auto* fn=get_runtime_fn("sarn_json_get_nested_float"); if(fn) return builder_.CreateCall(fn,{ga(0),ga(1),ga(2)},"jgnf"); }
+                if (meth=="get_nested_int"  && e.args.size()>=3) { auto* fn=get_runtime_fn("sarn_json_get_nested_int");   if(fn) return builder_.CreateCall(fn,{ga(0),ga(1),ga(2)},"jgni"); }
+                if (meth=="get_nested_str"  && e.args.size()>=3) { auto* fn=get_runtime_fn("sarn_json_get_nested_str");   if(fn) return builder_.CreateCall(fn,{ga(0),ga(1),ga(2)},"jgns"); }
                 return llvm::ConstantInt::get(i64,0);
             }
             if (mod == "net") {
@@ -2070,15 +2070,15 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     return v;
                 };
                 auto sxi  = [&](llvm::Value* v) -> llvm::Value* { return builder_.CreateSExt(v,i64); };
-                if (meth=="init")                         { auto* fn=get_runtime_fn("slua_net_init");        if(fn) return sxi(builder_.CreateCall(fn,{},"nini")); }
-                if (meth=="local_ip")                     { auto* fn=get_runtime_fn("slua_net_local_ip");    if(fn) return builder_.CreateCall(fn,{},"nip"); }
-                if (meth=="listen"    && e.args.size()>=1){ auto* fn=get_runtime_fn("slua_net_listen");      if(fn) return builder_.CreateCall(fn,{ci32(ga(0))},"nls"); }
-                if (meth=="accept"    && e.args.size()>=1){ auto* fn=get_runtime_fn("slua_net_accept");      if(fn) return builder_.CreateCall(fn,{c64(ga(0))},"nac"); }
-                if (meth=="connect"   && e.args.size()>=2){ auto* fn=get_runtime_fn("slua_net_connect");     if(fn) return builder_.CreateCall(fn,{ga(0),ci32(ga(1))},"nco"); }
-                if (meth=="send"      && e.args.size()>=2){ auto* fn=get_runtime_fn("slua_net_send");        if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ga(1)},"nsnd")); }
-                if (meth=="send_bytes"&& e.args.size()>=3){ auto* fn=get_runtime_fn("slua_net_send_bytes");  if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ga(1),ci32(ga(2))},"nsb")); }
-                if (meth=="recv"      && e.args.size()>=2){ auto* fn=get_runtime_fn("slua_net_recv");        if(fn) return builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1))},"nrcv"); }
-                if (meth=="close"     && e.args.size()>=1){ auto* fn=get_runtime_fn("slua_net_close");       if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"ncl")); }
+                if (meth=="init")                         { auto* fn=get_runtime_fn("sarn_net_init");        if(fn) return sxi(builder_.CreateCall(fn,{},"nini")); }
+                if (meth=="local_ip")                     { auto* fn=get_runtime_fn("sarn_net_local_ip");    if(fn) return builder_.CreateCall(fn,{},"nip"); }
+                if (meth=="listen"    && e.args.size()>=1){ auto* fn=get_runtime_fn("sarn_net_listen");      if(fn) return builder_.CreateCall(fn,{ci32(ga(0))},"nls"); }
+                if (meth=="accept"    && e.args.size()>=1){ auto* fn=get_runtime_fn("sarn_net_accept");      if(fn) return builder_.CreateCall(fn,{c64(ga(0))},"nac"); }
+                if (meth=="connect"   && e.args.size()>=2){ auto* fn=get_runtime_fn("sarn_net_connect");     if(fn) return builder_.CreateCall(fn,{ga(0),ci32(ga(1))},"nco"); }
+                if (meth=="send"      && e.args.size()>=2){ auto* fn=get_runtime_fn("sarn_net_send");        if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ga(1)},"nsnd")); }
+                if (meth=="send_bytes"&& e.args.size()>=3){ auto* fn=get_runtime_fn("sarn_net_send_bytes");  if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ga(1),ci32(ga(2))},"nsb")); }
+                if (meth=="recv"      && e.args.size()>=2){ auto* fn=get_runtime_fn("sarn_net_recv");        if(fn) return builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1))},"nrcv"); }
+                if (meth=="close"     && e.args.size()>=1){ auto* fn=get_runtime_fn("sarn_net_close");       if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"ncl")); }
                 return llvm::ConstantInt::get(i64,0);
             }
             if (mod == "sync") {
@@ -2091,11 +2091,11 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     return v;
                 };
                 auto sxi = [&](llvm::Value* v) -> llvm::Value* { return builder_.CreateSExt(v,i64); };
-                if (meth=="mutex_new")                     { auto* fn=get_runtime_fn("slua_sync_mutex_new");     if(fn) return builder_.CreateCall(fn,{},"smn"); }
-                if (meth=="lock"      && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_sync_mutex_lock");    if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"sml")); }
-                if (meth=="unlock"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_sync_mutex_unlock");  if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"smu")); }
-                if (meth=="trylock"   && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_sync_mutex_trylock"); if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"smt")); }
-                if (meth=="free"      && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_sync_mutex_free");    if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"smf")); }
+                if (meth=="mutex_new")                     { auto* fn=get_runtime_fn("sarn_sync_mutex_new");     if(fn) return builder_.CreateCall(fn,{},"smn"); }
+                if (meth=="lock"      && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_sync_mutex_lock");    if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"sml")); }
+                if (meth=="unlock"    && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_sync_mutex_unlock");  if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"smu")); }
+                if (meth=="trylock"   && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_sync_mutex_trylock"); if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"smt")); }
+                if (meth=="free"      && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_sync_mutex_free");    if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"smf")); }
                 return llvm::ConstantInt::get(i64,0);
             }
             if (mod == "http") {
@@ -2105,10 +2105,10 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                 (void)i8p;
                 auto ga  = [&](size_t n) -> llvm::Value* { return e.args.size()>n ? emit_expr(*e.args[n]) : nullptr; };
                 auto sxi = [&](llvm::Value* v) -> llvm::Value* { return builder_.CreateSExt(v,i64); };
-                if (meth=="get"       && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_http_get");       if(fn) return builder_.CreateCall(fn,{ga(0)},"hget"); }
-                if (meth=="post"      && e.args.size()>=3) { auto* fn=get_runtime_fn("slua_http_post");      if(fn) return builder_.CreateCall(fn,{ga(0),ga(1),ga(2)},"hpost"); }
-                if (meth=="post_json" && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_http_post_json"); if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"hpj"); }
-                if (meth=="status"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_http_status");    if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"hst")); }
+                if (meth=="get"       && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_http_get");       if(fn) return builder_.CreateCall(fn,{ga(0)},"hget"); }
+                if (meth=="post"      && e.args.size()>=3) { auto* fn=get_runtime_fn("sarn_http_post");      if(fn) return builder_.CreateCall(fn,{ga(0),ga(1),ga(2)},"hpost"); }
+                if (meth=="post_json" && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_http_post_json"); if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"hpj"); }
+                if (meth=="status"    && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_http_status");    if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"hst")); }
                 return llvm::ConstantPointerNull::get(llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(ctx_)));
             }
             if (mod == "table") {
@@ -2138,20 +2138,20 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     return v;
                 };
                 auto sxi  = [&](llvm::Value* v) -> llvm::Value* { return builder_.CreateSExt(v,i64); };
-                if (meth=="len"        && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_tbl_len_rt");    if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"tlen")); }
-                if (meth=="push"       && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_tbl_push");      if(fn){ builder_.CreateCall(fn,{ga(0),c64(ga(1))}); return llvm::ConstantInt::get(i64,0); } }
-                if (meth=="push_float" && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_tbl_push_f");    if(fn){ builder_.CreateCall(fn,{ga(0),cf64(ga(1))}); return llvm::ConstantInt::get(i64,0); } }
-                if (meth=="push_str"   && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_tbl_push_s");    if(fn){ builder_.CreateCall(fn,{ga(0),ga(1)}); return llvm::ConstantInt::get(i64,0); } }
-                if (meth=="pop"        && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_tbl_pop");       if(fn){ builder_.CreateCall(fn,{ga(0)}); return llvm::ConstantInt::get(i64,0); } }
-                if (meth=="contains_str"&&e.args.size()>=2) { auto* fn=get_runtime_fn("slua_tbl_contains_s");if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"tcs")); }
-                if (meth=="contains_int"&&e.args.size()>=2) { auto* fn=get_runtime_fn("slua_tbl_contains_i");if(fn) return sxi(builder_.CreateCall(fn,{ga(0),c64(ga(1))},"tci")); }
-                if (meth=="keys"       && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_tbl_keys");      if(fn) return builder_.CreateCall(fn,{ga(0)},"tkeys"); }
-                if (meth=="remove_at"  && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_tbl_remove_at"); if(fn){ builder_.CreateCall(fn,{ga(0),ci32(ga(1))}); return llvm::ConstantInt::get(i64,0); } }
-                if (meth=="clear"      && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_tbl_clear");     if(fn){ builder_.CreateCall(fn,{ga(0)}); return llvm::ConstantInt::get(i64,0); } }
-                if (meth=="merge"      && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_tbl_merge");     if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"tmerge"); }
-                if (meth=="slice"      && e.args.size()>=3) { auto* fn=get_runtime_fn("slua_tbl_slice");     if(fn) return builder_.CreateCall(fn,{ga(0),ci32(ga(1)),ci32(ga(2))},"tslice"); }
-                if (meth=="reverse"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_tbl_reverse");   if(fn){ builder_.CreateCall(fn,{ga(0)}); return llvm::ConstantInt::get(i64,0); } }
-                if (meth=="new")                             { auto* fn=get_runtime_fn("slua_tbl_new");       if(fn) return builder_.CreateCall(fn,{},"tnew"); }
+                if (meth=="len"        && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_tbl_len_rt");    if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"tlen")); }
+                if (meth=="push"       && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_tbl_push");      if(fn){ builder_.CreateCall(fn,{ga(0),c64(ga(1))}); return llvm::ConstantInt::get(i64,0); } }
+                if (meth=="push_float" && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_tbl_push_f");    if(fn){ builder_.CreateCall(fn,{ga(0),cf64(ga(1))}); return llvm::ConstantInt::get(i64,0); } }
+                if (meth=="push_str"   && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_tbl_push_s");    if(fn){ builder_.CreateCall(fn,{ga(0),ga(1)}); return llvm::ConstantInt::get(i64,0); } }
+                if (meth=="pop"        && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_tbl_pop");       if(fn){ builder_.CreateCall(fn,{ga(0)}); return llvm::ConstantInt::get(i64,0); } }
+                if (meth=="contains_str"&&e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_tbl_contains_s");if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"tcs")); }
+                if (meth=="contains_int"&&e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_tbl_contains_i");if(fn) return sxi(builder_.CreateCall(fn,{ga(0),c64(ga(1))},"tci")); }
+                if (meth=="keys"       && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_tbl_keys");      if(fn) return builder_.CreateCall(fn,{ga(0)},"tkeys"); }
+                if (meth=="remove_at"  && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_tbl_remove_at"); if(fn){ builder_.CreateCall(fn,{ga(0),ci32(ga(1))}); return llvm::ConstantInt::get(i64,0); } }
+                if (meth=="clear"      && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_tbl_clear");     if(fn){ builder_.CreateCall(fn,{ga(0)}); return llvm::ConstantInt::get(i64,0); } }
+                if (meth=="merge"      && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_tbl_merge");     if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"tmerge"); }
+                if (meth=="slice"      && e.args.size()>=3) { auto* fn=get_runtime_fn("sarn_tbl_slice");     if(fn) return builder_.CreateCall(fn,{ga(0),ci32(ga(1)),ci32(ga(2))},"tslice"); }
+                if (meth=="reverse"    && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_tbl_reverse");   if(fn){ builder_.CreateCall(fn,{ga(0)}); return llvm::ConstantInt::get(i64,0); } }
+                if (meth=="new")                             { auto* fn=get_runtime_fn("sarn_tbl_new");       if(fn) return builder_.CreateCall(fn,{},"tnew"); }
                 return llvm::ConstantInt::get(i64,0);
             }
             if (mod == "crypto") {
@@ -2167,16 +2167,16 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     return v;
                 };
                 auto sxi  = [&](llvm::Value* v) -> llvm::Value* { return builder_.CreateSExt(v,i64); };
-                if (meth=="sha256"        && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_crypto_sha256");        if(fn) return builder_.CreateCall(fn,{ga(0)},"csha"); }
-                if (meth=="md5"           && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_crypto_md5");           if(fn) return builder_.CreateCall(fn,{ga(0)},"cmd5"); }
-                if (meth=="base64_encode" && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_crypto_base64_encode"); if(fn) return builder_.CreateCall(fn,{ga(0),ci32(ga(1))},"cb64e"); }
-                if (meth=="base64_decode" && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_crypto_base64_decode"); if(fn) return builder_.CreateCall(fn,{ga(0)},"cb64d"); }
-                if (meth=="hex_encode"    && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_crypto_hex_encode");    if(fn) return builder_.CreateCall(fn,{ga(0),ci32(ga(1))},"chxe"); }
-                if (meth=="hex_decode"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_crypto_hex_decode");    if(fn) return builder_.CreateCall(fn,{ga(0)},"chxd"); }
-                if (meth=="hex_decode_len"&& e.args.size()>=1) { auto* fn=get_runtime_fn("slua_crypto_hex_decode_len");if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"chxdl")); }
-                if (meth=="crc32"         && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_crypto_crc32");         if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ci32(ga(1))},"ccrc")); }
-                if (meth=="hmac_sha256"   && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_crypto_hmac_sha256");   if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"chmac"); }
-                if (meth=="xor"           && e.args.size()>=4) { auto* fn=get_runtime_fn("slua_crypto_xor");           if(fn) return builder_.CreateCall(fn,{ga(0),ci32(ga(1)),ga(2),ci32(ga(3))},"cxor"); }
+                if (meth=="sha256"        && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_crypto_sha256");        if(fn) return builder_.CreateCall(fn,{ga(0)},"csha"); }
+                if (meth=="md5"           && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_crypto_md5");           if(fn) return builder_.CreateCall(fn,{ga(0)},"cmd5"); }
+                if (meth=="base64_encode" && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_crypto_base64_encode"); if(fn) return builder_.CreateCall(fn,{ga(0),ci32(ga(1))},"cb64e"); }
+                if (meth=="base64_decode" && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_crypto_base64_decode"); if(fn) return builder_.CreateCall(fn,{ga(0)},"cb64d"); }
+                if (meth=="hex_encode"    && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_crypto_hex_encode");    if(fn) return builder_.CreateCall(fn,{ga(0),ci32(ga(1))},"chxe"); }
+                if (meth=="hex_decode"    && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_crypto_hex_decode");    if(fn) return builder_.CreateCall(fn,{ga(0)},"chxd"); }
+                if (meth=="hex_decode_len"&& e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_crypto_hex_decode_len");if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"chxdl")); }
+                if (meth=="crc32"         && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_crypto_crc32");         if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ci32(ga(1))},"ccrc")); }
+                if (meth=="hmac_sha256"   && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_crypto_hmac_sha256");   if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"chmac"); }
+                if (meth=="xor"           && e.args.size()>=4) { auto* fn=get_runtime_fn("sarn_crypto_xor");           if(fn) return builder_.CreateCall(fn,{ga(0),ci32(ga(1)),ga(2),ci32(ga(3))},"cxor"); }
                 return llvm::ConstantInt::get(i64,0);
             }
             if (mod == "buf") {
@@ -2204,27 +2204,27 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     return v;
                 };
                 auto sxi  = [&](llvm::Value* v) -> llvm::Value* { return builder_.CreateSExt(v,i64); };
-                if (meth=="new"       && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_buf_new");       if(fn) return builder_.CreateCall(fn,{ci32(ga(0))},"bfn"); }
-                if (meth=="from_str"  && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_buf_from_str");  if(fn) return builder_.CreateCall(fn,{ga(0),ci32(ga(1))},"bffs"); }
-                if (meth=="free"      && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_buf_free");      if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"bff")); }
-                if (meth=="size"      && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_buf_size");      if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"bfsz")); }
-                if (meth=="to_str"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_buf_to_str");    if(fn) return builder_.CreateCall(fn,{c64(ga(0))},"bfts"); }
-                if (meth=="to_hex"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_buf_to_hex");    if(fn) return builder_.CreateCall(fn,{c64(ga(0))},"bfth"); }
-                if (meth=="fill"      && e.args.size()>=4) { auto* fn=get_runtime_fn("slua_buf_fill");      if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1)),ci32(ga(2)),ci32(ga(3))},"bffl")); }
-                if (meth=="write_str" && e.args.size()>=3) { auto* fn=get_runtime_fn("slua_buf_write_str"); if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1)),ga(2)},"bfws")); }
-                if (meth=="write_u8"  && e.args.size()>=3) { auto* fn=get_runtime_fn("slua_buf_write_u8");  if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1)),ci32(ga(2))},"bfw8")); }
-                if (meth=="write_u16" && e.args.size()>=3) { auto* fn=get_runtime_fn("slua_buf_write_u16"); if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1)),ci32(ga(2))},"bfw16")); }
-                if (meth=="write_u32" && e.args.size()>=3) { auto* fn=get_runtime_fn("slua_buf_write_u32"); if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1)),ci32(ga(2))},"bfw32")); }
-                if (meth=="write_i64" && e.args.size()>=3) { auto* fn=get_runtime_fn("slua_buf_write_i64"); if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1)),c64(ga(2))},"bfw64")); }
-                if (meth=="write_f32" && e.args.size()>=3) { auto* fn=get_runtime_fn("slua_buf_write_f32"); if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1)),cf64(ga(2))},"bfwf32")); }
-                if (meth=="write_f64" && e.args.size()>=3) { auto* fn=get_runtime_fn("slua_buf_write_f64"); if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1)),cf64(ga(2))},"bfwf64")); }
-                if (meth=="read_u8"   && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_buf_read_u8");   if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1))},"bfr8")); }
-                if (meth=="read_u16"  && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_buf_read_u16");  if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1))},"bfr16")); }
-                if (meth=="read_u32"  && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_buf_read_u32_i");if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1))},"bfr32")); }
-                if (meth=="read_i64"  && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_buf_read_i64");  if(fn) return builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1))},"bfr64"); }
-                if (meth=="read_f32"  && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_buf_read_f32");  if(fn) return builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1))},"bfrf32"); }
-                if (meth=="read_f64"  && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_buf_read_f64");  if(fn) return builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1))},"bfrf64"); }
-                if (meth=="copy"      && e.args.size()>=5) { auto* fn=get_runtime_fn("slua_buf_copy");      if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1)),c64(ga(2)),ci32(ga(3)),ci32(ga(4))},"bfcp")); }
+                if (meth=="new"       && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_buf_new");       if(fn) return builder_.CreateCall(fn,{ci32(ga(0))},"bfn"); }
+                if (meth=="from_str"  && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_buf_from_str");  if(fn) return builder_.CreateCall(fn,{ga(0),ci32(ga(1))},"bffs"); }
+                if (meth=="free"      && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_buf_free");      if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"bff")); }
+                if (meth=="size"      && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_buf_size");      if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"bfsz")); }
+                if (meth=="to_str"    && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_buf_to_str");    if(fn) return builder_.CreateCall(fn,{c64(ga(0))},"bfts"); }
+                if (meth=="to_hex"    && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_buf_to_hex");    if(fn) return builder_.CreateCall(fn,{c64(ga(0))},"bfth"); }
+                if (meth=="fill"      && e.args.size()>=4) { auto* fn=get_runtime_fn("sarn_buf_fill");      if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1)),ci32(ga(2)),ci32(ga(3))},"bffl")); }
+                if (meth=="write_str" && e.args.size()>=3) { auto* fn=get_runtime_fn("sarn_buf_write_str"); if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1)),ga(2)},"bfws")); }
+                if (meth=="write_u8"  && e.args.size()>=3) { auto* fn=get_runtime_fn("sarn_buf_write_u8");  if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1)),ci32(ga(2))},"bfw8")); }
+                if (meth=="write_u16" && e.args.size()>=3) { auto* fn=get_runtime_fn("sarn_buf_write_u16"); if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1)),ci32(ga(2))},"bfw16")); }
+                if (meth=="write_u32" && e.args.size()>=3) { auto* fn=get_runtime_fn("sarn_buf_write_u32"); if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1)),ci32(ga(2))},"bfw32")); }
+                if (meth=="write_i64" && e.args.size()>=3) { auto* fn=get_runtime_fn("sarn_buf_write_i64"); if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1)),c64(ga(2))},"bfw64")); }
+                if (meth=="write_f32" && e.args.size()>=3) { auto* fn=get_runtime_fn("sarn_buf_write_f32"); if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1)),cf64(ga(2))},"bfwf32")); }
+                if (meth=="write_f64" && e.args.size()>=3) { auto* fn=get_runtime_fn("sarn_buf_write_f64"); if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1)),cf64(ga(2))},"bfwf64")); }
+                if (meth=="read_u8"   && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_buf_read_u8");   if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1))},"bfr8")); }
+                if (meth=="read_u16"  && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_buf_read_u16");  if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1))},"bfr16")); }
+                if (meth=="read_u32"  && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_buf_read_u32_i");if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1))},"bfr32")); }
+                if (meth=="read_i64"  && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_buf_read_i64");  if(fn) return builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1))},"bfr64"); }
+                if (meth=="read_f32"  && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_buf_read_f32");  if(fn) return builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1))},"bfrf32"); }
+                if (meth=="read_f64"  && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_buf_read_f64");  if(fn) return builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1))},"bfrf64"); }
+                if (meth=="copy"      && e.args.size()>=5) { auto* fn=get_runtime_fn("sarn_buf_copy");      if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0)),ci32(ga(1)),c64(ga(2)),ci32(ga(3)),ci32(ga(4))},"bfcp")); }
                 return llvm::ConstantInt::get(i64,0);
             }
             if (mod == "thread") {
@@ -2237,11 +2237,11 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     return v;
                 };
                 auto sxi = [&](llvm::Value* v) -> llvm::Value* { return builder_.CreateSExt(v,i64); };
-                if (meth=="join"     && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_thread_join");     if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"thj")); }
-                if (meth=="detach"   && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_thread_detach");   if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"thd")); }
-                if (meth=="alive"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_thread_alive");    if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"tha")); }
-                if (meth=="sleep_ms" && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_thread_sleep_ms"); if(fn){ builder_.CreateCall(fn,{c64(ga(0))}); return llvm::ConstantInt::get(i64,0); } }
-                if (meth=="self_id")                      { auto* fn=get_runtime_fn("slua_thread_self_id");  if(fn) return builder_.CreateCall(fn,{},"thid"); }
+                if (meth=="join"     && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_thread_join");     if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"thj")); }
+                if (meth=="detach"   && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_thread_detach");   if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"thd")); }
+                if (meth=="alive"    && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_thread_alive");    if(fn) return sxi(builder_.CreateCall(fn,{c64(ga(0))},"tha")); }
+                if (meth=="sleep_ms" && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_thread_sleep_ms"); if(fn){ builder_.CreateCall(fn,{c64(ga(0))}); return llvm::ConstantInt::get(i64,0); } }
+                if (meth=="self_id")                      { auto* fn=get_runtime_fn("sarn_thread_self_id");  if(fn) return builder_.CreateCall(fn,{},"thid"); }
                 return llvm::ConstantInt::get(i64,0);
             }
             if (mod == "vec") {
@@ -2255,31 +2255,31 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     return v;
                 };
                 auto g64 = [&](size_t n) -> llvm::Value* { return cf64(ga(n)); };
-                if (meth=="v2_dot"    && e.args.size()>=4) { auto* fn=get_runtime_fn("slua_vec2_dot");    if(fn) return builder_.CreateCall(fn,{g64(0),g64(1),g64(2),g64(3)},"v2d"); }
-                if (meth=="v2_len"    && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_vec2_len");    if(fn) return builder_.CreateCall(fn,{g64(0),g64(1)},"v2l"); }
-                if (meth=="v2_dist"   && e.args.size()>=4) { auto* fn=get_runtime_fn("slua_vec2_dist");   if(fn) return builder_.CreateCall(fn,{g64(0),g64(1),g64(2),g64(3)},"v2di"); }
-                if (meth=="v2_norm_x" && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_vec2_norm_x"); if(fn) return builder_.CreateCall(fn,{g64(0),g64(1)},"v2nx"); }
-                if (meth=="v2_norm_y" && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_vec2_norm_y"); if(fn) return builder_.CreateCall(fn,{g64(0),g64(1)},"v2ny"); }
-                if (meth=="v3_dot"    && e.args.size()>=6) { auto* fn=get_runtime_fn("slua_vec3_dot");    if(fn) return builder_.CreateCall(fn,{g64(0),g64(1),g64(2),g64(3),g64(4),g64(5)},"v3d"); }
-                if (meth=="v3_len"    && e.args.size()>=3) { auto* fn=get_runtime_fn("slua_vec3_len");    if(fn) return builder_.CreateCall(fn,{g64(0),g64(1),g64(2)},"v3l"); }
-                if (meth=="v3_dist"   && e.args.size()>=6) { auto* fn=get_runtime_fn("slua_vec3_dist");   if(fn) return builder_.CreateCall(fn,{g64(0),g64(1),g64(2),g64(3),g64(4),g64(5)},"v3di"); }
-                if (meth=="v3_norm_x" && e.args.size()>=3) { auto* fn=get_runtime_fn("slua_vec3_norm_x"); if(fn) return builder_.CreateCall(fn,{g64(0),g64(1),g64(2)},"v3nx"); }
-                if (meth=="v3_norm_y" && e.args.size()>=3) { auto* fn=get_runtime_fn("slua_vec3_norm_y"); if(fn) return builder_.CreateCall(fn,{g64(0),g64(1),g64(2)},"v3ny"); }
-                if (meth=="v3_norm_z" && e.args.size()>=3) { auto* fn=get_runtime_fn("slua_vec3_norm_z"); if(fn) return builder_.CreateCall(fn,{g64(0),g64(1),g64(2)},"v3nz"); }
-                if (meth=="v3_cross_x"&& e.args.size()>=6) { auto* fn=get_runtime_fn("slua_vec3_cross_x");if(fn) return builder_.CreateCall(fn,{g64(0),g64(1),g64(2),g64(3),g64(4),g64(5)},"v3cx"); }
-                if (meth=="v3_cross_y"&& e.args.size()>=6) { auto* fn=get_runtime_fn("slua_vec3_cross_y");if(fn) return builder_.CreateCall(fn,{g64(0),g64(1),g64(2),g64(3),g64(4),g64(5)},"v3cy"); }
-                if (meth=="v3_cross_z"&& e.args.size()>=6) { auto* fn=get_runtime_fn("slua_vec3_cross_z");if(fn) return builder_.CreateCall(fn,{g64(0),g64(1),g64(2),g64(3),g64(4),g64(5)},"v3cz"); }
-                if (meth=="clamp"     && e.args.size()>=3) { auto* fn=get_runtime_fn("slua_math_clamp");  if(fn) return builder_.CreateCall(fn,{g64(0),g64(1),g64(2)},"mclamp"); }
-                if (meth=="lerp"      && e.args.size()>=3) { auto* fn=get_runtime_fn("slua_math_lerp");   if(fn) return builder_.CreateCall(fn,{g64(0),g64(1),g64(2)},"mlerp"); }
-                if (meth=="abs"       && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_math_abs");    if(fn) return builder_.CreateCall(fn,{g64(0)},"mabs"); }
-                if (meth=="floor"     && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_math_floor");  if(fn) return builder_.CreateCall(fn,{g64(0)},"mflr"); }
-                if (meth=="ceil"      && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_math_ceil");   if(fn) return builder_.CreateCall(fn,{g64(0)},"mcel"); }
-                if (meth=="round"     && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_math_round");  if(fn) return builder_.CreateCall(fn,{g64(0)},"mrnd"); }
-                if (meth=="min"       && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_math_min2");   if(fn) return builder_.CreateCall(fn,{g64(0),g64(1)},"mmin"); }
-                if (meth=="max"       && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_math_max2");   if(fn) return builder_.CreateCall(fn,{g64(0),g64(1)},"mmax"); }
-                if (meth=="sign"      && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_math_sign");   if(fn) return builder_.CreateCall(fn,{g64(0)},"msgn"); }
-                if (meth=="fract"     && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_math_fract");  if(fn) return builder_.CreateCall(fn,{g64(0)},"mfrc"); }
-                if (meth=="mod"       && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_math_mod");    if(fn) return builder_.CreateCall(fn,{g64(0),g64(1)},"mmod"); }
+                if (meth=="v2_dot"    && e.args.size()>=4) { auto* fn=get_runtime_fn("sarn_vec2_dot");    if(fn) return builder_.CreateCall(fn,{g64(0),g64(1),g64(2),g64(3)},"v2d"); }
+                if (meth=="v2_len"    && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_vec2_len");    if(fn) return builder_.CreateCall(fn,{g64(0),g64(1)},"v2l"); }
+                if (meth=="v2_dist"   && e.args.size()>=4) { auto* fn=get_runtime_fn("sarn_vec2_dist");   if(fn) return builder_.CreateCall(fn,{g64(0),g64(1),g64(2),g64(3)},"v2di"); }
+                if (meth=="v2_norm_x" && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_vec2_norm_x"); if(fn) return builder_.CreateCall(fn,{g64(0),g64(1)},"v2nx"); }
+                if (meth=="v2_norm_y" && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_vec2_norm_y"); if(fn) return builder_.CreateCall(fn,{g64(0),g64(1)},"v2ny"); }
+                if (meth=="v3_dot"    && e.args.size()>=6) { auto* fn=get_runtime_fn("sarn_vec3_dot");    if(fn) return builder_.CreateCall(fn,{g64(0),g64(1),g64(2),g64(3),g64(4),g64(5)},"v3d"); }
+                if (meth=="v3_len"    && e.args.size()>=3) { auto* fn=get_runtime_fn("sarn_vec3_len");    if(fn) return builder_.CreateCall(fn,{g64(0),g64(1),g64(2)},"v3l"); }
+                if (meth=="v3_dist"   && e.args.size()>=6) { auto* fn=get_runtime_fn("sarn_vec3_dist");   if(fn) return builder_.CreateCall(fn,{g64(0),g64(1),g64(2),g64(3),g64(4),g64(5)},"v3di"); }
+                if (meth=="v3_norm_x" && e.args.size()>=3) { auto* fn=get_runtime_fn("sarn_vec3_norm_x"); if(fn) return builder_.CreateCall(fn,{g64(0),g64(1),g64(2)},"v3nx"); }
+                if (meth=="v3_norm_y" && e.args.size()>=3) { auto* fn=get_runtime_fn("sarn_vec3_norm_y"); if(fn) return builder_.CreateCall(fn,{g64(0),g64(1),g64(2)},"v3ny"); }
+                if (meth=="v3_norm_z" && e.args.size()>=3) { auto* fn=get_runtime_fn("sarn_vec3_norm_z"); if(fn) return builder_.CreateCall(fn,{g64(0),g64(1),g64(2)},"v3nz"); }
+                if (meth=="v3_cross_x"&& e.args.size()>=6) { auto* fn=get_runtime_fn("sarn_vec3_cross_x");if(fn) return builder_.CreateCall(fn,{g64(0),g64(1),g64(2),g64(3),g64(4),g64(5)},"v3cx"); }
+                if (meth=="v3_cross_y"&& e.args.size()>=6) { auto* fn=get_runtime_fn("sarn_vec3_cross_y");if(fn) return builder_.CreateCall(fn,{g64(0),g64(1),g64(2),g64(3),g64(4),g64(5)},"v3cy"); }
+                if (meth=="v3_cross_z"&& e.args.size()>=6) { auto* fn=get_runtime_fn("sarn_vec3_cross_z");if(fn) return builder_.CreateCall(fn,{g64(0),g64(1),g64(2),g64(3),g64(4),g64(5)},"v3cz"); }
+                if (meth=="clamp"     && e.args.size()>=3) { auto* fn=get_runtime_fn("sarn_math_clamp");  if(fn) return builder_.CreateCall(fn,{g64(0),g64(1),g64(2)},"mclamp"); }
+                if (meth=="lerp"      && e.args.size()>=3) { auto* fn=get_runtime_fn("sarn_math_lerp");   if(fn) return builder_.CreateCall(fn,{g64(0),g64(1),g64(2)},"mlerp"); }
+                if (meth=="abs"       && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_math_abs");    if(fn) return builder_.CreateCall(fn,{g64(0)},"mabs"); }
+                if (meth=="floor"     && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_math_floor");  if(fn) return builder_.CreateCall(fn,{g64(0)},"mflr"); }
+                if (meth=="ceil"      && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_math_ceil");   if(fn) return builder_.CreateCall(fn,{g64(0)},"mcel"); }
+                if (meth=="round"     && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_math_round");  if(fn) return builder_.CreateCall(fn,{g64(0)},"mrnd"); }
+                if (meth=="min"       && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_math_min2");   if(fn) return builder_.CreateCall(fn,{g64(0),g64(1)},"mmin"); }
+                if (meth=="max"       && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_math_max2");   if(fn) return builder_.CreateCall(fn,{g64(0),g64(1)},"mmax"); }
+                if (meth=="sign"      && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_math_sign");   if(fn) return builder_.CreateCall(fn,{g64(0)},"msgn"); }
+                if (meth=="fract"     && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_math_fract");  if(fn) return builder_.CreateCall(fn,{g64(0)},"mfrc"); }
+                if (meth=="mod"       && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_math_mod");    if(fn) return builder_.CreateCall(fn,{g64(0),g64(1)},"mmod"); }
                 return llvm::ConstantFP::get(f64,0.0);
             }
             if (mod == "scene") {
@@ -2310,30 +2310,30 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                 };
                 auto sxi   = [&](llvm::Value* v) -> llvm::Value* { return builder_.CreateSExt(v,i64); };
                 if (meth=="camera_set" && e.args.size()>=11) {
-                    auto* fn=get_runtime_fn("slua_camera3d_set");
+                    auto* fn=get_runtime_fn("sarn_camera3d_set");
                     if(fn) { builder_.CreateCall(fn,{cf64(ga(0)),cf64(ga(1)),cf64(ga(2)),cf64(ga(3)),cf64(ga(4)),cf64(ga(5)),cf64(ga(6)),cf64(ga(7)),cf64(ga(8)),cf64(ga(9)),ci32(ga(10))}); return llvm::ConstantInt::get(i64,0); }
                 }
-                if (meth=="camera_update") { auto* fn=get_runtime_fn("slua_camera3d_update"); if(fn) builder_.CreateCall(fn,{}); return llvm::ConstantInt::get(i64,0); }
-                if (meth=="begin")         { auto* fn=get_runtime_fn("slua_begin_mode3d");    if(fn) builder_.CreateCall(fn,{}); return llvm::ConstantInt::get(i64,0); }
-                if (meth=="end")           { auto* fn=get_runtime_fn("slua_end_mode3d");      if(fn) builder_.CreateCall(fn,{}); return llvm::ConstantInt::get(i64,0); }
-                if (meth=="grid" && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_draw_grid"); if(fn) builder_.CreateCall(fn,{ci32(ga(0)),cf32(ga(1))}); return llvm::ConstantInt::get(i64,0); }
-                if (meth=="cube" && e.args.size()>=10){ auto* fn=get_runtime_fn("slua_draw_cube"); if(fn) builder_.CreateCall(fn,{cf32(ga(0)),cf32(ga(1)),cf32(ga(2)),cf32(ga(3)),cf32(ga(4)),cf32(ga(5)),ci32(ga(6)),ci32(ga(7)),ci32(ga(8)),ci32(ga(9))}); return llvm::ConstantInt::get(i64,0); }
-                if (meth=="cube_wires" && e.args.size()>=10){ auto* fn=get_runtime_fn("slua_draw_cube_wires"); if(fn) builder_.CreateCall(fn,{cf32(ga(0)),cf32(ga(1)),cf32(ga(2)),cf32(ga(3)),cf32(ga(4)),cf32(ga(5)),ci32(ga(6)),ci32(ga(7)),ci32(ga(8)),ci32(ga(9))}); return llvm::ConstantInt::get(i64,0); }
-                if (meth=="sphere" && e.args.size()>=8){ auto* fn=get_runtime_fn("slua_draw_sphere"); if(fn) builder_.CreateCall(fn,{cf32(ga(0)),cf32(ga(1)),cf32(ga(2)),cf32(ga(3)),ci32(ga(4)),ci32(ga(5)),ci32(ga(6)),ci32(ga(7))}); return llvm::ConstantInt::get(i64,0); }
-                if (meth=="sphere_wires" && e.args.size()>=10){ auto* fn=get_runtime_fn("slua_draw_sphere_wires"); if(fn) builder_.CreateCall(fn,{cf32(ga(0)),cf32(ga(1)),cf32(ga(2)),cf32(ga(3)),ci32(ga(4)),ci32(ga(5)),ci32(ga(6)),ci32(ga(7)),ci32(ga(8)),ci32(ga(9))}); return llvm::ConstantInt::get(i64,0); }
-                if (meth=="plane" && e.args.size()>=9){ auto* fn=get_runtime_fn("slua_draw_plane"); if(fn) builder_.CreateCall(fn,{cf32(ga(0)),cf32(ga(1)),cf32(ga(2)),cf32(ga(3)),cf32(ga(4)),ci32(ga(5)),ci32(ga(6)),ci32(ga(7)),ci32(ga(8))}); return llvm::ConstantInt::get(i64,0); }
-                if (meth=="line3d" && e.args.size()>=10){ auto* fn=get_runtime_fn("slua_draw_line3d"); if(fn) builder_.CreateCall(fn,{cf32(ga(0)),cf32(ga(1)),cf32(ga(2)),cf32(ga(3)),cf32(ga(4)),cf32(ga(5)),ci32(ga(6)),ci32(ga(7)),ci32(ga(8)),ci32(ga(9))}); return llvm::ConstantInt::get(i64,0); }
-                if (meth=="model_load"   && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_model_load");   if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"mdll")); }
-                if (meth=="model_unload" && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_model_unload"); if(fn){ builder_.CreateCall(fn,{ci32(ga(0))}); return llvm::ConstantInt::get(i64,0); } }
-                if (meth=="model_draw"   && e.args.size()>=9) { auto* fn=get_runtime_fn("slua_model_draw");   if(fn){ builder_.CreateCall(fn,{ci32(ga(0)),cf32(ga(1)),cf32(ga(2)),cf32(ga(3)),cf32(ga(4)),ci32(ga(5)),ci32(ga(6)),ci32(ga(7)),ci32(ga(8))}); return llvm::ConstantInt::get(i64,0); } }
-                if (meth=="tex_load"     && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_texture_load");   if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"texl")); }
-                if (meth=="tex_unload"   && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_texture_unload"); if(fn){ builder_.CreateCall(fn,{ci32(ga(0))}); return llvm::ConstantInt::get(i64,0); } }
-                if (meth=="tex_draw"     && e.args.size()>=7) { auto* fn=get_runtime_fn("slua_texture_draw");   if(fn){ builder_.CreateCall(fn,{ci32(ga(0)),ci32(ga(1)),ci32(ga(2)),ci32(ga(3)),ci32(ga(4)),ci32(ga(5)),ci32(ga(6))}); return llvm::ConstantInt::get(i64,0); } }
-                if (meth=="tex_width"    && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_texture_width");  if(fn) return sxi(builder_.CreateCall(fn,{ci32(ga(0))},"texw")); }
-                if (meth=="tex_height"   && e.args.size()>=1) { auto* fn=get_runtime_fn("slua_texture_height"); if(fn) return sxi(builder_.CreateCall(fn,{ci32(ga(0))},"texh")); }
-                if (meth=="fps_counter"  && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_draw_fps_counter"); if(fn){ builder_.CreateCall(fn,{ci32(ga(0)),ci32(ga(1))}); return llvm::ConstantInt::get(i64,0); } }
-                if (meth=="time")                              { auto* fn=get_runtime_fn("slua_get_time"); if(fn) return builder_.CreateCall(fn,{},"gtime"); }
-                if (meth=="window_init_3d" && e.args.size()>=3){ auto* fn=get_runtime_fn("slua_window_init_3d"); if(fn){ builder_.CreateCall(fn,{ci32(ga(0)),ci32(ga(1)),ga(2)}); return llvm::ConstantInt::get(i64,0); } }
+                if (meth=="camera_update") { auto* fn=get_runtime_fn("sarn_camera3d_update"); if(fn) builder_.CreateCall(fn,{}); return llvm::ConstantInt::get(i64,0); }
+                if (meth=="begin")         { auto* fn=get_runtime_fn("sarn_begin_mode3d");    if(fn) builder_.CreateCall(fn,{}); return llvm::ConstantInt::get(i64,0); }
+                if (meth=="end")           { auto* fn=get_runtime_fn("sarn_end_mode3d");      if(fn) builder_.CreateCall(fn,{}); return llvm::ConstantInt::get(i64,0); }
+                if (meth=="grid" && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_draw_grid"); if(fn) builder_.CreateCall(fn,{ci32(ga(0)),cf32(ga(1))}); return llvm::ConstantInt::get(i64,0); }
+                if (meth=="cube" && e.args.size()>=10){ auto* fn=get_runtime_fn("sarn_draw_cube"); if(fn) builder_.CreateCall(fn,{cf32(ga(0)),cf32(ga(1)),cf32(ga(2)),cf32(ga(3)),cf32(ga(4)),cf32(ga(5)),ci32(ga(6)),ci32(ga(7)),ci32(ga(8)),ci32(ga(9))}); return llvm::ConstantInt::get(i64,0); }
+                if (meth=="cube_wires" && e.args.size()>=10){ auto* fn=get_runtime_fn("sarn_draw_cube_wires"); if(fn) builder_.CreateCall(fn,{cf32(ga(0)),cf32(ga(1)),cf32(ga(2)),cf32(ga(3)),cf32(ga(4)),cf32(ga(5)),ci32(ga(6)),ci32(ga(7)),ci32(ga(8)),ci32(ga(9))}); return llvm::ConstantInt::get(i64,0); }
+                if (meth=="sphere" && e.args.size()>=8){ auto* fn=get_runtime_fn("sarn_draw_sphere"); if(fn) builder_.CreateCall(fn,{cf32(ga(0)),cf32(ga(1)),cf32(ga(2)),cf32(ga(3)),ci32(ga(4)),ci32(ga(5)),ci32(ga(6)),ci32(ga(7))}); return llvm::ConstantInt::get(i64,0); }
+                if (meth=="sphere_wires" && e.args.size()>=10){ auto* fn=get_runtime_fn("sarn_draw_sphere_wires"); if(fn) builder_.CreateCall(fn,{cf32(ga(0)),cf32(ga(1)),cf32(ga(2)),cf32(ga(3)),ci32(ga(4)),ci32(ga(5)),ci32(ga(6)),ci32(ga(7)),ci32(ga(8)),ci32(ga(9))}); return llvm::ConstantInt::get(i64,0); }
+                if (meth=="plane" && e.args.size()>=9){ auto* fn=get_runtime_fn("sarn_draw_plane"); if(fn) builder_.CreateCall(fn,{cf32(ga(0)),cf32(ga(1)),cf32(ga(2)),cf32(ga(3)),cf32(ga(4)),ci32(ga(5)),ci32(ga(6)),ci32(ga(7)),ci32(ga(8))}); return llvm::ConstantInt::get(i64,0); }
+                if (meth=="line3d" && e.args.size()>=10){ auto* fn=get_runtime_fn("sarn_draw_line3d"); if(fn) builder_.CreateCall(fn,{cf32(ga(0)),cf32(ga(1)),cf32(ga(2)),cf32(ga(3)),cf32(ga(4)),cf32(ga(5)),ci32(ga(6)),ci32(ga(7)),ci32(ga(8)),ci32(ga(9))}); return llvm::ConstantInt::get(i64,0); }
+                if (meth=="model_load"   && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_model_load");   if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"mdll")); }
+                if (meth=="model_unload" && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_model_unload"); if(fn){ builder_.CreateCall(fn,{ci32(ga(0))}); return llvm::ConstantInt::get(i64,0); } }
+                if (meth=="model_draw"   && e.args.size()>=9) { auto* fn=get_runtime_fn("sarn_model_draw");   if(fn){ builder_.CreateCall(fn,{ci32(ga(0)),cf32(ga(1)),cf32(ga(2)),cf32(ga(3)),cf32(ga(4)),ci32(ga(5)),ci32(ga(6)),ci32(ga(7)),ci32(ga(8))}); return llvm::ConstantInt::get(i64,0); } }
+                if (meth=="tex_load"     && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_texture_load");   if(fn) return sxi(builder_.CreateCall(fn,{ga(0)},"texl")); }
+                if (meth=="tex_unload"   && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_texture_unload"); if(fn){ builder_.CreateCall(fn,{ci32(ga(0))}); return llvm::ConstantInt::get(i64,0); } }
+                if (meth=="tex_draw"     && e.args.size()>=7) { auto* fn=get_runtime_fn("sarn_texture_draw");   if(fn){ builder_.CreateCall(fn,{ci32(ga(0)),ci32(ga(1)),ci32(ga(2)),ci32(ga(3)),ci32(ga(4)),ci32(ga(5)),ci32(ga(6))}); return llvm::ConstantInt::get(i64,0); } }
+                if (meth=="tex_width"    && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_texture_width");  if(fn) return sxi(builder_.CreateCall(fn,{ci32(ga(0))},"texw")); }
+                if (meth=="tex_height"   && e.args.size()>=1) { auto* fn=get_runtime_fn("sarn_texture_height"); if(fn) return sxi(builder_.CreateCall(fn,{ci32(ga(0))},"texh")); }
+                if (meth=="fps_counter"  && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_draw_fps_counter"); if(fn){ builder_.CreateCall(fn,{ci32(ga(0)),ci32(ga(1))}); return llvm::ConstantInt::get(i64,0); } }
+                if (meth=="time")                              { auto* fn=get_runtime_fn("sarn_get_time"); if(fn) return builder_.CreateCall(fn,{},"gtime"); }
+                if (meth=="window_init_3d" && e.args.size()>=3){ auto* fn=get_runtime_fn("sarn_window_init_3d"); if(fn){ builder_.CreateCall(fn,{ci32(ga(0)),ci32(ga(1)),ga(2)}); return llvm::ConstantInt::get(i64,0); } }
                 return llvm::ConstantInt::get(i64,0);
             }
             if (mod == "regex") {
@@ -2347,12 +2347,12 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
                     return v;
                 };
                 auto sxi  = [&](llvm::Value* v) -> llvm::Value* { return builder_.CreateSExt(v,i64); };
-                if (meth=="match"    && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_regex_match");    if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"rxm")); }
-                if (meth=="find"     && e.args.size()>=3) { auto* fn=get_runtime_fn("slua_regex_find");     if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1),ci32(ga(2))},"rxf")); }
-                if (meth=="replace"  && e.args.size()>=3) { auto* fn=get_runtime_fn("slua_regex_replace");  if(fn) return builder_.CreateCall(fn,{ga(0),ga(1),ga(2)},"rxr"); }
-                if (meth=="groups"   && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_regex_groups");   if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"rxg"); }
-                if (meth=="count"    && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_regex_count");    if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"rxc")); }
-                if (meth=="find_all" && e.args.size()>=2) { auto* fn=get_runtime_fn("slua_regex_find_all"); if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"rxfa"); }
+                if (meth=="match"    && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_regex_match");    if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"rxm")); }
+                if (meth=="find"     && e.args.size()>=3) { auto* fn=get_runtime_fn("sarn_regex_find");     if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1),ci32(ga(2))},"rxf")); }
+                if (meth=="replace"  && e.args.size()>=3) { auto* fn=get_runtime_fn("sarn_regex_replace");  if(fn) return builder_.CreateCall(fn,{ga(0),ga(1),ga(2)},"rxr"); }
+                if (meth=="groups"   && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_regex_groups");   if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"rxg"); }
+                if (meth=="count"    && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_regex_count");    if(fn) return sxi(builder_.CreateCall(fn,{ga(0),ga(1)},"rxc")); }
+                if (meth=="find_all" && e.args.size()>=2) { auto* fn=get_runtime_fn("sarn_regex_find_all"); if(fn) return builder_.CreateCall(fn,{ga(0),ga(1)},"rxfa"); }
                 return llvm::ConstantInt::get(i64,0);
             }
         }
@@ -2366,18 +2366,18 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
 
             llvm::Type* ty = arg->getType();
             if (ty->isDoubleTy()) {
-                auto* fn = get_runtime_fn("slua_print_float");
+                auto* fn = get_runtime_fn("sarn_print_float");
                 if (fn) builder_.CreateCall(fn, {arg});
             } else if (ty->isIntegerTy(1)) {
-                auto* fn  = get_runtime_fn("slua_print_bool");
+                auto* fn  = get_runtime_fn("sarn_print_bool");
                 auto* i32 = llvm::Type::getInt32Ty(ctx_);
                 if (fn) builder_.CreateCall(fn, {builder_.CreateZExt(arg, i32)});
             } else if (ty->isIntegerTy()) {
-                auto* fn  = get_runtime_fn("slua_print_int");
+                auto* fn  = get_runtime_fn("sarn_print_int");
                 auto* i64 = llvm::Type::getInt64Ty(ctx_);
                 if (fn) builder_.CreateCall(fn, {builder_.CreateSExt(arg, i64)});
             } else if (ty->isPointerTy()) {
-                auto* fn = get_runtime_fn("slua_print_str");
+                auto* fn = get_runtime_fn("sarn_print_str");
                 if (fn) builder_.CreateCall(fn, {arg});
             }
             return llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx_), 0);
@@ -2512,7 +2512,7 @@ llvm::Value* IREmitter::emit_index(Index& e, SourceLoc loc, TypeNode* result_typ
     }
 
     bool key_is_str = key->getType()->isPointerTy();
-    std::string pfx = key_is_str ? "slua_tbl_sget" : "slua_tbl_iget";
+    std::string pfx = key_is_str ? "sarn_tbl_sget" : "sarn_tbl_iget";
 
     if (!key_is_str)
         key = builder_.CreateSExt(key, i64);
@@ -2533,7 +2533,7 @@ llvm::Value* IREmitter::emit_table_ctor(TableCtor& e, SourceLoc loc) {
     auto* i32 = llvm::Type::getInt32Ty(ctx_);
     auto* f64 = llvm::Type::getDoubleTy(ctx_);
 
-    auto* new_fn = get_runtime_fn("slua_tbl_new");
+    auto* new_fn = get_runtime_fn("sarn_tbl_new");
     if (!new_fn) return llvm::ConstantPointerNull::get(i8p);
     llvm::Value* tbl = builder_.CreateCall(new_fn, {}, "tbl");
 
@@ -2574,8 +2574,8 @@ llvm::Value* IREmitter::emit_table_ctor(TableCtor& e, SourceLoc loc) {
             }
         };
 
-        if (key_is_str) emit_set("slua_tbl_sset");
-        else            emit_set("slua_tbl_iset");
+        if (key_is_str) emit_set("sarn_tbl_sset");
+        else            emit_set("sarn_tbl_iset");
     }
     return tbl;
 }
@@ -2592,7 +2592,7 @@ llvm::Value* IREmitter::emit_alloc_expr(AllocExpr& e, SourceLoc loc) {
     count     = coerce(count, i64, loc);
     auto* sz  = builder_.CreateMul(count, llvm::ConstantInt::get(i64, elem_sz), "alloc.sz");
 
-    auto* fn = get_runtime_fn("slua_alloc");
+    auto* fn = get_runtime_fn("sarn_alloc");
     if (!fn) return nullptr;
     llvm::Value* raw = builder_.CreateCall(fn, {sz}, "raw_ptr");
 

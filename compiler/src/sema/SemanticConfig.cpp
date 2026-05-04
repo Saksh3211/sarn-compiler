@@ -1,6 +1,6 @@
-#include "slua/SemanticConfig.h"
+#include "sarn/SemanticConfig.h"
 
-namespace slua {
+namespace sarn {
 
 SemanticConfig SemanticConfig::for_mode(CompileMode m) {
     using DB = DiagBehavior;

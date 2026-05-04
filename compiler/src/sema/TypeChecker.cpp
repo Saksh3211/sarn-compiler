@@ -1,9 +1,9 @@
-﻿#include "slua/TypeChecker.h"
+#include "sarn/TypeChecker.h"
 #include <sstream>
 #include <cassert>
 
-namespace slua {
-    std::string SluaType::to_string() const {
+namespace sarn {
+    std::string SarnType::to_string() const {
         switch (kind) {
             case TypeKind::INT:    return "int";
             case TypeKind::NUMBER: return "number";
@@ -50,32 +50,32 @@ namespace slua {
 
     
 
-    static SluaTypePtr make_prim(TypeKind k, const std::string& name = "") {
-        auto t = std::make_shared<SluaType>();
+    static SarnTypePtr make_prim(TypeKind k, const std::string& name = "") {
+        auto t = std::make_shared<SarnType>();
         t->kind = k;
         t->name = name;
         return t;
     }
 
-    SluaTypePtr make_int()    { return make_prim(TypeKind::INT,    "int");    }
-    SluaTypePtr make_number() { return make_prim(TypeKind::NUMBER, "number"); }
-    SluaTypePtr make_string() { return make_prim(TypeKind::STRING, "string"); }
-    SluaTypePtr make_bool()   { return make_prim(TypeKind::BOOL,   "bool");   }
-    SluaTypePtr make_void()   { return make_prim(TypeKind::VOID,   "void");   }
-    SluaTypePtr make_any()    { return make_prim(TypeKind::ANY,    "any");    }
-    SluaTypePtr make_null()   { return make_prim(TypeKind::NULL_T, "null");   }
-    SluaTypePtr make_error()  { return make_prim(TypeKind::ERROR,  "<error>");}
+    SarnTypePtr make_int()    { return make_prim(TypeKind::INT,    "int");    }
+    SarnTypePtr make_number() { return make_prim(TypeKind::NUMBER, "number"); }
+    SarnTypePtr make_string() { return make_prim(TypeKind::STRING, "string"); }
+    SarnTypePtr make_bool()   { return make_prim(TypeKind::BOOL,   "bool");   }
+    SarnTypePtr make_void()   { return make_prim(TypeKind::VOID,   "void");   }
+    SarnTypePtr make_any()    { return make_prim(TypeKind::ANY,    "any");    }
+    SarnTypePtr make_null()   { return make_prim(TypeKind::NULL_T, "null");   }
+    SarnTypePtr make_error()  { return make_prim(TypeKind::ERROR,  "<error>");}
 
-    SluaTypePtr make_ptr(SluaTypePtr inner) {
-        auto t = std::make_shared<SluaType>();
+    SarnTypePtr make_ptr(SarnTypePtr inner) {
+        auto t = std::make_shared<SarnType>();
         t->kind    = TypeKind::PTR;
         t->name    = "ptr";
         t->pointee = std::move(inner);
         return t;
     }
 
-    SluaTypePtr make_func(std::vector<SluaTypePtr> params, SluaTypePtr ret) {
-        auto t = std::make_shared<SluaType>();
+    SarnTypePtr make_func(std::vector<SarnTypePtr> params, SarnTypePtr ret) {
+        auto t = std::make_shared<SarnType>();
         t->kind        = TypeKind::FUNC;
         t->param_types = std::move(params);
         t->return_type = std::move(ret);
@@ -128,10 +128,10 @@ namespace slua {
         
     }
     
-    SluaTypePtr TypeChecker::resolve_type_node(const TypeNode* t) {
+    SarnTypePtr TypeChecker::resolve_type_node(const TypeNode* t) {
         if (!t) return make_any();
 
-        return std::visit([&](auto&& v) -> SluaTypePtr {
+        return std::visit([&](auto&& v) -> SarnTypePtr {
             using T = std::decay_t<decltype(v)>;
 
             if constexpr (std::is_same_v<T, PrimitiveType>) {
@@ -150,7 +150,7 @@ namespace slua {
                 if (n == "null")    return make_null();
 
                 
-                SluaTypePtr found = env_ ? env_->lookup(n) : nullptr;
+                SarnTypePtr found = env_ ? env_->lookup(n) : nullptr;
                 if (found) return found;
 
                 
@@ -178,14 +178,14 @@ namespace slua {
                     return make_ptr(resolve_type_node(v.args[0].get()));
 
                 
-                auto gt = std::make_shared<SluaType>();
+                auto gt = std::make_shared<SarnType>();
                 gt->kind = TypeKind::GENERIC;
                 gt->name = v.name;
                 for (auto& a : v.args)
                     gt->type_args.push_back(resolve_type_node(a.get()));
 
                 
-                SluaTypePtr base = env_ ? env_->lookup(v.name) : nullptr;
+                SarnTypePtr base = env_ ? env_->lookup(v.name) : nullptr;
                 if (base && base->kind == TypeKind::RECORD) {
                     
                     
@@ -195,7 +195,7 @@ namespace slua {
             }
 
             else if constexpr (std::is_same_v<T, RecordType>) {
-                auto rt = std::make_shared<SluaType>();
+                auto rt = std::make_shared<SarnType>();
                 rt->kind = TypeKind::RECORD;
                 for (auto& [fname, ftype] : v.fields)
                     rt->fields.push_back({fname, resolve_type_node(ftype.get())});
@@ -203,7 +203,7 @@ namespace slua {
             }
 
             else if constexpr (std::is_same_v<T, FuncType>) {
-                std::vector<SluaTypePtr> params;
+                std::vector<SarnTypePtr> params;
                 for (auto& p : v.params)
                     params.push_back(resolve_type_node(p.get()));
                 return make_func(std::move(params), resolve_type_node(v.ret.get()));
@@ -262,7 +262,7 @@ namespace slua {
             else if constexpr (std::is_same_v<T, MultiLocalDecl>) {
                 if (v.init) check_expr(*v.init);
                 for (auto& [vname, vtype] : v.vars) {
-                    SluaTypePtr t = vtype ? resolve_type_node(vtype.get()) : make_any();
+                    SarnTypePtr t = vtype ? resolve_type_node(vtype.get()) : make_any();
                     env_->define(vname, t);
                 }
             }
@@ -303,14 +303,14 @@ namespace slua {
     }
 
     void TypeChecker::check_local_decl(LocalDecl& s, SourceLoc loc) {
-        SluaTypePtr ann_type = s.type_ann
+        SarnTypePtr ann_type = s.type_ann
             ? resolve_type_node(s.type_ann.get())
             : nullptr;
 
-        SluaTypePtr init_type;
+        SarnTypePtr init_type;
         if (s.init) init_type = check_expr(*s.init);
 
-        SluaTypePtr final_type;
+        SarnTypePtr final_type;
 
         if (ann_type && init_type) {
             
@@ -332,14 +332,14 @@ namespace slua {
     }
 
     void TypeChecker::check_global_decl(GlobalDecl& s, SourceLoc loc) {
-        SluaTypePtr ann_type = s.type_ann
+        SarnTypePtr ann_type = s.type_ann
             ? resolve_type_node(s.type_ann.get())
             : nullptr;
 
-        SluaTypePtr init_type;
+        SarnTypePtr init_type;
         if (s.init) init_type = check_expr(*s.init);
 
-        SluaTypePtr final_type = ann_type ? ann_type
+        SarnTypePtr final_type = ann_type ? ann_type
                             : init_type ? init_type
                             : make_any();
 
@@ -352,11 +352,11 @@ namespace slua {
 
     void TypeChecker::check_func_decl(FuncDecl& s, SourceLoc loc) {
         
-        std::vector<SluaTypePtr> param_types;
+        std::vector<SarnTypePtr> param_types;
         for (auto& [pname, ptype] : s.params)
             param_types.push_back(resolve_type_node(ptype.get()));
 
-        SluaTypePtr ret = s.ret_type
+        SarnTypePtr ret = s.ret_type
             ? resolve_type_node(s.ret_type.get())
             : make_void();
 
@@ -375,7 +375,7 @@ namespace slua {
         }
 
         
-        SluaTypePtr saved_ret = ret_type_;
+        SarnTypePtr saved_ret = ret_type_;
         ret_type_ = ret;
 
         for (auto& stmt : s.body)
@@ -390,7 +390,7 @@ namespace slua {
     
 
     void TypeChecker::check_if_stmt(IfStmt& s, SourceLoc loc) {
-        SluaTypePtr cond_t = check_expr(*s.cond);
+        SarnTypePtr cond_t = check_expr(*s.cond);
 
         
         if (cfg_.mode == CompileMode::STRICT &&
@@ -436,9 +436,9 @@ namespace slua {
     }
 
     void TypeChecker::check_numeric_for(NumericFor& s, SourceLoc loc) {
-        SluaTypePtr start_t = check_expr(*s.start);
-        SluaTypePtr stop_t  = check_expr(*s.stop);
-        SluaTypePtr step_t  = s.step ? check_expr(*s.step) : make_int();
+        SarnTypePtr start_t = check_expr(*s.start);
+        SarnTypePtr stop_t  = check_expr(*s.stop);
+        SarnTypePtr step_t  = s.step ? check_expr(*s.step) : make_int();
 
         
         if (cfg_.mode == CompileMode::STRICT) {
@@ -451,7 +451,7 @@ namespace slua {
         }
 
         
-        SluaTypePtr var_type = (start_t && start_t->kind == TypeKind::NUMBER)
+        SarnTypePtr var_type = (start_t && start_t->kind == TypeKind::NUMBER)
             ? make_number() : make_int();
 
         push_env();
@@ -474,7 +474,7 @@ namespace slua {
             return;
         }
 
-        SluaTypePtr val_type = check_expr(*s.values[0]);
+        SarnTypePtr val_type = check_expr(*s.values[0]);
 
         if (ret_type_ && val_type &&
             !ret_type_->is_error() && !val_type->is_error()) {
@@ -483,8 +483,8 @@ namespace slua {
     }
 
     void TypeChecker::check_assign(Assign& s, SourceLoc loc) {
-        SluaTypePtr rhs_type = check_expr(*s.value);
-        SluaTypePtr lhs_type = check_expr(*s.target);
+        SarnTypePtr rhs_type = check_expr(*s.value);
+        SarnTypePtr lhs_type = check_expr(*s.target);
 
         if (lhs_type && rhs_type &&
             !lhs_type->is_error() && !rhs_type->is_error()) {
@@ -509,8 +509,8 @@ namespace slua {
     }
 
     void TypeChecker::check_store_stmt(StoreStmt& s, SourceLoc loc) {
-        SluaTypePtr ptr_t = check_expr(*s.ptr);
-        SluaTypePtr val_t = check_expr(*s.val);
+        SarnTypePtr ptr_t = check_expr(*s.ptr);
+        SarnTypePtr val_t = check_expr(*s.val);
 
         if (cfg_.mode == CompileMode::STRICT && ptr_t &&
             ptr_t->kind != TypeKind::PTR &&
@@ -523,7 +523,7 @@ namespace slua {
     }
 
     void TypeChecker::check_free_stmt(FreeStmt& s, SourceLoc loc) {
-        SluaTypePtr t = check_expr(*s.ptr);
+        SarnTypePtr t = check_expr(*s.ptr);
         if (cfg_.mode == CompileMode::STRICT && t &&
             t->kind != TypeKind::PTR &&
             t->kind != TypeKind::ANY &&
@@ -538,13 +538,13 @@ namespace slua {
     }
 
     void TypeChecker::check_type_decl(TypeDecl& s, SourceLoc loc) {
-        SluaTypePtr t = resolve_type_node(s.def.get());
+        SarnTypePtr t = resolve_type_node(s.def.get());
         t->name = s.name;
         env_->define(s.name, t);
     }
 
     void TypeChecker::check_extern_decl(ExternDecl& s, SourceLoc loc) {
-        SluaTypePtr ft = resolve_type_node(s.func_type.get());
+        SarnTypePtr ft = resolve_type_node(s.func_type.get());
         env_->define(s.name, ft);
     }
 
@@ -552,8 +552,8 @@ namespace slua {
     
     
 
-    SluaTypePtr TypeChecker::check_expr(Expr& e) {
-        SluaTypePtr result = std::visit([&](auto&& v) -> SluaTypePtr {
+    SarnTypePtr TypeChecker::check_expr(Expr& e) {
+        SarnTypePtr result = std::visit([&](auto&& v) -> SarnTypePtr {
             using T = std::decay_t<decltype(v)>;
 
             if constexpr (std::is_same_v<T, NullLit>)    return make_null();
@@ -563,7 +563,7 @@ namespace slua {
             else if constexpr (std::is_same_v<T, StrLit>)   return make_string();
 
             else if constexpr (std::is_same_v<T, Ident>) {
-                SluaTypePtr t = env_ ? env_->lookup(v.name) : nullptr;
+                SarnTypePtr t = env_ ? env_->lookup(v.name) : nullptr;
                 if (!t) return make_any(); 
                 return t;
             }
@@ -588,7 +588,7 @@ namespace slua {
                 return check_alloc_expr(v, e.loc);
 
             else if constexpr (std::is_same_v<T, DerefExpr>) {
-                SluaTypePtr pt = check_expr(*v.ptr);
+                SarnTypePtr pt = check_expr(*v.ptr);
                 if (pt && pt->kind == TypeKind::PTR && pt->pointee)
                     return pt->pointee;
                 if (pt && pt->kind == TypeKind::ANY) return make_any();
@@ -600,7 +600,7 @@ namespace slua {
             }
 
             else if constexpr (std::is_same_v<T, AddrExpr>) {
-                SluaTypePtr inner = check_expr(*v.target);
+                SarnTypePtr inner = check_expr(*v.target);
                 return make_ptr(inner);
             }
 
@@ -632,9 +632,9 @@ namespace slua {
     
     
 
-    SluaTypePtr TypeChecker::check_binop(Binop& e, SourceLoc loc) {
-        SluaTypePtr lhs = check_expr(*e.lhs);
-        SluaTypePtr rhs = check_expr(*e.rhs);
+    SarnTypePtr TypeChecker::check_binop(Binop& e, SourceLoc loc) {
+        SarnTypePtr lhs = check_expr(*e.lhs);
+        SarnTypePtr rhs = check_expr(*e.rhs);
 
         if (!lhs || !rhs) return make_any();
         if (lhs->kind == TypeKind::ANY || rhs->kind == TypeKind::ANY)
@@ -735,8 +735,8 @@ namespace slua {
     
     
 
-    SluaTypePtr TypeChecker::check_unop(Unop& e, SourceLoc loc) {
-        SluaTypePtr operand = check_expr(*e.operand);
+    SarnTypePtr TypeChecker::check_unop(Unop& e, SourceLoc loc) {
+        SarnTypePtr operand = check_expr(*e.operand);
         if (!operand || operand->kind == TypeKind::ANY) return make_any();
 
         if (e.op == "-") {
@@ -762,20 +762,20 @@ namespace slua {
         return make_any();
     }
 
-    SluaTypePtr TypeChecker::check_call_expr(Call& e, SourceLoc loc) {
+    SarnTypePtr TypeChecker::check_call_expr(Call& e, SourceLoc loc) {
         if (auto* fi = std::get_if<Field>(&e.callee->v)) {
         if (auto* id = std::get_if<Ident>(&fi->table->v)) {
             std::string key = id->name + "." + fi->name;
-            SluaTypePtr fn_t = env_ ? env_->lookup(key) : nullptr;
+            SarnTypePtr fn_t = env_ ? env_->lookup(key) : nullptr;
             if (fn_t && fn_t->kind == TypeKind::FUNC) {
                 for (auto& arg : e.args) check_expr(*arg);
                 return fn_t->return_type ? fn_t->return_type : make_void();
             }
         }
         }
-        SluaTypePtr callee_t = check_expr(*e.callee);
+        SarnTypePtr callee_t = check_expr(*e.callee);
 
-        std::vector<SluaTypePtr> arg_types;
+        std::vector<SarnTypePtr> arg_types;
         for (auto& arg : e.args)
             arg_types.push_back(check_expr(*arg));
 
@@ -809,29 +809,29 @@ namespace slua {
         return callee_t->return_type ? callee_t->return_type : make_void();
     }
 
-    SluaTypePtr TypeChecker::check_method_call(MethodCall& e, SourceLoc loc) {
+    SarnTypePtr TypeChecker::check_method_call(MethodCall& e, SourceLoc loc) {
         check_expr(*e.obj);
         for (auto& arg : e.args) check_expr(*arg);
         return make_any(); 
     }
 
-    SluaTypePtr TypeChecker::check_field(Field& e, SourceLoc loc) {
+    SarnTypePtr TypeChecker::check_field(Field& e, SourceLoc loc) {
         if (auto* id = std::get_if<Ident>(&e.table->v)) {
             std::string method_key = id->name + "." + e.name;
-            SluaTypePtr mfn = env_ ? env_->lookup(method_key) : nullptr;
+            SarnTypePtr mfn = env_ ? env_->lookup(method_key) : nullptr;
             if (mfn) {
                 if (mfn->kind == TypeKind::FUNC)
                     return mfn->return_type ? mfn->return_type : make_void();
                 return make_any();
             }
             
-            SluaTypePtr sym = env_ ? env_->lookup(id->name) : nullptr;
+            SarnTypePtr sym = env_ ? env_->lookup(id->name) : nullptr;
             if (sym && (sym->kind == TypeKind::RECORD ||sym->kind == TypeKind::GENERIC ||sym->kind == TypeKind::ANY)) {
                 return make_any();
             }
         }
         
-        SluaTypePtr obj_t = check_expr(*e.table);
+        SarnTypePtr obj_t = check_expr(*e.table);
         if (!obj_t || obj_t->kind == TypeKind::ANY) return make_any();
 
         if (obj_t->kind == TypeKind::RECORD) {
@@ -841,7 +841,7 @@ namespace slua {
             
             if (!obj_t->name.empty()) {
                 std::string mk = obj_t->name + "." + e.name;
-                SluaTypePtr mfn2 = env_ ? env_->lookup(mk) : nullptr;
+                SarnTypePtr mfn2 = env_ ? env_->lookup(mk) : nullptr;
                 if (mfn2) {
                     if (mfn2->kind == TypeKind::FUNC)
                         return mfn2->return_type ? mfn2->return_type : make_void();
@@ -858,9 +858,9 @@ namespace slua {
         return make_any();
     }
 
-    SluaTypePtr TypeChecker::check_index(Index& e, SourceLoc loc) {
-        SluaTypePtr obj_t = check_expr(*e.table);
-        SluaTypePtr key_t = check_expr(*e.key);
+    SarnTypePtr TypeChecker::check_index(Index& e, SourceLoc loc) {
+        SarnTypePtr obj_t = check_expr(*e.table);
+        SarnTypePtr key_t = check_expr(*e.key);
 
         if (obj_t && obj_t->kind == TypeKind::PTR && obj_t->pointee)
             return obj_t->pointee; 
@@ -872,7 +872,7 @@ namespace slua {
     
     
 
-    SluaTypePtr TypeChecker::check_table_ctor(TableCtor& e, SourceLoc loc) {
+    SarnTypePtr TypeChecker::check_table_ctor(TableCtor& e, SourceLoc loc) {
         
         bool all_named = true;
         for (auto& entry : e.entries) {
@@ -886,13 +886,13 @@ namespace slua {
         }
 
         if (all_named && !e.entries.empty()) {
-            auto rt = std::make_shared<SluaType>();
+            auto rt = std::make_shared<SarnType>();
             rt->kind = TypeKind::RECORD;
             for (auto& entry : e.entries) {
                 if (!entry.key) continue;
                 auto* sl = std::get_if<StrLit>(&(*entry.key)->v);
                 if (sl) {
-                    SluaTypePtr ft = check_expr(*entry.val);
+                    SarnTypePtr ft = check_expr(*entry.val);
                     RecordField rf;
                     rf.name = sl->val;
                     rf.type = ft;
@@ -909,12 +909,12 @@ namespace slua {
     
     
 
-    SluaTypePtr TypeChecker::check_func_expr(FuncExpr& e, SourceLoc loc) {
-        std::vector<SluaTypePtr> param_types;
+    SarnTypePtr TypeChecker::check_func_expr(FuncExpr& e, SourceLoc loc) {
+        std::vector<SarnTypePtr> param_types;
         for (auto& [pname, ptype] : e.params)
             param_types.push_back(resolve_type_node(ptype.get()));
 
-        SluaTypePtr ret = e.ret_type
+        SarnTypePtr ret = e.ret_type
             ? resolve_type_node(e.ret_type.get())
             : make_void();
 
@@ -922,7 +922,7 @@ namespace slua {
         for (size_t i = 0; i < e.params.size(); i++)
             env_->define(e.params[i].first, param_types[i]);
 
-        SluaTypePtr saved_ret = ret_type_;
+        SarnTypePtr saved_ret = ret_type_;
         ret_type_ = ret;
         for (auto& stmt : e.body) check_stmt(*stmt);
         ret_type_ = saved_ret;
@@ -935,9 +935,9 @@ namespace slua {
     
     
 
-    SluaTypePtr TypeChecker::check_alloc_expr(AllocExpr& e, SourceLoc loc) {
-        SluaTypePtr elem = resolve_type_node(e.elem_type.get());
-        SluaTypePtr count_t = check_expr(*e.count);
+    SarnTypePtr TypeChecker::check_alloc_expr(AllocExpr& e, SourceLoc loc) {
+        SarnTypePtr elem = resolve_type_node(e.elem_type.get());
+        SarnTypePtr count_t = check_expr(*e.count);
 
         if (cfg_.mode == CompileMode::STRICT && count_t &&
             !count_t->is_numeric() && count_t->kind != TypeKind::ANY &&
@@ -953,7 +953,7 @@ namespace slua {
     
     
 
-    bool TypeChecker::types_equal(SluaTypePtr a, SluaTypePtr b) {
+    bool TypeChecker::types_equal(SarnTypePtr a, SarnTypePtr b) {
         if (!a || !b) return false;
         if (a->kind != b->kind) return false;
         switch (a->kind) {
@@ -987,12 +987,12 @@ namespace slua {
         }
     }
 
-    bool TypeChecker::is_nullable(SluaTypePtr t) {
+    bool TypeChecker::is_nullable(SarnTypePtr t) {
         if (!t) return true;
         return t->kind == TypeKind::NULL_T || t->kind == TypeKind::ANY;
     }
 
-    bool TypeChecker::is_assignable(SluaTypePtr from, SluaTypePtr to,
+    bool TypeChecker::is_assignable(SarnTypePtr from, SarnTypePtr to,
                                     SourceLoc loc, const std::string& ctx) {
         if (!from || !to) return true;
         if (from->is_error() || to->is_error()) return true; 
