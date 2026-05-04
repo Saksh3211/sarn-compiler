@@ -95,10 +95,6 @@ namespace sarn {
         delete old;
     }
 
-    
-    
-    
-
     void TypeChecker::install_builtins() {
         
         env_->define("print",
@@ -215,10 +211,6 @@ namespace sarn {
             return make_any();
         }, t->v);
     }
-
-    
-    
-    
 
     bool TypeChecker::check(Module& mod) {
         push_env();
@@ -627,10 +619,6 @@ namespace sarn {
 
         return result ? result : make_any();
     }
-
-    
-    
-    
 
     SarnTypePtr TypeChecker::check_binop(Binop& e, SourceLoc loc) {
         SarnTypePtr lhs = check_expr(*e.lhs);

@@ -73,6 +73,14 @@ Directives detect_directives(const std::string& source,
 
         if (line.substr(0, 4) != "--!!") break;
 
+        size_t semi = line.find(';');
+        if (semi != std::string::npos) {
+            line = line.substr(0, semi);
+        }
+        while (!line.empty() && (line.back() == ' ' || line.back() == '\t')) {
+            line.pop_back();
+        }
+
         if (line == "--!!strict" || line == "--!!type:strict") {
             d.type = CompileMode::STRICT;
             found_type = true;
@@ -130,12 +138,12 @@ static CompileMode detect_mode_unused_sentinel(const std::string& source, const 
     if (line == "--!!nonstrict") return CompileMode::NONSTRICT;
 
     if (line.substr(0, 4) == "--!!") {
-        fprintf(stderr, "[E0003] %s:1:1 — malformed mode directive: '%s'\n",
+        fprintf(stderr, "[E0003] %s:1:1 ï¿½ malformed mode directive: '%s'\n",
                 filename.c_str(), line.c_str());
         exit(1);
     }
 
-    fprintf(stderr, "[W0001] %s:1:1 — missing mode directive, defaulting to nonstrict\n",
+    fprintf(stderr, "[W0001] %s:1:1 ï¿½ missing mode directive, defaulting to nonstrict\n",
             filename.c_str());
     return CompileMode::NONSTRICT;
 }
