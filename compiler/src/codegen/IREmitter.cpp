@@ -1,4 +1,4 @@
-#ifdef SARN_HAS_LLVM
+﻿#ifdef SARN_HAS_LLVM
 
 #include "sarn/IREmitter.h"
 #include <llvm/IR/Constants.h>
@@ -130,7 +130,7 @@ llvm::Type* IREmitter::llvm_type(const TypeNode* t) {
 llvm::Type* IREmitter::tagvalue_type() {
     static llvm::StructType* tv = nullptr;
     if (!tv) {
-        tv = llvm::StructType::create(ctx_, "sarnValue");
+        tv = llvm::StructType::create(ctx_, "SluaValue");
         tv->setBody({
             llvm::Type::getInt8Ty(ctx_),
             llvm::ArrayType::get(llvm::Type::getInt8Ty(ctx_), 7),

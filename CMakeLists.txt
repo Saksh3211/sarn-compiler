@@ -28,3 +28,14 @@ endif()
 
 add_subdirectory(runtime)
 add_subdirectory(compiler)
+
+add_executable(sarn sarn.cpp)
+target_link_libraries(sarn PRIVATE shlwapi shell32 comctl32 user32 gdi32 advapi32 kernel32 ws2_32)
+if(MSVC)
+    target_compile_options(sarn PRIVATE /permissive- /EHsc /O2)
+else()
+    target_compile_options(sarn PRIVATE -O2)
+endif()
+set_target_properties(sarn PROPERTIES
+    VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+)
