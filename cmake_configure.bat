@@ -82,7 +82,7 @@ if exist "build\compiler\Release\sarnc.exe" (
     echo Compiler: build\compiler\sarnc.exe
 )
 echo.
-echo Test with: .\sarn.ps1 Sarn-Run learn-sarn\examples\...
+echo Test with: .\sarn.exe run sarn\examples\...
 echo.
 pause
 
