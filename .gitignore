@@ -1,6 +1,9 @@
 .packages/
 sarn/
 
+*.spec
+*.pyc
+
 examples/*.ll
 examples/*.exe
 

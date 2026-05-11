@@ -317,13 +317,13 @@ int main(int argc, char** argv) {
             if (slash != std::string::npos) base_dir = base_dir.substr(0, slash + 1);
             else base_dir = "";
             std::vector<std::unique_ptr<sarn::Stmt>> expanded;
-            static const std::unordered_set<std::string> slua_builtins = {
+            static const std::unordered_set<std::string> sarn_builtins = {
                 "io","math","os","string","stdata","table","fs","random",
                 "datetime","path","process","json","net","sync","regex",
                 "crypto","buf","thread","vec","scene","http","stdgui"
             };
-            const char* slua_root_env = getenv("SLUA_ROOT");
-            std::string slua_root = slua_root_env ? slua_root_env : ".";
+            const char* sarn_root_env = getenv("SARN_ROOT");
+            std::string sarn_root = sarn_root_env ? sarn_root_env : ".";
             for (auto& s : m.stmts) {
                 if (auto* fi = std::get_if<sarn::FileImportDecl>(&s->v)) {
                     std::string fpath = base_dir + fi->path;
@@ -337,10 +337,10 @@ int main(int argc, char** argv) {
                     for (auto& fs : fmod->stmts)
                         expanded.push_back(std::move(fs));
                 } else if (auto* id = std::get_if<sarn::ImportDecl>(&s->v)) {
-                    if (slua_builtins.count(id->module_name) == 0) {
+                    if (sarn_builtins.count(id->module_name) == 0) {
                         std::vector<std::string> search = {
                             base_dir + ".packages/" + id->module_name + "/__init__.sarn",
-                            slua_root + "/.packages/" + id->module_name + "/__init__.sarn"
+                            sarn_root + "/.packages/" + id->module_name + "/__init__.sarn"
                         };
                         bool pkg_found = false;
                         for (auto& fpath : search) {

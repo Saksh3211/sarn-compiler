@@ -167,7 +167,7 @@ Type inference, dynamic typing, good for prototyping.
 .\cmake_configure.bat
 ```
 
-This generates `build/compiler/sluac.exe` - the S Lua compiler.
+This generates `build/compiler/sarnc.exe` - the S Lua compiler.
 
 ## License
 

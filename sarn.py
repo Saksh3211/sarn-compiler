@@ -111,7 +111,7 @@ def get_pkg_libs() -> list[str]:
     for sub in pr.iterdir():
         if not sub.is_dir():
             continue
-        if not (sub / "__init__.sarn").exists() and not (sub / "__init__.slua").exists():
+        if not (sub / "__init__.sarn").exists() and not (sub / "__init__.sarn").exists():
             continue
         name = sub.name
         if compile_pkg_c(sub, name):
@@ -141,7 +141,12 @@ def do_build(src: str, out_exe: str = "", is_static=False, run_after=False) -> b
 
     ll_file  = str(bin_dir / f"{stem}.ll")
     obj_file = str(bin_dir / f"{stem}.obj")
-    exe_file = out_exe if out_exe else str(bin_dir / f"{stem}.exe")
+    if out_exe:
+        exe_file = str(Path(out_exe).resolve())
+        if sys.platform == "win32" and not exe_file.lower().endswith(".exe"):
+            exe_file += ".exe"
+    else:
+        exe_file = str(bin_dir / f"{stem}.exe")
 
     info(f"Compiling  {src_path.name}")
     rc, _ = run(f'"{sarnc}" "{src_path}" -o "{ll_file}"')
@@ -167,7 +172,7 @@ def do_build(src: str, out_exe: str = "", is_static=False, run_after=False) -> b
     nodef    = "-Wl,/NODEFAULTLIB:libcmt"
 
     if is_static:
-        crt = "-Wl,/NODEFAULTLIB:msvcrt -Wl,/NODEFAULTLIB:msvcrtd -Wl,/NODEFAULTLIB:ucrt -Wl,/NODEFAULTLIB:vcruntime -lmt -libucrt -lvcruntime"
+        crt = "-Wl,/NODEFAULTLIB:msvcrt -Wl,/NODEFAULTLIB:msvcrtd -Wl,/NODEFAULTLIB:ucrt -Wl,/NODEFAULTLIB:vcruntime -llibcmt -llibucrt -llibvcruntime"
     else:
         crt = "-lmsvcrt -lucrt -lvcruntime"
 
@@ -245,24 +250,6 @@ def cmd_list():
         if sub.is_dir():
             print(f"  {W}{sub.name}{X}")
 
-def cmd_clean():
-    bin_dir = sarn_root() / "bin"
-    if not bin_dir.exists():
-        info("No bin directory to clean.")
-        return
-    removed = 0
-    for ext in ["*.exe", "*.ll", "*.dll", "*.obj"]:
-        for f in bin_dir.glob(ext):
-            try:
-                f.unlink()
-                removed += 1
-            except Exception as e:
-                warn(f"Failed to delete {f.name}: {e}")
-    if removed > 0:
-        ok(f"Cleaned {removed} file(s) from bin/")
-    else:
-        info("No build artifacts found to clean.")
-
 def cmd_newpkg(name: str):
     Path(name).mkdir(exist_ok=True)
     (Path(name) / "__init__.sarn").write_text(
@@ -339,8 +326,7 @@ def print_usage():
     print(f"{C}Run / Build:{X}")
     print("  run    <file.sarn>                     Compile and run immediately")
     print("  build  <file.sarn> [-o out.exe]         Build dynamic exe")
-    print("  build  <file.sarn> --static [-o out]    Build fully static exe")
-    print("  clean                                  Remove build artifacts (.exe, .ll, .dll, .obj)\n")
+    print("  build  <file.sarn> --static [-o out]    Build fully static exe\n")
     print(f"{C}Packages:{X}")
     print("  install <name|url>   Install from registry or git URL")
     print("  remove  <name>       Remove installed package")
@@ -358,7 +344,7 @@ def main():
 
     root = sarn_root()
     os.environ["SARN_ROOT"] = str(root)
-    os.environ["SLUA_ROOT"]  = str(root)
+    os.environ["SARN_ROOT"]  = str(root)
 
     args = sys.argv[1:]
 
@@ -370,7 +356,6 @@ def main():
     if cmd in ("version",):           print(f"Sarn v{SARN_VER}"); return
     if cmd in ("help", "--help", "-h"): print_usage(); return
     if cmd == "list":                  cmd_list(); return
-    if cmd == "clean":                 cmd_clean(); return
     if cmd == "sarn":                  sys.exit(cmd_repl())
 
     if cmd == "install":

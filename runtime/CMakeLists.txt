@@ -5,8 +5,8 @@ file(GLOB_RECURSE STDLIB_MODULE_SOURCES
 
 add_library(libsarn STATIC
     ${RUNTIME_SOURCES}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../stdlib/slua_stdlib.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../stdlib/modules/slua_registry.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../stdlib/sarn_stdlib.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../stdlib/modules/sarn_registry.c
     ${STDLIB_MODULE_SOURCES})
 
 target_include_directories(libsarn PUBLIC include)
@@ -17,6 +17,7 @@ set_target_properties(libsarn PROPERTIES OUTPUT_NAME sarn)
 
 if(MSVC)
     target_compile_options(libsarn PRIVATE /W3 /WX-)
+    set_property(TARGET libsarn PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
 else()
     target_compile_options(libsarn PRIVATE -Wall -Wextra -Wno-unused-parameter)
 endif()
@@ -24,9 +25,9 @@ endif()
 find_package(raylib CONFIG QUIET)
 if(raylib_FOUND)
     message(STATUS "raylib found")
-    target_sources(libsarn PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../stdlib/slua_raylib.c)
+    target_sources(libsarn PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../stdlib/sarn_raylib.c)
     target_link_libraries(libsarn PUBLIC raylib)
-    target_compile_definitions(libsarn PUBLIC SLUA_HAS_RAYLIB=1)
+    target_compile_definitions(libsarn PUBLIC SARN_HAS_RAYLIB=1)
 else()
     message(STATUS "raylib not found")
 endif()
