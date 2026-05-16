@@ -275,8 +275,7 @@ def cmd_repl():
 
     font = ("Consolas", 12)
     editor = scrolledtext.ScrolledText(root, font=font, bg="#1e1e2e", fg="#cdd6f4",
-                                       insertbackground="#cdd6f4", wrap=tk.NONE,
-                                       undo=True, tabs=("1c",))
+        insertbackground="#cdd6f4", wrap=tk.NONE,undo=True, tabs=("1c",))
     editor.insert("1.0", '--!!type:strict\n\nfunction main(): int\n    print("Hello, Sarn!")\n    return 0\nend\n')
     editor.pack(fill=tk.BOTH, expand=True)
 
@@ -286,7 +285,7 @@ def cmd_repl():
     editor.bind("<Tab>", on_tab)
 
     status = tk.Label(root, text="Ready", bg="#181825", fg="#89b4fa",
-                      font=("Consolas", 10), anchor="w", padx=8)
+        font=("Consolas", 10), anchor="w", padx=8)
     status.pack(fill=tk.X, side=tk.BOTTOM)
 
     compile_lock = threading.Lock()
@@ -311,9 +310,8 @@ def cmd_repl():
 
     btn_frame = tk.Frame(root, bg="#181825")
     btn_frame.pack(fill=tk.X, side=tk.BOTTOM)
-    tk.Button(btn_frame, text="▶ Run (F5)", command=run_code,
-              bg="#89b4fa", fg="#1e1e2e", font=("Consolas", 10, "bold"),
-              relief=tk.FLAT, padx=12, pady=4).pack(side=tk.LEFT, padx=4, pady=4)
+    tk.Button(btn_frame, text="▶ Run (F5)", command=run_code,bg="#89b4fa", fg="#1e1e2e", font=("Consolas", 10, "bold"),
+        relief=tk.FLAT, padx=12, pady=4).pack(side=tk.LEFT, padx=4, pady=4)
 
     print(f"\n{C}{B}  Sarn REPL v{SARN_VER}{X}")
     print(f"  Editor open. Press F5 or click Run inside the window.\n")
@@ -353,10 +351,10 @@ def main():
 
     cmd = args[0]
 
-    if cmd in ("version",):           print(f"Sarn v{SARN_VER}"); return
+    if cmd in ("version" or "-v",):  print(f"Sarn v{SARN_VER}"); return
     if cmd in ("help", "--help", "-h"): print_usage(); return
-    if cmd == "list":                  cmd_list(); return
-    if cmd == "sarn":                  sys.exit(cmd_repl())
+    if cmd == "list":  cmd_list(); return
+    if cmd == "sarn": sys.exit(cmd_repl())
 
     if cmd == "install":
         if len(args) < 2: err("Usage: sarn install <pkg|url>"); sys.exit(1)
@@ -376,14 +374,13 @@ def main():
 
     if cmd == "run":
         if len(args) < 2: err("Usage: sarn run <file.sarn>"); sys.exit(1)
-        sys.exit(0 if do_build(args[1], run_after=True) else 1)
 
     if cmd == "build":
         if len(args) < 2: err("Usage: sarn build <file.sarn> [--static] [-o out.exe]"); sys.exit(1)
         out_exe = ""; is_static = False
         i = 2
         while i < len(args):
-            if args[i] == "--static":       is_static = True
+            if args[i] == "--static": is_static = True
             elif args[i] == "-o" and i+1 < len(args): out_exe = args[i+1]; i += 1
             i += 1
         sys.exit(0 if do_build(args[1], out_exe=out_exe, is_static=is_static) else 1)
