@@ -1,7 +1,6 @@
 .packages/
 sarn/
 
-*.spec
 *.pyc
 
 examples/*.ll
@@ -10,14 +9,6 @@ examples/*.exe
 tools/lsp/sarn-lsp/build/*
 
 build/*
-
-!build/compiler/
-!build/compiler/Release/sarnc.exe
-build/compiler/*.vcxproj
-build/compiler/*.filters
-build/compiler/*.cmake
-build/compiler/sarnc.dir/
-build/compiler/CmakeFiles/
 
 
 *.ll
@@ -34,6 +25,7 @@ build/compiler/CmakeFiles/
 cache/
 
 bin/*
+desktop.ini
 
 node_modules/
 npm-debug.log

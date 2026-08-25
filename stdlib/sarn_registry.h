@@ -9,11 +9,12 @@ typedef struct {
     const char*      name;
     SarnModuleInitFn init;
     SarnModuleFreeFn free_fn;
-} SarnModuleEntry;
-int32_t            sarn_module_register(const char* name, SarnModuleInitFn init, SarnModuleFreeFn free_fn);
-SarnModuleEntry*   sarn_module_find(const char* name);
-int                sarn_module_count(void);
-SarnModuleEntry*   sarn_module_at(int index);
+} 
+SarnModuleEntry;
+int32_t sarn_module_register(const char* name, SarnModuleInitFn init, SarnModuleFreeFn free_fn);
+SarnModuleEntry* sarn_module_find(const char* name);
+int sarn_module_count(void);
+SarnModuleEntry* sarn_module_at(int index);
 #ifdef __cplusplus
 }
 #endif

@@ -2503,7 +2503,12 @@ llvm::Value* IREmitter::emit_index(Index& e, SourceLoc loc, TypeNode* result_typ
     if (!base || !key) return nullptr;
 
     auto* i64 = llvm::Type::getInt64Ty(ctx_);
-    key = coerce(key, i64, {});
+
+    // Check if key is a string BEFORE coercing it to i64
+    bool key_is_str = key->getType()->isPointerTy();
+
+    if (!key_is_str)
+        key = coerce(key, i64, {});
 
     std::string inferred;
     if (result_type) {
@@ -2511,11 +2516,13 @@ llvm::Value* IREmitter::emit_index(Index& e, SourceLoc loc, TypeNode* result_typ
             inferred = p->name;
     }
 
-    bool key_is_str = key->getType()->isPointerTy();
     std::string pfx = key_is_str ? "sarn_tbl_sget" : "sarn_tbl_iget";
 
-    if (!key_is_str)
+    if (!key_is_str) {
         key = builder_.CreateSExt(key, i64);
+        // Convert 0-based user indices to 1-based table storage
+        key = builder_.CreateAdd(key, llvm::ConstantInt::get(i64, 1));
+    }
 
     std::string suffix = "_i64";
     if (inferred == "number") suffix = "_f64";

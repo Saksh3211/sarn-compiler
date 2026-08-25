@@ -167,10 +167,7 @@ SarnValue sarn_string_new(const char* data, int32_t len) {
     return v;
 }
 
-double sarn_math_floor(double x) { return floor(x); }
-double sarn_math_ceil (double x) { return ceil(x);  }
 double sarn_math_sqrt (double x) { return sqrt(x);  }
-double sarn_math_abs  (double x) { return fabs(x);  }
 double sarn_math_pow  (double b, double e) { return pow(b, e); }
 double sarn_math_min  (double a, double b) { return a < b ? a : b; }
 double sarn_math_max  (double a, double b) { return a > b ? a : b; }

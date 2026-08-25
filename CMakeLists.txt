@@ -16,6 +16,10 @@ if(MSVC)
     add_compile_definitions(WIN32 _WINDOWS NOMINMAX _CRT_SECURE_NO_WARNINGS)
 endif()
 
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    add_compile_definitions(_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH)
+endif()
+
 # LLVM is optional
 find_package(LLVM CONFIG QUIET)
 if(LLVM_FOUND)

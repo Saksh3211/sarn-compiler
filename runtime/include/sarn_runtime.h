@@ -72,6 +72,16 @@ int32_t    sarn_table_length(SarnTable* t);
 void       sarn_table_insert(SarnTable* t, SarnValue val);
 SarnValue  sarn_table_remove(SarnTable* t, int32_t idx);
 
+// Table setter helpers (called by compiler for table literals)
+void sarn_tbl_iset_i64(SarnTable* t, int64_t key, int64_t val);
+void sarn_tbl_iset_f64(SarnTable* t, int64_t key, double val);
+void sarn_tbl_iset_str(SarnTable* t, int64_t key, const char* val);
+void sarn_tbl_iset_bool(SarnTable* t, int64_t key, int32_t val);
+void sarn_tbl_sset_i64(SarnTable* t, const char* key, int64_t val);
+void sarn_tbl_sset_f64(SarnTable* t, const char* key, double val);
+void sarn_tbl_sset_str(SarnTable* t, const char* key, const char* val);
+void sarn_tbl_sset_bool(SarnTable* t, const char* key, int32_t val);
+
 static inline SarnValue sarn_null(void)       { SarnValue v = {0}; return v; }
 static inline SarnValue sarn_bool(int b)      { SarnValue v; v.tag = SARN_TAG_BOOL;  v.val.bits = (uint64_t)!!b; return v; }
 static inline SarnValue sarn_int(int64_t i)   { SarnValue v; v.tag = SARN_TAG_INT;   v.val.ival = i;  return v; }
@@ -97,7 +107,6 @@ const char* sarn_typename(SarnValue v);
 _Noreturn void sarn_panic(const char* msg, const char* file, int line);
 #define SARN_PANIC(msg) sarn_panic((msg), __FILE__, __LINE__)
 
-int         sarn_str_len(SarnString* s);
 SarnString* sarn_str_from_cstr(const char* cstr);
 const char* sarn_str_cstr(SarnString* s);
 
