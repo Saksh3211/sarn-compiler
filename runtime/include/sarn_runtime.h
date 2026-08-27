@@ -61,6 +61,7 @@ extern SarnAllocator sarn_sys_allocator;
 
 void* sarn_alloc(size_t bytes);
 void  sarn_free(void* ptr);
+void* sarn_ptr_clone(const void* ptr, size_t bytes);
 void* sarn_alloc_zeroed(size_t bytes);
 void* sarn_realloc(void* ptr, size_t new_size);
 

@@ -23,6 +23,13 @@ SarnAllocator sarn_sys_allocator = {
 
 void* sarn_alloc       (size_t bytes)              { return malloc(bytes); }
 void  sarn_free        (void* ptr)                 { free(ptr); }
+void* sarn_ptr_clone  (const void* ptr, size_t bytes) {
+    if (!ptr) return NULL;
+    void* copy = malloc(bytes);
+    if (!copy) SARN_PANIC("out of memory");
+    memcpy(copy, ptr, bytes);
+    return copy;
+}
 void* sarn_alloc_zeroed(size_t bytes)              { return calloc(1, bytes); }
 void* sarn_realloc     (void* ptr, size_t new_size){ return realloc(ptr, new_size); }
 

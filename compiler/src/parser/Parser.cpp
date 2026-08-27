@@ -673,7 +673,8 @@ ExprPtr Parser::parse_mul_expr() {
     auto lhs = parse_unary_expr();
     while (check(TokenKind::TK_STAR)    ||
         check(TokenKind::TK_SLASH)   ||
-        check(TokenKind::TK_PERCENT)) {
+        check(TokenKind::TK_PERCENT) ||
+        check(TokenKind::TK_CARET)) {
         SourceLoc loc = cur_.loc;
         std::string op = advance().text;
         auto rhs = parse_unary_expr();
@@ -819,6 +820,13 @@ ExprPtr Parser::parse_primary_expr() {
             e->v = StrLit{cur_.text};
             advance();
             return e;
+
+        case TokenKind::TK_IMPORT: {
+            advance();
+            e->v = ModuleImportExpr{
+                expect(TokenKind::TK_IDENT, "module name").text};
+            return e;
+        }
 
         case TokenKind::TK_IDENT:
             e->v = Ident{cur_.text};

@@ -459,6 +459,7 @@ void IREmitter::declare_runtime() {
     declare("sarn_tbl_merge",        i8p,   {i8p, i8p});
     declare("sarn_tbl_slice",        i8p,   {i8p, i32, i32});
     declare("sarn_tbl_reverse",      voidT, {i8p});
+    declare("sarn_ptr_clone",        i8p,   {i8p, i64});
 }
 
 llvm::Function* IREmitter::get_runtime_fn(const std::string& name) {
@@ -615,8 +616,17 @@ void IREmitter::emit_stmt(Stmt& s) {
 }
 
 void IREmitter::emit_local_decl(LocalDecl& s, SourceLoc loc) {
-    llvm::Value* val = nullptr;
+    bool is_module_import = false;
     if (s.init) {
+        if (auto* module = std::get_if<ModuleImportExpr>(&s.init->v)) {
+            module_aliases_[s.name] = module->module_name;
+            is_module_import = true;
+        }
+    }
+    llvm::Value* val = nullptr;
+    if (is_module_import) {
+        return;
+    } else if (s.init) {
         if (auto* tc = std::get_if<TableCtor>(&s.init->v)) {
             llvm::Type* ty = s.type_ann ? llvm_type(s.type_ann.get()) : nullptr;
             if (ty && ty->isStructTy()) {
@@ -668,6 +678,13 @@ void IREmitter::emit_local_decl(LocalDecl& s, SourceLoc loc) {
     if (val) {
         val = coerce(val, ty, loc);
         builder_.CreateStore(val, slot);
+        if (cfg_.mem_mode == MemoryMode::Manual && ty->isPointerTy()) {
+            if (auto* id = s.init ? std::get_if<Ident>(&s.init->v) : nullptr) {
+                llvm::Value* source = env_ ? env_->lookup(id->name) : nullptr;
+                if (source) builder_.CreateStore(llvm::ConstantPointerNull::get(
+                    llvm::cast<llvm::PointerType>(ty)), source);
+            }
+        }
     } else {
         builder_.CreateStore(llvm::Constant::getNullValue(ty), slot);
     }
@@ -1057,6 +1074,13 @@ void IREmitter::emit_assign(Assign& s, SourceLoc loc) {
         rhs = coerce(rhs, gv->getValueType(), loc);
 
     builder_.CreateStore(rhs, lhs);
+    if (cfg_.mem_mode == MemoryMode::Manual && rhs->getType()->isPointerTy()) {
+        if (auto* id = std::get_if<Ident>(&s.value->v)) {
+            llvm::Value* source = env_ ? env_->lookup(id->name) : nullptr;
+            if (source) builder_.CreateStore(llvm::ConstantPointerNull::get(
+                llvm::cast<llvm::PointerType>(rhs->getType())), source);
+        }
+    }
 }
 
 void IREmitter::emit_call_stmt(CallStmt& s) {
@@ -1214,6 +1238,11 @@ llvm::Value* IREmitter::emit_expr(Expr& e) {
             return builder_.CreateGlobalStringPtr("any");
         }
 
+        else if constexpr (std::is_same_v<T, ModuleImportExpr>) {
+            return llvm::ConstantPointerNull::get(
+                llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(ctx_)));
+        }
+
         else if constexpr (std::is_same_v<T, FuncExpr>) {
             static int anon_id = 0;
             std::string name = "__anon_" + std::to_string(anon_id++);
@@ -1346,6 +1375,15 @@ llvm::Value* IREmitter::emit_binop(Binop& e, SourceLoc loc) {
         return builder_.CreateFDiv(lhs, rhs);
     }
     if (e.op == "%")  return is_float ? builder_.CreateFRem(lhs, rhs) : builder_.CreateSRem(lhs, rhs);
+    if (e.op == "^") {
+        auto* fn = get_runtime_fn("sarn_pow");
+        if (!fn) return llvm::ConstantFP::get(llvm::Type::getDoubleTy(ctx_), 0.0);
+        if (!lhs->getType()->isDoubleTy())
+            lhs = builder_.CreateSIToFP(lhs, llvm::Type::getDoubleTy(ctx_));
+        if (!rhs->getType()->isDoubleTy())
+            rhs = builder_.CreateSIToFP(rhs, llvm::Type::getDoubleTy(ctx_));
+        return builder_.CreateCall(fn, {lhs, rhs}, "pow");
+    }
 
     if (e.op == "==" || e.op == "~=") {
         llvm::Value* cmp = is_float ? builder_.CreateFCmpOEQ(lhs, rhs) : builder_.CreateICmpEQ(lhs, rhs);
@@ -1418,6 +1456,29 @@ llvm::Value* IREmitter::emit_unop(Unop& e, SourceLoc loc) {
 }
 // here the umm, all the libs -=-========-=-=-=-=-=-=-=-=-=-=-=-=-=-=-========-=-=-=-=-=-=-=-=-=-=-=
 llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
+    if (auto* id = std::get_if<Ident>(&e.callee->v)) {
+        if ((id->name == "ptr_clone" || id->name == "ptr_move") &&
+            e.args.size() == 1) {
+            llvm::Value* value = emit_expr(*e.args[0]);
+            if (!value) return nullptr;
+            if (id->name == "ptr_move") {
+                return value;
+            }
+
+            if (!value->getType()->isPointerTy()) return value;
+            auto* clone_fn = get_runtime_fn("sarn_ptr_clone");
+            if (!clone_fn) return value;
+            uint64_t bytes = 8;
+            llvm::Value* raw = value;
+            llvm::Type* i8p = clone_fn->getFunctionType()->getParamType(0);
+            if (raw->getType() != i8p)
+                raw = builder_.CreateBitCast(raw, i8p, "clone_src");
+            llvm::Value* size = llvm::ConstantInt::get(
+                clone_fn->getFunctionType()->getParamType(1), bytes);
+            llvm::Value* copy = builder_.CreateCall(clone_fn, {raw, size}, "ptr_clone");
+            return builder_.CreateBitCast(copy, value->getType(), "typed_clone");
+        }
+    }
     if (auto* fld = std::get_if<Field>(&e.callee->v)) {
         if (auto* base_id = std::get_if<Ident>(&fld->table->v)) {
             std::string full_name = base_id->name + "." + fld->name;
@@ -1454,8 +1515,24 @@ llvm::Value* IREmitter::emit_call_expr(Call& e, SourceLoc loc) {
 
     if (auto* fi = std::get_if<Field>(&e.callee->v)) {
         if (auto* mod_id = std::get_if<Ident>(&fi->table->v)) {
-            const std::string& mod  = mod_id->name;
+            std::string mod = mod_id->name;
+            auto alias = module_aliases_.find(mod);
+            if (alias != module_aliases_.end())
+                mod = alias->second;
             const std::string& meth = fi->name;
+
+            auto module_fn = functions_.find(mod + "." + meth);
+            if (module_fn != functions_.end()) {
+                llvm::Function* fn = module_fn->second;
+                auto* ftype = fn->getFunctionType();
+                std::vector<llvm::Value*> args;
+                for (size_t i = 0; i < e.args.size() &&
+                           i < ftype->getNumParams(); i++) {
+                    llvm::Value* arg = emit_expr(*e.args[i]);
+                    if (arg) args.push_back(coerce(arg, ftype->getParamType((unsigned)i), loc));
+                }
+                return builder_.CreateCall(fn, args, mod + "_" + meth);
+            }
 
             if (mod == "io") {
                 if (meth == "read_line") {

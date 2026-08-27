@@ -95,6 +95,23 @@ namespace sarn {
         delete old;
     }
 
+    bool TypeChecker::is_moved(const Expr& e) const {
+        auto* id = std::get_if<Ident>(&e.v);
+        return id && moved_vars_.count(id->name) != 0;
+    }
+
+    void TypeChecker::mark_moved(const Expr& e) {
+        if (auto* id = std::get_if<Ident>(&e.v)) {
+            moved_vars_.insert(id->name);
+            freed_vars_.erase(id->name);
+        }
+    }
+
+    void TypeChecker::mark_freed(const Expr& e) {
+        if (auto* id = std::get_if<Ident>(&e.v))
+            freed_vars_.insert(id->name);
+    }
+
     void TypeChecker::install_builtins() {
         
         env_->define("print",
@@ -115,6 +132,11 @@ namespace sarn {
         
         env_->define("assert",
             make_func({make_bool(), make_string()}, make_void()));
+
+        env_->define("ptr_clone",
+            make_func({make_any()}, make_any()));
+        env_->define("ptr_move",
+            make_func({make_any()}, make_any()));
 
         
         env_->define("type",
@@ -321,6 +343,15 @@ namespace sarn {
         }
 
         env_->define(s.name, final_type);
+        if (s.init) {
+            if (auto* module = std::get_if<ModuleImportExpr>(&s.init->v))
+                env_->module_aliases[module->module_name] = s.name;
+        }
+        if (cfg_.mem_mode == MemoryMode::Manual && s.init &&
+            final_type && final_type->kind == TypeKind::PTR &&
+            std::get_if<Ident>(&s.init->v)) {
+            mark_moved(*s.init);
+        }
     }
 
     void TypeChecker::check_global_decl(GlobalDecl& s, SourceLoc loc) {
@@ -483,6 +514,13 @@ namespace sarn {
             
             if (cfg_.mode == CompileMode::STRICT)
                 is_assignable(rhs_type, lhs_type, loc, "assignment");
+
+            if (cfg_.mem_mode == MemoryMode::Manual &&
+                lhs_type->kind == TypeKind::PTR &&
+                std::get_if<Ident>(&s.target->v) &&
+                std::get_if<Ident>(&s.value->v)) {
+                mark_moved(*s.value);
+            }
         }
     }
 
@@ -523,6 +561,15 @@ namespace sarn {
             diag_.error("E0051",
                 "free requires a pointer, got '" + t->to_string() + "'", loc);
         }
+        if (cfg_.mem_mode == MemoryMode::Manual && is_moved(*s.ptr)) {
+            diag_.error("E0054", "cannot free a moved pointer", loc);
+        } else if (cfg_.mem_mode == MemoryMode::Manual &&
+                   std::get_if<Ident>(&s.ptr->v) &&
+                   freed_vars_.count(std::get<Ident>(s.ptr->v).name) != 0) {
+            diag_.error("E0056", "double free of pointer", loc);
+        } else if (cfg_.mem_mode == MemoryMode::Manual) {
+            mark_freed(*s.ptr);
+        }
     }
 
     void TypeChecker::check_panic_stmt(PanicStmt& s) {
@@ -553,9 +600,17 @@ namespace sarn {
             else if constexpr (std::is_same_v<T, IntLit>)   return make_int();
             else if constexpr (std::is_same_v<T, FloatLit>) return make_number();
             else if constexpr (std::is_same_v<T, StrLit>)   return make_string();
+            else if constexpr (std::is_same_v<T, ModuleImportExpr>) {
+                return make_any();
+            }
 
             else if constexpr (std::is_same_v<T, Ident>) {
                 SarnTypePtr t = env_ ? env_->lookup(v.name) : nullptr;
+                if (cfg_.mem_mode == MemoryMode::Manual &&
+                    moved_vars_.count(v.name) != 0 && t &&
+                    t->kind == TypeKind::PTR) {
+                    diag_.error("E0053", "use of moved pointer '" + v.name + "'", e.loc);
+                }
                 if (!t) return make_any(); 
                 return t;
             }
@@ -615,7 +670,7 @@ namespace sarn {
 
         
         
-        e.inferred_type = nullptr; 
+        e.inferred_type = nullptr;
 
         return result ? result : make_any();
     }
@@ -631,7 +686,8 @@ namespace sarn {
         const std::string& op = e.op;
 
         
-        if (op == "+" || op == "-" || op == "*" || op == "/" || op == "%") {
+        if (op == "+" || op == "-" || op == "*" || op == "/" ||
+            op == "%" || op == "^") {
         
         if (lhs->kind == TypeKind::PTR && (rhs->kind == TypeKind::INT || rhs->kind == TypeKind::NUMBER)) return lhs;
         if ((lhs->kind == TypeKind::INT || lhs->kind == TypeKind::NUMBER) && rhs->kind == TypeKind::PTR) return rhs;
@@ -751,6 +807,25 @@ namespace sarn {
     }
 
     SarnTypePtr TypeChecker::check_call_expr(Call& e, SourceLoc loc) {
+        if (auto* id = std::get_if<Ident>(&e.callee->v)) {
+            if (id->name == "ptr_clone" || id->name == "ptr_move") {
+                if (e.args.size() != 1) {
+                    if (cfg_.mode == CompileMode::STRICT)
+                        diag_.error("E0071", id->name + " expects one pointer", loc);
+                    return make_any();
+                }
+                SarnTypePtr arg_type = check_expr(*e.args[0]);
+                if (cfg_.mode == CompileMode::STRICT && arg_type &&
+                    arg_type->kind != TypeKind::PTR && arg_type->kind != TypeKind::ANY &&
+                    !arg_type->is_error()) {
+                    diag_.error("E0055", id->name + " requires a pointer, got '" +
+                        arg_type->to_string() + "'", loc);
+                }
+                if (id->name == "ptr_move" && cfg_.mem_mode == MemoryMode::Manual)
+                    mark_moved(*e.args[0]);
+                return arg_type ? arg_type : make_any();
+            }
+        }
         if (auto* fi = std::get_if<Field>(&e.callee->v)) {
         if (auto* id = std::get_if<Ident>(&fi->table->v)) {
             std::string key = id->name + "." + fi->name;
@@ -805,6 +880,12 @@ namespace sarn {
 
     SarnTypePtr TypeChecker::check_field(Field& e, SourceLoc loc) {
         if (auto* id = std::get_if<Ident>(&e.table->v)) {
+            std::string alias = env_ ? env_->module_alias_for(id->name) : "";
+            if (!alias.empty() && alias != id->name && cfg_.mode == CompileMode::STRICT) {
+                diag_.error("E0081", "module '" + id->name +
+                    "' was renamed to '" + alias + "'", loc);
+                return make_error();
+            }
             std::string method_key = id->name + "." + e.name;
             SarnTypePtr mfn = env_ ? env_->lookup(method_key) : nullptr;
             if (mfn) {
