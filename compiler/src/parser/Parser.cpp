@@ -529,12 +529,25 @@ StmtPtr Parser::parse_import_decl() {
     SourceLoc loc = advance().loc;
     if (check(TokenKind::TK_LPAREN)) {
         advance();
-        std::string path = expect(TokenKind::TK_STRING_LIT, "import path").text;
-        expect(TokenKind::TK_RPAREN, "import path");
-        auto s = std::make_unique<Stmt>();
-        s->v   = FileImportDecl{path};
-        s->loc = loc;
-        return s;
+        if (check(TokenKind::TK_STRING_LIT)) {
+            std::string path = expect(TokenKind::TK_STRING_LIT, "import path").text;
+            expect(TokenKind::TK_RPAREN, "import path");
+            auto s = std::make_unique<Stmt>();
+            s->v   = FileImportDecl{path};
+            s->loc = loc;
+            return s;
+        }
+        if (check(TokenKind::TK_IDENT)) {
+            std::string mod = expect(TokenKind::TK_IDENT, "package name").text;
+            expect(TokenKind::TK_RPAREN, "package name");
+            auto s = std::make_unique<Stmt>();
+            s->v   = ImportDecl{mod};
+            s->loc = loc;
+            return s;
+        }
+        diag_.error("E0001", "expected a file path or package name inside import()", cur_.loc);
+        advance();
+        return nullptr;
     }
     std::string mod = expect(TokenKind::TK_IDENT, "import module name").text;
     auto s = std::make_unique<Stmt>();
@@ -545,6 +558,8 @@ StmtPtr Parser::parse_import_decl() {
 
 StmtPtr Parser::parse_type_decl() {
     SourceLoc loc = advance().loc;
+    bool exported = check(TokenKind::TK_EXPORT);
+    if (exported) advance();
     std::string name = expect(TokenKind::TK_IDENT, "type name").text;
 
     std::vector<std::string> type_params;
@@ -559,7 +574,7 @@ StmtPtr Parser::parse_type_decl() {
     auto def = parse_type();
 
     auto s = std::make_unique<Stmt>();
-    s->v   = TypeDecl{name, std::move(type_params), std::move(def)};
+    s->v   = TypeDecl{name, exported, std::move(type_params), std::move(def)};
     s->loc = loc;
     return s;
 }

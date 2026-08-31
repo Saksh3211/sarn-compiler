@@ -59,6 +59,7 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -107,6 +108,53 @@ static fs::path sarn_root() {
 }
 
 static fs::path pkg_root_dir() { return sarn_root() / ".packages"; }
+
+static vector<string> package_search_roots(const string& base_file) {
+    vector<string> roots;
+    auto push_unique = [&](const fs::path& p) {
+        auto s = fs::weakly_canonical(p).string();
+        if (std::find(roots.begin(), roots.end(), s) == roots.end())
+            roots.push_back(s);
+    };
+
+    fs::path base = fs::absolute(base_file).parent_path();
+    for (auto p = base; ; p = p.parent_path()) {
+        push_unique(p);
+        if (p == p.parent_path()) break;
+    }
+
+    push_unique(fs::current_path());
+    push_unique(sarn_root());
+    if (const char* root_env = getenv("SARN_ROOT"))
+        push_unique(fs::path(root_env));
+
+    return roots;
+}
+
+static bool resolve_package_file(const string& module_name,
+                                const string& base_file,
+                                fs::path& out_path) {
+    vector<string> candidates;
+    for (auto& root : package_search_roots(base_file)) {
+        fs::path root_path(root);
+        candidates.push_back((root_path / ".packages" / module_name / "__init__.sarn").string());
+        candidates.push_back((root_path / ".packages" / module_name / "main.sarn").string());
+        candidates.push_back((root_path / ".packages" / module_name / (module_name + ".sarn")).string());
+        candidates.push_back((root_path / module_name / "__init__.sarn").string());
+        candidates.push_back((root_path / module_name / "main.sarn").string());
+        candidates.push_back((root_path / module_name / (module_name + ".sarn")).string());
+        candidates.push_back((root_path / (module_name + ".sarn")).string());
+    }
+
+    for (auto& c : candidates) {
+        fs::path p(c);
+        if (fs::exists(p)) {
+            out_path = p;
+            return true;
+        }
+    }
+    return false;
+}
 
 struct SarnConfig {
     string llvm_bin;
@@ -303,28 +351,29 @@ static int compile_to_ll(const string& input_file,
                     for (auto& fs2 : fm->stmts) expanded.push_back(std::move(fs2));
                 } else if (auto* id = std::get_if<sarn::ImportDecl>(&s->v)) {
                     if (!builtins.count(id->module_name)) {
-                        vector<string> search = {
-                            base_dir + ".packages/" + id->module_name + "/__init__.sarn",
-                            root_str + "/.packages/" + id->module_name + "/__init__.sarn"
-                        };
-                        bool found = false;
-                        for (auto& fpath : search) {
-                            std::ifstream ff(fpath, std::ios::binary);
-                            if (ff) {
-                                std::ostringstream ss; ss << ff.rdbuf();
-                                sarn::Lexer  fl(ss.str(), fpath, mode);
-                                sarn::Parser fp(fl, diag, mode);
-                                auto fm = fp.parse_module(fpath);
-                                resolve_imports(*fm, fpath);
-                                for (auto& fs2 : fm->stmts) {
-                                    if (auto* fd = std::get_if<sarn::FuncDecl>(&fs2->v))
-                                        if (fd->exported) fd->name = id->module_name+"."+fd->name;
-                                    expanded.push_back(std::move(fs2));
-                                }
-                                found = true; break;
+                        fs::path pkg_file;
+                        bool found = resolve_package_file(id->module_name, base_file, pkg_file);
+                        if (found) {
+                            std::ifstream ff(pkg_file, std::ios::binary);
+                            if (!ff) {
+                                fprintf(stderr,"sarnc: cannot open import '%s'\n", pkg_file.string().c_str());
+                                exit(1);
                             }
+                            std::ostringstream ss; ss << ff.rdbuf();
+                            sarn::Lexer  fl(ss.str(), pkg_file.string(), mode);
+                            sarn::Parser fp(fl, diag, mode);
+                            auto fm = fp.parse_module(pkg_file.string());
+                            resolve_imports(*fm, pkg_file.string());
+                            for (auto& fs2 : fm->stmts) {
+                                if (auto* fd = std::get_if<sarn::FuncDecl>(&fs2->v))
+                                    if (fd->exported) fd->name = id->module_name+"."+fd->name;
+                                if (auto* td = std::get_if<sarn::TypeDecl>(&fs2->v))
+                                    if (td->exported) td->name = id->module_name+"."+td->name;
+                                expanded.push_back(std::move(fs2));
+                            }
+                        } else {
+                            expanded.push_back(std::move(s));
                         }
-                        if (!found) expanded.push_back(std::move(s));
                     } else expanded.push_back(std::move(s));
                 } else expanded.push_back(std::move(s));
             }
@@ -469,32 +518,61 @@ static void cmd_pkg_install(const string& pkg) {
     auto pr = pkg_root_dir();
     fs::create_directories(pr);
 
+    string dep_name = pkg;
+    string dep_ver  = "0.0.0";
+    auto at = pkg.find('@');
+    if (at != string::npos) {
+        dep_name = pkg.substr(0, at);
+        dep_ver = pkg.substr(at + 1);
+    }
+
     string url;
     if (pkg.rfind("https://",0)==0 || pkg.rfind("http://",0)==0) {
         url = pkg;
-        auto name = fs::path(pkg).stem().string();
-        string dest = (pr / name).string();
-        if (run_cmd("git clone \""+url+"\" \""+dest+"\"") == 0) log_ok("Installed %s", name.c_str());
-        else log_err("Clone failed.");
-        return;
+        dep_name = fs::path(pkg).stem().string();
+    } else {
+        auto reg_path = sarn_root() / "packageReg.json";
+        if (!fs::exists(reg_path)) { log_err("packageReg.json not found"); return; }
+        std::ifstream rf(reg_path);
+        string content((std::istreambuf_iterator<char>(rf)), {});
+
+        string key = "\"" + dep_name + "\"";
+        auto pos = content.find(key);
+        if (pos == string::npos) { log_err("Package '%s' not in registry", dep_name.c_str()); return; }
+        pos = content.find(':', pos + key.size());
+        pos = content.find('"', pos); auto eq = content.find('"', pos+1);
+        url = content.substr(pos+1, eq-pos-1);
     }
 
-    auto reg_path = sarn_root() / "packageReg.json";
-    if (!fs::exists(reg_path)) { log_err("packageReg.json not found"); return; }
-    std::ifstream rf(reg_path);
-    string content((std::istreambuf_iterator<char>(rf)), {});
-
-    string key = "\"" + pkg + "\"";
-    auto pos = content.find(key);
-    if (pos == string::npos) { log_err("Package '%s' not in registry", pkg.c_str()); return; }
-    pos = content.find(':', pos + key.size());
-    pos = content.find('"', pos); auto eq = content.find('"', pos+1);
-    url = content.substr(pos+1, eq-pos-1);
-
-    string dest = (pr / pkg).string();
+    string dest = (pr / dep_name).string();
     if (fs::exists(dest)) fs::remove_all(dest);
-    if (run_cmd("git clone \""+url+"\" \""+dest+"\"") == 0) log_ok("Installed %s", pkg.c_str());
-    else log_err("Clone failed.");
+    if (run_cmd("git clone \""+url+"\" \""+dest+"\"") == 0) {
+        if (dep_ver == "0.0.0") {
+            fs::path pkg_manifest = fs::path(dest) / "sarn.json";
+            if (fs::exists(pkg_manifest)) {
+                std::ifstream mf(pkg_manifest);
+                std::string js((std::istreambuf_iterator<char>(mf)), {});
+                auto vpos = js.find("\"version\"");
+                if (vpos != std::string::npos) {
+                    auto cpos = js.find(':', vpos);
+                    auto q1 = js.find('"', cpos + 1);
+                    auto q2 = js.find('"', q1 + 1);
+                    if (q1 != std::string::npos && q2 != std::string::npos)
+                        dep_ver = js.substr(q1 + 1, q2 - q1 - 1);
+                }
+            }
+        }
+
+        std::ofstream meta(fs::path(dest) / "sarn.package");
+        meta << "{\n"
+             << "  \"name\": \"" << dep_name << "\",\n"
+             << "  \"version\": \"" << dep_ver << "\",\n"
+             << "  \"url\": \"" << url << "\"\n"
+             << "}\n";
+        log_ok("Installed %s@%s", dep_name.c_str(), dep_ver.c_str());
+    } else {
+        log_err("Clone failed.");
+    }
 }
 
 static void cmd_pkg_remove(const string& pkg) {
