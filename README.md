@@ -1,4 +1,4 @@
-# Sarn
+## Sarn
 
 Sarn is a compiled systems programming language that compiles directly to native machine code via LLVM.
 
@@ -97,9 +97,9 @@ Examples are organized by increasing complexity:
 
 ### stdlib/ - Standard Library
 
-- `io.sarn` - Input/output with colors *(working)*
-- `math.sarn` - Math functions (sqrt, sin, cos, etc.) *(in progress)*
-- `string.sarn` - String manipulation *(in progress)*
+- `io.sarn` - Input/output with colors
+- `math.sarn` - Math functions (sqrt, sin, cos, etc.)
+- `string.sarn` - String manipulation
 - `fs_path.sarn` - Files and paths
 - `json.sarn` - JSON parsing
 - `crypto.sarn` - Hashing and encoding
