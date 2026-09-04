@@ -1,4 +1,3 @@
-
 # Sarn
 
 Sarn is a compiled systems programming language that compiles directly to native machine code via LLVM.
@@ -16,13 +15,17 @@ Sarn is a compiled systems programming language that compiles directly to native
 ## Quick Start
 
 ### Installation
-```bash
+
+```
 cd sarn-compiler
-cmake -B build -G Ninja && ninja -C build
+.\cmake_configure.bat
 ```
 
+This generates `build/compiler/sarnc.exe` — the Sarn compiler.
+
 ### Hello World
-```lua
+
+```
 --!!type:strict
 
 function main(): int
@@ -32,13 +35,21 @@ end
 ```
 
 Compile and run:
-```bash
-./sarn.ps1 Sarn-Run hello.sarn
+
+```
+sarnc hello.sarn
 ```
 
-Or use the interactive REPL:
-```bash
-./sarn.ps1 sarn
+Compile to a specific output path:
+
+```
+sarnc hello.sarn -o path\to\hello.exe
+```
+
+Or launch the interactive REPL:
+
+```
+sarnc
 ```
 
 ## Documentation
@@ -46,23 +57,27 @@ Or use the interactive REPL:
 Start here based on your needs:
 
 ### Beginners
+
 - **[sarn/GETTING_STARTED.md](sarn/GETTING_STARTED.md)** - Step-by-step intro and core concepts
-- **[examples/](examples/)** - Starter code examples
+- **[examples/](examples)** - Starter code examples
 - **[sarn/FAQ.md](sarn/FAQ.md)** - Common questions answered
 
 ### Developers
+
 - **[sarn/docs.md](sarn/docs.md)** - Complete language reference
 - **[sarn/PATTERNS.md](sarn/PATTERNS.md)** - Common idioms and design patterns
-- **[examples/advanced/](examples/advanced/)** - Advanced language features
+- **[examples/advanced/](examples/advanced)** - Advanced language features
 - **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Compiler error reference
 
 ### Reference
+
 - **[Language Reference](docs.md)** - Syntax, operators, types, standard library
 - **[Standard Library](docs.md#standard-library-modules)** - All built-in modules
 - **[Error Codes](docs.md#error-codes)** - Compiler error reference
 
 ### Graphics & Games
-- **[examples/graphics/](examples/graphics/)** - Raylib integration examples
+
+- **[examples/graphics/](examples/graphics)** - Raylib integration examples
 - **[docs.md#gui](docs.md#gui--windowdrawinputuifontscene)** - Graphics library reference
 
 ## Learn Sarn
@@ -70,6 +85,7 @@ Start here based on your needs:
 Examples are organized by increasing complexity:
 
 ### basics/ - Fundamentals (Start here!)
+
 - `variables.sarn` - Variable declaration and scope
 - `types.sarn` - Type system
 - `functions.sarn` - Function definition and calling
@@ -80,15 +96,17 @@ Examples are organized by increasing complexity:
 - And more...
 
 ### stdlib/ - Standard Library
-- `math.sarn` - Math functions (sqrt, sin, cos, etc.)
-- `string.sarn` - String manipulation
-- `io.sarn` - Input/output with colors
+
+- `io.sarn` - Input/output with colors *(working)*
+- `math.sarn` - Math functions (sqrt, sin, cos, etc.) *(in progress)*
+- `string.sarn` - String manipulation *(in progress)*
 - `fs_path.sarn` - Files and paths
 - `json.sarn` - JSON parsing
 - `crypto.sarn` - Hashing and encoding
 - And more...
 
 ### advanced/ - Advanced Features
+
 - `memory.sarn` - Manual memory allocation
 - `records.sarn` - Record types (structs)
 - `oop.sarn` - Object-oriented patterns
@@ -97,6 +115,7 @@ Examples are organized by increasing complexity:
 - And more...
 
 ### graphics/ - Graphics & UI
+
 - `demo_3d.sarn` - 3D rendering with Raylib
 - `ui_demo.sarn` - Interactive UI components
 - `fonts.sarn` - Font loading and rendering
@@ -104,7 +123,8 @@ Examples are organized by increasing complexity:
 ## Language Highlights
 
 ### Static Typing with Inference
-```lua
+
+```
 --!!type:strict
 
 local x: int = 42           -- Explicit type
@@ -113,7 +133,8 @@ local z: string = "hello"   -- String type
 ```
 
 ### Memory Management
-```lua
+
+```
 local buffer: ptr<int> = alloc_typed(int, 256)
 defer free(buffer)          -- Automatic cleanup
 
@@ -122,7 +143,8 @@ local val: int = deref(buffer)  -- Read from memory
 ```
 
 ### Structs & Methods
-```lua
+
+```
 type Person = { name: string, age: int }
 
 function Person.greet(self: Person): string
@@ -134,8 +156,9 @@ print(alice:greet())  -- Method call syntax
 ```
 
 ### Standard Library
-```lua
-import math, string, fs, json, http, crypto
+
+```
+import io, math, string, fs, json, http, crypto
 ```
 
 Access to 20+ built-in modules including filesystem, networking, cryptography, JSON, regex, and more.
@@ -143,16 +166,29 @@ Access to 20+ built-in modules including filesystem, networking, cryptography, J
 ## Compilation Modes
 
 ### Strict Mode (Recommended)
-```lua
+
+```
 --!!type:strict
 ```
+
 Full type checking, compile-time error detection, best performance.
 
 ### Nonstrict Mode
-```lua
+
+```
 --!!type:nonstrict
 ```
+
 Type inference, dynamic typing, good for prototyping.
+
+### Memory Modes
+
+```
+--!!mem:auto
+--!!mem:man
+```
+
+Choose automatic or manual memory management per file.
 
 ## Build Requirements
 
@@ -160,14 +196,18 @@ Type inference, dynamic typing, good for prototyping.
 - CMake
 - LLVM 18.1.6
 - Clang
+- Raylib (auto-copied to output directories for graphics/UI demos)
 
 ## Building
 
-```powershell
+```
 .\cmake_configure.bat
 ```
 
-This generates `build/compiler/sarnc.exe` - the S Lua compiler.
+This generates `build/compiler/sarnc.exe` — the Sarn compiler.
+
+> **Note:** Always delete `build/` before switching CMake generators, and always
+> use `cmake_configure.bat` rather than invoking `cmake --build` directly.
 
 ## License
 
