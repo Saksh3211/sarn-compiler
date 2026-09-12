@@ -140,6 +140,9 @@ StmtPtr Parser::parse_stmt() {
         case TokenKind::TK_DEFER:
             return parse_defer_stmt();
 
+        case TokenKind::TK_ASM:
+            return parse_asm_stmt();
+
         case TokenKind::TK_IMPORT:
             return parse_import_decl();
 
@@ -556,6 +559,41 @@ StmtPtr Parser::parse_import_decl() {
     return s;
 }
 
+StmtPtr Parser::parse_asm_stmt() {
+    SourceLoc loc = advance().loc;
+    bool is_volatile = match(TokenKind::TK_VOLATILE);
+
+    if (match(TokenKind::TK_LPAREN)) {
+        std::string asm_text = expect(TokenKind::TK_STRING_LIT,
+            "inline assembly template").text;
+        expect(TokenKind::TK_COMMA, "inline assembly constraints");
+        std::string constraints = expect(TokenKind::TK_STRING_LIT,
+            "inline assembly constraints").text;
+        std::vector<ExprPtr> operands;
+        while (match(TokenKind::TK_COMMA))
+            operands.push_back(parse_expr());
+        expect(TokenKind::TK_RPAREN, "inline assembly");
+
+        auto s = std::make_unique<Stmt>();
+        s->v = AsmStmt{is_volatile, std::move(asm_text),
+                       std::move(constraints), std::move(operands)};
+        s->loc = loc;
+        return s;
+    }
+
+    std::string asm_text;
+    if (check(TokenKind::TK_STRING_LIT)) {
+        asm_text = advance().text;
+    } else {
+        diag_.error("E0001", "expected inline assembly string literal", cur_.loc);
+    }
+
+    auto s = std::make_unique<Stmt>();
+    s->v   = AsmStmt{is_volatile, std::move(asm_text), "", {}};
+    s->loc = loc;
+    return s;
+}
+
 StmtPtr Parser::parse_type_decl() {
     SourceLoc loc = advance().loc;
     bool exported = check(TokenKind::TK_EXPORT);
@@ -806,6 +844,9 @@ ExprPtr Parser::parse_primary_expr() {
 
     switch (cur_.kind) {
 
+        case TokenKind::TK_ASM:
+            return parse_asm_expr();
+
         case TokenKind::TK_NULL:
             e->v = NullLit{};
             advance();
@@ -961,6 +1002,29 @@ ExprPtr Parser::parse_primary_expr() {
     }
 }
 
+ExprPtr Parser::parse_asm_expr() {
+    SourceLoc loc = advance().loc;
+    bool is_volatile = match(TokenKind::TK_VOLATILE);
+    expect(TokenKind::TK_LPAREN, "inline assembly");
+
+    std::string asm_text = expect(TokenKind::TK_STRING_LIT,
+        "inline assembly template").text;
+    expect(TokenKind::TK_COMMA, "inline assembly constraints");
+    std::string constraints = expect(TokenKind::TK_STRING_LIT,
+        "inline assembly constraints").text;
+
+    std::vector<ExprPtr> operands;
+    while (match(TokenKind::TK_COMMA))
+        operands.push_back(parse_expr());
+    expect(TokenKind::TK_RPAREN, "inline assembly");
+
+    auto e = std::make_unique<Expr>();
+    e->v = AsmExpr{is_volatile, std::move(asm_text),
+                   std::move(constraints), std::move(operands)};
+    e->loc = loc;
+    return e;
+}
+
 ExprPtr Parser::parse_table_ctor() {
     SourceLoc loc = advance().loc;
     std::vector<TableCtor::Entry> entries;
@@ -1075,6 +1139,10 @@ TypeNodePtr Parser::parse_primary_type() {
 
     if (check(TokenKind::TK_IDENT)) {
         std::string name = advance().text;
+        while (match(TokenKind::TK_DOT)) {
+            name += ".";
+            name += expect(TokenKind::TK_IDENT, "qualified type name").text;
+        }
         auto t  = std::make_unique<TypeNode>();
         t->loc  = loc;
 

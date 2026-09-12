@@ -603,6 +603,11 @@ namespace sarn {
             else if constexpr (std::is_same_v<T, ModuleImportExpr>) {
                 return make_any();
             }
+            else if constexpr (std::is_same_v<T, AsmExpr>) {
+                for (auto& operand : v.operands)
+                    check_expr(*operand);
+                return make_int();
+            }
 
             else if constexpr (std::is_same_v<T, Ident>) {
                 SarnTypePtr t = env_ ? env_->lookup(v.name) : nullptr;

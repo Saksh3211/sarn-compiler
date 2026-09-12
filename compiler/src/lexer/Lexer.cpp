@@ -35,6 +35,8 @@ static const std::unordered_map<std::string, TokenKind> KEYWORDS = {
     {"type",       TokenKind::TK_TYPE},
     {"extern",     TokenKind::TK_EXTERN},
     {"defer",      TokenKind::TK_DEFER},
+    {"asm",        TokenKind::TK_ASM},
+    {"volatile",   TokenKind::TK_VOLATILE},
     {"alloc",      TokenKind::TK_ALLOC},
     {"free",       TokenKind::TK_FREE},
     {"alloc_typed",TokenKind::TK_ALLOC_TYPED},

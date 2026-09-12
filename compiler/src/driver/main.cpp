@@ -411,7 +411,7 @@ static int compile_to_ll(const string& input_file,
 static bool do_build(const string& src_file,
                      const string& out_exe,
                      bool          run_after,
-                     int           output_mode = 1) {
+                     int           output_mode = 2) {
     SarnConfig config = load_config();
     string llvm    = find_llvm_bin(config.llvm_bin);
     string clang   = find_tool(llvm, "clang.exe");
@@ -488,7 +488,7 @@ static bool do_build(const string& src_file,
     fs::path runtime_bin = config.runtime_bin.empty()
         ? raylib_dll.parent_path()
         : fs::path(config.runtime_bin);
-    if (output_mode <= 2) for (const char* dll : {"raylib.dll", "glfw3.dll"}) {
+    if (output_mode == 1) for (const char* dll : {"raylib.dll", "glfw3.dll"}) {
         fs::path source = runtime_bin / dll;
         if (fs::exists(source)) {
             std::error_code ec;
@@ -861,7 +861,7 @@ int main(int argc, char** argv) {
         bool emit_ast       = false;
         bool override_strict= false;
         bool override_ns    = false;
-        int output_mode     = 1;
+        int output_mode     = 2;
 
         for (int i = 2; i < argc; ++i) {
             string a = argv[i];

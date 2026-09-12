@@ -1,6 +1,7 @@
 ﻿#ifdef SARN_HAS_LLVM
 
 #include "sarn/IREmitter.h"
+#include <llvm/IR/InlineAsm.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/GlobalVariable.h>
@@ -593,6 +594,24 @@ void IREmitter::emit_stmt(Stmt& s) {
         else if constexpr (std::is_same_v<T, StoreStmt>)    emit_store_stmt(v);
         else if constexpr (std::is_same_v<T, FreeStmt>)     emit_free_stmt(v);
         else if constexpr (std::is_same_v<T, PanicStmt>)    emit_panic_stmt(v);
+        else if constexpr (std::is_same_v<T, AsmStmt>)      {
+            if (!v.asm_text.empty() || !v.constraints.empty() || !v.operands.empty()) {
+                auto* i64 = llvm::Type::getInt64Ty(ctx_);
+                std::vector<llvm::Type*> param_types(v.operands.size(), i64);
+                auto* asm_ty = llvm::FunctionType::get(
+                    llvm::Type::getVoidTy(ctx_), param_types, false);
+                auto* asm_fn = llvm::InlineAsm::get(
+                    asm_ty,
+                    v.asm_text,
+                    v.constraints,
+                    v.is_volatile,
+                    false);
+                std::vector<llvm::Value*> args;
+                for (auto& operand : v.operands)
+                    args.push_back(coerce(emit_expr(*operand), i64, s.loc));
+                builder_.CreateCall(asm_fn, args);
+            }
+        }
         else if constexpr (std::is_same_v<T, TypeDecl>) {} 
         else if constexpr (std::is_same_v<T, ExternDecl>) {}
         else if constexpr (std::is_same_v<T, BreakStmt>) {
@@ -1241,6 +1260,18 @@ llvm::Value* IREmitter::emit_expr(Expr& e) {
         else if constexpr (std::is_same_v<T, ModuleImportExpr>) {
             return llvm::ConstantPointerNull::get(
                 llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(ctx_)));
+        }
+
+        else if constexpr (std::is_same_v<T, AsmExpr>) {
+            auto* i64 = llvm::Type::getInt64Ty(ctx_);
+            std::vector<llvm::Type*> param_types(v.operands.size(), i64);
+            auto* asm_ty = llvm::FunctionType::get(i64, param_types, false);
+            auto* asm_fn = llvm::InlineAsm::get(
+                asm_ty, v.asm_text, v.constraints, v.is_volatile, false);
+            std::vector<llvm::Value*> args;
+            for (auto& operand : v.operands)
+                args.push_back(coerce(emit_expr(*operand), i64, e.loc));
+            return builder_.CreateCall(asm_fn, args, "asm_result");
         }
 
         else if constexpr (std::is_same_v<T, FuncExpr>) {
