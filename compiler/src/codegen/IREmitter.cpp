@@ -1,4 +1,7 @@
-﻿#ifdef SARN_HAS_LLVM
+﻿/*
+    
+*/
+#ifdef SARN_HAS_LLVM
 
 #include "sarn/IREmitter.h"
 #include <llvm/IR/InlineAsm.h>
@@ -14,9 +17,12 @@
 
 namespace sarn {
 
-IREmitter::IREmitter(DiagEngine& diag, SemanticConfig cfg,const std::string& module_name)
-    : diag_(diag), cfg_(cfg),mod_(std::make_unique<llvm::Module>(module_name, ctx_)),
-    builder_(ctx_) {
+IREmitter::IREmitter(
+        DiagEngine& diag, SemanticConfig cfg,const std::string& module_name)
+        :diag_(diag), cfg_(cfg),mod_(std::make_unique<llvm::Module>(module_name, ctx_)
+    ),
+    builder_(ctx_) 
+    {
     declare_runtime();
 }
 
@@ -140,7 +146,12 @@ llvm::Type* IREmitter::tagvalue_type() {
     }
     return tv;
 }
+//==============================================================================================
+//
 // here i declare all the runtime funcs . -==-=-=-=-=-=-=--=-=-=-=-=--=-=--=-=-=-=-=-=-=-=-=-=-=-=-=
+//
+//==============================================================================================
+//
 void IREmitter::declare_runtime() {
     auto* i8p   = llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(ctx_));
     auto* i64   = llvm::Type::getInt64Ty(ctx_);
@@ -148,25 +159,35 @@ void IREmitter::declare_runtime() {
     auto* f64   = llvm::Type::getDoubleTy(ctx_);
     auto* voidT = llvm::Type::getVoidTy(ctx_);
 
-    auto declare = [&](const std::string& name,
-        llvm::Type* ret,std::vector<llvm::Type*> params,
-            bool vararg = false) {
+    auto declare = [&](
+            const std::string& name,
+            llvm::Type* ret,std::vector<llvm::Type*> params,
+            bool vararg = false
+        ) 
+        {
         auto* ft = llvm::FunctionType::get(ret, params, vararg);
         auto* fn = llvm::Function::Create(
-            ft, llvm::Function::ExternalLinkage, name, *mod_);
+            ft, llvm::Function::ExternalLinkage, name, *mod_
+        );
         functions_[name] = fn;
     };
+    
+    // +++++++++++++++++++++++++++++
+    // Default Functions 
+    // ++++++++++++++++++++++++++++
 
-    declare("sarn_alloc",                i8p,   {i64});
-    declare("sarn_free",                 voidT, {i8p});
-    declare("sarn_panic",                voidT, {i8p, i8p, i32});
-    declare("sarn_print_str",            voidT, {i8p});
-    declare("sarn_print_int",            voidT, {i64});
-    declare("sarn_print_float",          voidT, {f64});
-    declare("sarn_print_bool",           voidT, {i32});
-    declare("sarn_print_null",           voidT, {});
-    declare("sarn_time_ns",              i64,   {});
-    declare("sarn_exit",                 voidT, {i32});
+    declare("sarn_alloc",i8p,{i64});
+    declare("sarn_free",voidT, {i8p});
+    declare("sarn_panic",voidT, {i8p, i8p, i32});
+    declare("sarn_print_str",voidT, {i8p});
+    declare("sarn_print_int",voidT, {i64});
+    declare("sarn_print_float",voidT, {f64});
+    declare("sarn_print_bool",voidT, {i32});
+    declare("sarn_print_null",voidT, {});
+    declare("sarn_time_ns",i64,   {});
+    declare("sarn_exit",  voidT, {i32});
+    
+    // IO lib
 
     declare("sarn_read_line",            i8p,   {});
     declare("sarn_read_char",            i32,   {});
@@ -176,6 +197,8 @@ void IREmitter::declare_runtime() {
     declare("sarn_io_print_color",       voidT, {i8p, i8p});
     declare("sarn_print_str_no_newline", voidT, {i8p});
     declare("sarn_flush",                voidT, {});
+
+    // str stdlib
 
     declare("sarn_str_concat", i8p,   {i8p, i8p});
     declare("sarn_int_to_str",  i8p,   {i64});
@@ -193,28 +216,32 @@ void IREmitter::declare_runtime() {
     declare("sarn_str_count", i32, {i8p, i8p});
     declare("sarn_str_to_float",f64,   {i8p});
 
+    // OS lib
+
     declare("sarn_os_time",i64,   {});
     declare("sarn_os_sleep",voidT, {i64});
     declare("sarn_os_getenv", i8p,   {i8p});
     declare("sarn_os_system", voidT, {i8p});
-    declare("sarn_os_cwd",i8p,   {});
+    declare("sarn_os_cwd",i8p, {});
     declare("sarn_os_sleepS", voidT, {i64});
-    declare("sarn_os_is_admin",    i32,   {});
-    declare("sarn_os_add_to_path", i32,   {i8p});
+    declare("sarn_os_is_admin", i32,   {});
+    declare("sarn_os_add_to_path", i32,{i8p});
     declare("sarn_os_get_temp_dir",i8p,   {});
 
-    declare("sarn_sqrt",  f64, {f64});
-    declare("sarn_pow",   f64, {f64, f64});
-    declare("sarn_sin",   f64, {f64});
-    declare("sarn_cos",   f64, {f64});
-    declare("sarn_tan",   f64, {f64});
-    declare("sarn_log",   f64, {f64});
-    declare("sarn_log2",  f64, {f64});
-    declare("sarn_exp",   f64, {f64});
-    declare("sarn_inf",   f64, {});
-    declare("sarn_nan",   f64, {});
-    declare("sarn_pi",    f64, {});
-    declare("sarn_e",     f64, {});
+    // Math lib
+    
+    declare("sarn_sqrt",f64, {f64});
+    declare("sarn_pow",f64, {f64, f64});
+    declare("sarn_sin",f64, {f64});
+    declare("sarn_cos",f64, {f64});
+    declare("sarn_tan",f64, {f64});
+    declare("sarn_log", f64, {f64});
+    declare("sarn_log2",f64, {f64});
+    declare("sarn_exp",f64, {f64});
+    declare("sarn_inf",f64, {});
+    declare("sarn_nan",f64, {});
+    declare("sarn_pi",f64, {});
+    declare("sarn_e",f64, {});
 
     declare("sarn_tbl_new",       i8p,   {});
     declare("sarn_tbl_iset_i64",  voidT, {i8p, i64, i64});
@@ -234,8 +261,8 @@ void IREmitter::declare_runtime() {
     declare("sarn_tbl_sget_str",  i8p,   {i8p, i8p});
     declare("sarn_tbl_sget_bool", i32,   {i8p, i8p});
     auto* f32 = llvm::Type::getFloatTy(ctx_);
-    declare("sarn_window_init",          voidT, {i32, i32, i8p});
-    declare("sarn_window_close",         voidT, {});
+    declare("sarn_window_init",voidT, {i32, i32, i8p});
+    declare("sarn_window_close",voidT, {});
     declare("sarn_window_should_close",  i32,   {});
     declare("sarn_begin_drawing",        voidT, {});
     declare("sarn_end_drawing",          voidT, {});
@@ -245,14 +272,21 @@ void IREmitter::declare_runtime() {
     declare("sarn_get_frame_time",       f64,   {});
     declare("sarn_screen_width",         i32,   {});
     declare("sarn_screen_height",        i32,   {});
-    declare("sarn_draw_rect",            voidT, {i32, i32, i32, i32, i32, i32, i32, i32});
-    declare("sarn_draw_rect_outline",    voidT, {i32, i32, i32, i32, i32, i32, i32, i32, i32});
-    declare("sarn_draw_circle",          voidT, {i32, i32, f32, i32, i32, i32, i32});
-    declare("sarn_draw_circle_outline",  voidT, {i32, i32, f32, i32, i32, i32, i32});
-    declare("sarn_draw_line",            voidT, {i32, i32, i32, i32, i32, i32, i32, i32, i32});
-    declare("sarn_draw_triangle",        voidT, {i32, i32, i32, i32, i32, i32, i32, i32, i32, i32});
-    declare("sarn_draw_text",            voidT, {i8p, i32, i32, i32, i32, i32, i32, i32});
-    declare("sarn_measure_text",         i32,   {i8p, i32});
+    declare("sarn_draw_rect",voidT, {
+        i32, i32, i32, i32, i32, i32, i32, i32
+    });
+    declare("sarn_draw_rect_outline",voidT, 
+        {i32, i32, i32, i32, i32, i32, i32, i32, i32
+    });
+    declare("sarn_draw_circle",voidT, {i32, i32, f32, i32, i32, i32, i32});
+    declare("sarn_draw_circle_outline",  voidT, {
+        i32, i32, f32, i32, i32, i32, i32
+    });
+    declare("sarn_draw_line", voidT, {
+        i32, i32, i32, i32, i32, i32, i32, i32, i32
+    });
+    declare("sarn_draw_triangle",voidT, {i32, i32, i32, i32, i32, i32, i32, i32, i32, i32});
+    declare("sarn_draw_text",  i32,   {i8p, i32});
     declare("sarn_is_key_down",          i32,   {i32});
     declare("sarn_is_key_pressed",       i32,   {i32});
     declare("sarn_is_key_released",      i32,   {i32});
@@ -261,13 +295,26 @@ void IREmitter::declare_runtime() {
     declare("sarn_is_mouse_btn_pressed", i32,   {i32});
     declare("sarn_is_mouse_btn_down",    i32,   {i32});
     declare("sarn_get_mouse_wheel",      f64,   {});
-    declare("sarn_ui_button",            i32,   {i32, i32, i32, i32, i8p});
-    declare("sarn_ui_label",             voidT, {i32, i32, i32, i32, i8p});
-    declare("sarn_ui_checkbox",          i32,   {i32, i32, i32, i8p, i32});
-    declare("sarn_ui_slider",            f64,   {i32, i32, i32, i32, f64, f64, f64});
-    declare("sarn_ui_progress_bar",      voidT, {i32, i32, i32, i32, f64, f64});
-    declare("sarn_ui_panel",             voidT, {i32, i32, i32, i32, i8p});
-    declare("sarn_ui_text_input",        i32,   {i32, i32, i32, i32, i8p, i32, i32});
+    declare("sarn_ui_button",  i32,   {
+        i32, i32, i32, i32, i8p
+    });
+    declare("sarn_ui_label", voidT, {
+        i32, i32, i32, i32, i8p
+    });
+    declare("sarn_ui_checkbox",  i32,   {
+        i32, i32, i32, i8p, i32
+    });
+    declare("sarn_ui_slider",  f64,   {
+        i32, i32, i32, i32, f64, f64, f64});
+    declare("sarn_ui_progress_bar",voidT, {
+        i32, i32, i32, i32, f64, f64
+    });
+    declare("sarn_ui_panel",voidT, {
+        i32, i32, i32, i32, i8p
+    });
+    declare("sarn_ui_text_input",i32,   {
+        i32, i32, i32, i32, i8p, i32, i32
+    });
     declare("sarn_ui_set_font_size",     voidT, {i32});
     declare("sarn_ui_set_accent",        voidT, {i32, i32, i32});
     declare("sarn_font_load",            i32,   {i8p, i32});
@@ -431,8 +478,12 @@ void IREmitter::declare_runtime() {
     declare("sarn_draw_ray",         voidT, {f32,f32,f32,f32,f32,f32,i32,i32,i32,i32});
     declare("sarn_draw_line3d",      voidT, {f32,f32,f32,f32,f32,f32,i32,i32,i32,i32});
     declare("sarn_model_load",       i32,   {i8p});
-    declare("sarn_model_draw",       voidT, {i32,f32,f32,f32,f32,i32,i32,i32,i32});
-    declare("sarn_model_draw_ex",    voidT, {i32,f32,f32,f32,f32,f32,f32,f32,f32,f32,f32,i32,i32,i32,i32});
+    declare("sarn_model_draw",       voidT, {
+        i32,f32,f32,f32,f32,i32,i32,i32,i32
+    });
+    declare("sarn_model_draw_ex",    voidT, {
+        i32,f32,f32,f32,f32,f32,f32,f32,f32,f32,f32,i32,i32,i32,i32
+    });
     declare("sarn_model_unload",     voidT, {i32});
     declare("sarn_texture_load",     i32,   {i8p});
     declare("sarn_texture_draw",     voidT, {i32,i32,i32,i32,i32,i32,i32});
@@ -2573,6 +2624,29 @@ llvm::Value* IREmitter::emit_method_call(MethodCall& e, SourceLoc loc) {
 }
 
 llvm::Value* IREmitter::emit_field(Field& e, SourceLoc loc) {
+    if (auto* module_id = std::get_if<Ident>(&e.table->v)) {
+        std::string module = module_id->name;
+        auto alias = module_aliases_.find(module);
+        if (alias != module_aliases_.end())
+            module = alias->second;
+
+        const std::unordered_map<std::string, std::string> no_arg_functions = {
+            {"datetime.now", "sarn_datetime_now"},
+            {"random.float", "sarn_random_float"},
+            {"json.encode_null", "sarn_json_encode_null"},
+            {"net.init", "sarn_net_init"},
+            {"net.local_ip", "sarn_net_local_ip"},
+            {"sync.mutex_new", "sarn_sync_mutex_new"},
+            {"table.new", "sarn_tbl_new"},
+            {"thread.self_id", "sarn_thread_self_id"}
+        };
+        auto function = no_arg_functions.find(module + "." + e.name);
+        if (function != no_arg_functions.end()) {
+            if (auto* fn = get_runtime_fn(function->second))
+                return builder_.CreateCall(fn, {}, e.name);
+        }
+    }
+
     llvm::Value* obj = emit_lvalue(*e.table);
     if (!obj) return nullptr;
 

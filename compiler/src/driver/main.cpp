@@ -6,6 +6,7 @@
  *   sarnc  <file.sarn>           Compile + link next to source, then run
  *   sarnc  <file.sarn> -o <out>  Compile + link to <out>.exe  (no auto-run)
  *   sarnc  <file.sarn> --emit-ast | --emit-tokens   (debug)
+ *   sarnc  <file.sarn> --emit-ll [out.ll]           Write LLVM IR only
  *   sarnc  install <pkg|url>     Install package
  *   sarnc  remove  <pkg>         Remove package
  *   sarnc  list                  List installed packages
@@ -304,9 +305,10 @@ static string read_file(const string& path) {
  * <output_ll>.  Returns 0 on success, 1 on error.
  */
 static int compile_to_ll(const string& input_file,
-                          const string& output_ll,
-                          bool override_strict   = false,
-                          bool override_nonstrict= false) {
+        const string& output_ll,
+        bool override_strict = false,
+    bool override_nonstrict= false,
+    bool show_suggestions = false) {
     string source = read_file(input_file);
 
     sarn::Directives directives = sarn::detect_directives(source, input_file);
@@ -314,7 +316,7 @@ static int compile_to_ll(const string& input_file,
     if (override_strict)     mode = sarn::CompileMode::STRICT;
     if (override_nonstrict)  mode = sarn::CompileMode::NONSTRICT;
 
-    sarn::DiagEngine     diag(mode);
+    sarn::DiagEngine     diag(mode, show_suggestions);
     sarn::SemanticConfig cfg = sarn::SemanticConfig::for_mode(mode);
     cfg.mem_mode = directives.mem;
 
@@ -338,6 +340,25 @@ static int compile_to_ll(const string& input_file,
             };
             const char* root_env = getenv("SARN_ROOT");
             string root_str = root_env ? root_env : ".";
+            auto expand_package = [&](const string& package_name, const fs::path& pkg_file) {
+                std::ifstream ff(pkg_file, std::ios::binary);
+                if (!ff) {
+                    fprintf(stderr,"sarnc: cannot open import '%s'\n",pkg_file.string().c_str());
+                    exit(1);
+                }
+                std::ostringstream ss; ss << ff.rdbuf();
+                sarn::Lexer fl(ss.str(), pkg_file.string(), mode);
+                sarn::Parser fp(fl, diag, mode);
+                auto fm = fp.parse_module(pkg_file.string());
+                resolve_imports(*fm, pkg_file.string());
+                for (auto& fs2 : fm->stmts) {
+                    if (auto* fd = std::get_if<sarn::FuncDecl>(&fs2->v))
+                        if (fd->exported) fd->name = package_name + "." + fd->name;
+                    if (auto* td = std::get_if<sarn::TypeDecl>(&fs2->v))
+                        if (td->exported) td->name = package_name + "." + td->name;
+                    expanded.push_back(std::move(fs2));
+                }
+            };
             for (auto& s : m.stmts) {
                 if (auto* fi = std::get_if<sarn::FileImportDecl>(&s->v)) {
                     string fpath = base_dir + fi->path;
@@ -354,27 +375,22 @@ static int compile_to_ll(const string& input_file,
                         fs::path pkg_file;
                         bool found = resolve_package_file(id->module_name, base_file, pkg_file);
                         if (found) {
-                            std::ifstream ff(pkg_file, std::ios::binary);
-                            if (!ff) {
-                                fprintf(stderr,"sarnc: cannot open import '%s'\n", pkg_file.string().c_str());
-                                exit(1);
-                            }
-                            std::ostringstream ss; ss << ff.rdbuf();
-                            sarn::Lexer  fl(ss.str(), pkg_file.string(), mode);
-                            sarn::Parser fp(fl, diag, mode);
-                            auto fm = fp.parse_module(pkg_file.string());
-                            resolve_imports(*fm, pkg_file.string());
-                            for (auto& fs2 : fm->stmts) {
-                                if (auto* fd = std::get_if<sarn::FuncDecl>(&fs2->v))
-                                    if (fd->exported) fd->name = id->module_name+"."+fd->name;
-                                if (auto* td = std::get_if<sarn::TypeDecl>(&fs2->v))
-                                    if (td->exported) td->name = id->module_name+"."+td->name;
-                                expanded.push_back(std::move(fs2));
-                            }
+                            expand_package(id->module_name, pkg_file);
                         } else {
                             expanded.push_back(std::move(s));
                         }
                     } else expanded.push_back(std::move(s));
+                } else if (auto* local = std::get_if<sarn::LocalDecl>(&s->v)) {
+                    if (local->init) {
+                        if (auto* module = std::get_if<sarn::ModuleImportExpr>(&local->init->v)) {
+                            if (!builtins.count(module->module_name)) {
+                                fs::path pkg_file;
+                                if (resolve_package_file(module->module_name, base_file, pkg_file))
+                                    expand_package(module->module_name, pkg_file);
+                            }
+                        }
+                    }
+                    expanded.push_back(std::move(s));
                 } else expanded.push_back(std::move(s));
             }
             m.stmts = std::move(expanded);
@@ -409,16 +425,15 @@ static int compile_to_ll(const string& input_file,
  * run_after  : if true, launch the exe after a successful build
  */
 static bool do_build(const string& src_file,
-                     const string& out_exe,
-                     bool          run_after,
-                     int           output_mode = 2) {
+                    const string& out_exe,
+                    bool          run_after,
+                    int           output_mode = 2,
+                    bool          show_suggestions = false) {
     SarnConfig config = load_config();
     string llvm    = find_llvm_bin(config.llvm_bin);
     string clang   = find_tool(llvm, "clang.exe");
     string sarnlib = find_sarn_lib(config.runtime_lib);
     string raylib  = find_raylib_lib(config.raylib_lib);
-    // out3 currently uses the same static-CRT strategy as out2.
-    if (output_mode == 3) output_mode = 2;
 
     if (clang.empty())   { log_err("clang.exe not found."); return false; }
     if (sarnlib.empty()) { log_err("sarn.lib not found. Build the project first."); return false; }
@@ -435,7 +450,7 @@ static bool do_build(const string& src_file,
 
     /* ── Step 1: compile .sarn → .ll ───────────────────────────────────── */
     log_info("Compiling  %s", src.filename().string().c_str());
-    if (compile_to_ll(src.string(), ll_file) != 0) {
+    if (compile_to_ll(src.string(), ll_file, false, false, show_suggestions) != 0) {
         log_err("Compilation failed.");
         return false;
     }
@@ -467,7 +482,17 @@ static bool do_build(const string& src_file,
     string nod = "-Wl,/NODEFAULTLIB:libcmt";
 
     string link = "\"" + clang + "\" \"" + obj_file + "\""
-                  " \"" + sarnlib + "\"";
+        " \"" + sarnlib + "\"";
+    fs::path packages = pkg_root_dir();
+    if (fs::exists(packages)) {
+        for (const auto& package : fs::directory_iterator(packages)) {
+            if (!package.is_directory()) continue;
+            for (const auto& file : fs::directory_iterator(package.path())) {
+                if (file.path().extension() == ".lib")
+                    link += " \"" + file.path().string() + "\"";
+            }
+        }
+    }
     if (!raylib.empty()) link += " \"" + raylib + "\"";
     link += " " + sys + " " + nod + " " + crt;
     link += " -o \"" + exe_path.string() + "\"";
@@ -493,7 +518,7 @@ static bool do_build(const string& src_file,
         if (fs::exists(source)) {
             std::error_code ec;
             fs::copy_file(source, exe_path.parent_path() / dll,
-                          fs::copy_options::overwrite_existing, ec);
+                    fs::copy_options::overwrite_existing, ec);
         }
     }
 
@@ -526,6 +551,28 @@ static void cmd_pkg_install(const string& pkg) {
         dep_ver = pkg.substr(at + 1);
     }
 
+    if (fs::exists(pr)) {
+        for (const auto& entry : fs::directory_iterator(pr)) {
+            if (!entry.is_directory()) continue;
+            if (entry.path().filename() == dep_name) {
+                log_warn("Package '%s' is already installed at %s",
+                         dep_name.c_str(), entry.path().string().c_str());
+                return;
+            }
+
+            fs::path manifest = entry.path() / "pkg.json";
+            if (!fs::exists(manifest)) continue;
+            std::ifstream mf(manifest);
+            string metadata((std::istreambuf_iterator<char>(mf)), {});
+            string package_name = "\"name\": \"" + dep_name + "\"";
+            if (metadata.find(package_name) != string::npos) {
+                log_warn("Package '%s' is already installed at %s",
+                         dep_name.c_str(), entry.path().string().c_str());
+                return;
+            }
+        }
+    }
+
     string url;
     if (pkg.rfind("https://",0)==0 || pkg.rfind("http://",0)==0) {
         url = pkg;
@@ -545,7 +592,10 @@ static void cmd_pkg_install(const string& pkg) {
     }
 
     string dest = (pr / dep_name).string();
-    if (fs::exists(dest)) fs::remove_all(dest);
+    if (fs::exists(dest)) {
+        log_warn("Package '%s' is already installed at %s", dep_name.c_str(), dest.c_str());
+        return;
+    }
     if (run_cmd("git clone \""+url+"\" \""+dest+"\"") == 0) {
         if (dep_ver == "0.0.0") {
             fs::path pkg_manifest = fs::path(dest) / "sarn.json";
@@ -723,10 +773,10 @@ static int cmd_repl() {
     printf(CC CBL
         "\n  Sarn REPL v%s\n"
         "  Write code in the editor, then:\n"
-        "    [Enter]   – run from terminal\n"
-        "    F5        – run from inside editor\n"
-        "    clear     – reset editor\n"
-        "    exit      – quit\n\n" C0, SARN_VER);
+        "    [Enter]   > run from terminal\n"
+        "    F5        > run from inside editor\n"
+        "    clear     > reset editor\n"
+        "    exit      > quit\n\n" C0, SARN_VER);
 
     while (g_repl_alive) {
         printf(CG "sarn> " C0); fflush(stdout);
@@ -814,7 +864,10 @@ static void print_stmt(const sarn::Stmt* s, int i) {
     }, s->v);
 }
 
-/* ─── main ───────────────────────────────────────────────────────────────── */
+/* ==========================================================================
+ ─── main ───────────────────────────────────────────────────────────────── 
+==============================================================================
+*/
 
 int main(int argc, char** argv) {
     ansi_on();
@@ -859,6 +912,9 @@ int main(int argc, char** argv) {
         string out_exe;
         bool emit_tokens    = false;
         bool emit_ast       = false;
+        bool emit_ll        = false;
+        string ll_output;
+        bool show_suggestions = true;
         bool override_strict= false;
         bool override_ns    = false;
         int output_mode     = 2;
@@ -874,11 +930,16 @@ int main(int argc, char** argv) {
             }
             else if (a == "--emit-tokens")  emit_tokens     = true;
             else if (a == "--emit-ast")     emit_ast        = true;
+            else if (a == "--emit-ll") {
+                emit_ll = true;
+                if (i + 1 < argc && argv[i + 1][0] != '-')
+                    ll_output = argv[++i];
+            }
+                    else if (a == "--no-suggestions") show_suggestions = false;
             else if (a == "--strict")       override_strict = true;
             else if (a == "--nonstrict")    override_ns     = true;
             else if (a == "--out1")         output_mode     = 1;
             else if (a == "--out2")         output_mode     = 2;
-            else if (a == "--out3")         output_mode     = 3;
         }
 
         /* debug dump modes – no build */
@@ -886,8 +947,8 @@ int main(int argc, char** argv) {
             string source = read_file(first);
             sarn::Directives d = sarn::detect_directives(source, first);
             sarn::CompileMode m = override_strict ? sarn::CompileMode::STRICT :
-                                  override_ns     ? sarn::CompileMode::NONSTRICT : d.type;
-            sarn::DiagEngine diag(m);
+                override_ns ? sarn::CompileMode::NONSTRICT : d.type;
+            sarn::DiagEngine diag(m, show_suggestions);
             sarn::Lexer lx(source, first, m);
             while (!lx.at_eof()) {
                 sarn::Token t = lx.next();
@@ -900,14 +961,36 @@ int main(int argc, char** argv) {
             string source = read_file(first);
             sarn::Directives d = sarn::detect_directives(source, first);
             sarn::CompileMode m = override_strict ? sarn::CompileMode::STRICT :
-                                  override_ns     ? sarn::CompileMode::NONSTRICT : d.type;
-            sarn::DiagEngine     diag(m);
+                override_ns ? sarn::CompileMode::NONSTRICT : d.type;
+            sarn::DiagEngine     diag(m, show_suggestions);
             sarn::SemanticConfig cfg = sarn::SemanticConfig::for_mode(m);
             sarn::Lexer  lx(source, first, m);
             sarn::Parser pr(lx, diag, m);
             auto mod = pr.parse_module(first);
             printf("Module: %s  stmts=%zu\n", first.c_str(), mod->stmts.size());
             for (auto& s : mod->stmts) print_stmt(s.get(), 1);
+            return 0;
+        }
+
+        if (emit_ll) {
+            if (ll_output.empty()) {
+                fs::path src = fs::absolute(first);
+                ll_output = (src.parent_path() / (src.stem().string() + ".ll")).string();
+            } else if (ll_output.size() < 3 ||
+                    ll_output.compare(ll_output.size() - 3, 3, ".ll") != 0) 
+                {
+                ll_output += ".ll";
+            }
+            fs::path output_path = fs::absolute(ll_output);
+            fs::create_directories(output_path.parent_path());
+            log_info("Emitting LLVM IR to %s", output_path.string().c_str());
+            if (compile_to_ll(first, output_path.string(), override_strict, override_ns,
+                    show_suggestions) != 0) 
+                {
+                log_err("Compilation failed.");
+                return 1;
+            }
+            log_ok("Wrote %s", output_path.string().c_str());
             return 0;
         }
 
@@ -919,7 +1002,7 @@ int main(int argc, char** argv) {
             out_exe = (src.parent_path() / (src.stem().string() + ".exe")).string();
         }
 
-        return do_build(first, out_exe, run_after, output_mode) ? 0 : 1;
+        return do_build(first, out_exe, run_after, output_mode, show_suggestions) ? 0 : 1;
     }
 
     /* ── Unknown ──────────────────────────────────────────────────────── */
@@ -931,7 +1014,8 @@ int main(int argc, char** argv) {
         "  sarnc <file.sarn> -o <exe>   Compile + link (no run)\n"
         "  --out1                       Dynamic executable + DLLs\n"
         "  --out2                       Static CRT executable\n"
-        "  --out3                       Same as --out2 for now\n"
+        "  sarnc <file.sarn> --emit-ll [out.ll]\n"
+        "  --no-suggestions           Hide compiler help suggestions\n"
         "  sarnc <file.sarn> --emit-ast\n"
         "  sarnc install <pkg|url>\n"
         "  sarnc remove  <pkg>\n"

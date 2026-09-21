@@ -30,10 +30,14 @@ void Parser::skip_semicolons() {
 
 Token Parser::expect(TokenKind k, const std::string& ctx) {
     if (!check(k)) {
+        std::string expected = token_kind_name(k);
+        std::string suggestion = cur_.kind == TokenKind::TK_EOF
+            ? "add '" + expected + "' before the end of the file"
+            : "insert '" + expected + "' before '" + cur_.text + "'";
         diag_.error("E0001",
             "expected '" + token_kind_name(k) + "' in " + ctx +
             ", got '" + cur_.text + "'",
-            cur_.loc);
+            cur_.loc, suggestion);
         return cur_;
     }
     return advance();
@@ -103,7 +107,8 @@ StmtPtr Parser::parse_stmt() {
                 return parse_func_decl(true);
             if (check(TokenKind::TK_TYPE))
                 return parse_type_decl();
-            diag_.error("E0001", "expected 'function' or 'type' after 'export'", cur_.loc);
+            diag_.error("E0001", "expected 'function' or 'type' after 'export'", cur_.loc,
+                "write 'function' or 'type' after 'export'");
             advance();
             return nullptr;
         }
@@ -142,6 +147,17 @@ StmtPtr Parser::parse_stmt() {
 
         case TokenKind::TK_ASM:
             return parse_asm_stmt();
+
+        case TokenKind::TK_STAR:
+            advance();
+            if (check(TokenKind::TK_ASM)) {
+                return parse_asm_stmt(true);
+            }
+            diag_.error("E0001",
+                "unexpected token '*' at statement level",
+                cur_.loc, "check the previous statement for a missing expression");
+            advance();
+            return nullptr;
 
         case TokenKind::TK_IMPORT:
             return parse_import_decl();
@@ -208,7 +224,7 @@ StmtPtr Parser::parse_stmt() {
 
             diag_.error("E0001",
                 "unexpected token '" + cur_.text + "' at statement level",
-                cur_.loc);
+                cur_.loc, "check the previous statement for a missing or extra delimiter");
             advance();
             return nullptr;
         }
@@ -559,9 +575,9 @@ StmtPtr Parser::parse_import_decl() {
     return s;
 }
 
-StmtPtr Parser::parse_asm_stmt() {
+StmtPtr Parser::parse_asm_stmt(bool force_volatile) {
     SourceLoc loc = advance().loc;
-    bool is_volatile = match(TokenKind::TK_VOLATILE);
+    bool is_volatile = force_volatile || match(TokenKind::TK_VOLATILE);
 
     if (match(TokenKind::TK_LPAREN)) {
         std::string asm_text = expect(TokenKind::TK_STRING_LIT,
@@ -723,6 +739,15 @@ ExprPtr Parser::parse_add_expr() {
 }
 
 ExprPtr Parser::parse_mul_expr() {
+    if (check(TokenKind::TK_STAR)) {
+        advance();
+        if (check(TokenKind::TK_ASM))
+            return parse_asm_expr(true);
+        diag_.error("E0001", "unexpected token '*' in expression",
+                    cur_.loc, "use '*' only as a multiplication operator or before asm");
+        return nullptr;
+    }
+
     auto lhs = parse_unary_expr();
     while (check(TokenKind::TK_STAR)    ||
         check(TokenKind::TK_SLASH)   ||
@@ -741,6 +766,15 @@ ExprPtr Parser::parse_mul_expr() {
 
 ExprPtr Parser::parse_unary_expr() {
     SourceLoc loc = cur_.loc;
+
+    if (check(TokenKind::TK_STAR)) {
+        advance();
+        if (check(TokenKind::TK_ASM))
+            return parse_asm_expr(true);
+        diag_.error("E0001", "unexpected token '*' in expression", loc,
+                    "use '*' only as a multiplication operator or before asm");
+        return nullptr;
+    }
 
     if (check(TokenKind::TK_NOT)) {
         std::string op = advance().text;
@@ -879,8 +913,11 @@ ExprPtr Parser::parse_primary_expr() {
 
         case TokenKind::TK_IMPORT: {
             advance();
+            bool parenthesized = match(TokenKind::TK_LPAREN);
             e->v = ModuleImportExpr{
                 expect(TokenKind::TK_IDENT, "module name").text};
+            if (parenthesized)
+                expect(TokenKind::TK_RPAREN, "package name");
             return e;
         }
 
@@ -996,15 +1033,15 @@ ExprPtr Parser::parse_primary_expr() {
         default:
             diag_.error("E0001",
                 "unexpected token '" + cur_.text + "' in expression",
-                cur_.loc);
+                cur_.loc, "check the expression near this token for a missing or extra delimiter");
             advance();
             return nullptr;
     }
 }
 
-ExprPtr Parser::parse_asm_expr() {
+ExprPtr Parser::parse_asm_expr(bool force_volatile) {
     SourceLoc loc = advance().loc;
-    bool is_volatile = match(TokenKind::TK_VOLATILE);
+    bool is_volatile = force_volatile || match(TokenKind::TK_VOLATILE);
     expect(TokenKind::TK_LPAREN, "inline assembly");
 
     std::string asm_text = expect(TokenKind::TK_STRING_LIT,
